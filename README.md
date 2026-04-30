@@ -8,6 +8,10 @@
 
 ---
 
+> **TL;DR** · One engineer, five months, ~60,000 lines of production Python + JavaScript + PowerShell, 8,872+ regression tests, 16 named release cycles, three project-permanent invariants enforced through the test suite. A configuration-truth audit platform for MSP-scale cybersecurity engagements covering four firewall vendors (WatchGuard · Palo Alto · Fortinet · Cisco ASA) and a 47-section Windows-server collector pipeline. Engagement-quality deliverables ratified live on customer data. Open to senior · principal · or staff IC roles · or first-engineering-hire / engineering-leadership at smaller teams. Hybrid or remote · NJ/NY metro or US-remote.
+
+---
+
 ## Why this work happened
 
 I joined an engagement team that was producing configuration-audit deliverables the hard way. We had a stack of vendor tools that each saw a sliver of the picture — Nipper for firewall posture, Tenable for vulnerability inventory, Lansweeper for asset state, ad-hoc PowerShell for the Windows-server side — and senior engineers were spending 60-80 hours per major audit stitching the outputs into something a client could read. None of it composed. None of it compounded. Every audit was a one-off.
@@ -95,6 +99,21 @@ I am open to senior, principal, or staff-level individual-contributor roles, or 
 
 ---
 
-**Contact.** Email and phone available on request through the application channel. Repository access is not available — the platform is private company IP — but every architectural claim in this case study is verifiable through live walkthrough or anonymised excerpt.
+## Contact + next steps
 
-*Anonymisation rules honoured: no client company names, no proprietary business detail beyond what the engineering discipline requires for context.*
+If any of the engineering claims above resonate with what your team needs · I'd welcome the conversation.
+
+- **GitHub:** [@RyanH-sudo](https://github.com/RyanH-sudo)
+- **Location:** NJ/NY metro · open to hybrid or US-remote
+- **Email:** available on request via LinkedIn or this repo's Issues tab
+- **Repository access to NinjaToolKit itself:** not available — the platform is private company IP — but every architectural claim in this case study is verifiable through live walkthrough, anonymised code excerpt, or reference conversation with the eMazzanti engineering team
+
+I'm specifically targeting roles where the platform-architecture work I've done compounds across the company rather than being filed as one project. Cybersecurity-tooling firms · platform-engineering teams at mid-market tech companies · and well-funded early-stage startups looking for a first principal engineering hire are the natural fits. Compensation expectations align with senior / principal / staff IC bands at firms that take engineering-quality seriously.
+
+Looking forward to it.
+
+— Ryan
+
+---
+
+*Anonymisation rules honoured throughout: no client company names, no proprietary business detail beyond what the engineering discipline requires for context. Every concrete number in this case study is auditable in the source tree of the platform under discussion.*
