@@ -85,7 +85,7 @@ Both of these incidents made the platform stronger. The discipline that catches 
 - **Domain depth in cybersecurity, MSP operations, and multi-vendor configuration audit.** WatchGuard, Palo Alto, Fortinet, Cisco ASA, Active Directory, certificate hygiene, listening-port mapping, identity posture, 50 compliance controls across four frameworks. I read the configurations as native language.
 - **Specification-as-substrate practice at production cadence.** Twelve domain documents authored as a 6,116-line research corpus before code was written. Implementations cite the spec sections they satisfy. Corrections feed back into the corpus rather than into chat context. Most engineering teams treat specs as wiki pages that decay; the teams that produce engineering deliverables that hold up under scrutiny treat specs as durable infrastructure. I bring that discipline.
 
-I am open to senior, principal, or staff-level individual-contributor roles, Applied AI / Forward Deployed Engineer positions at frontier AI labs, or first-engineering-hire / engineering-leadership positions at smaller teams where the platform-architecture work compounds across the company. Remote · based in Chiang Mai, Thailand (US Citizen · US Pacific evening hours align with Thailand morning).
+I am open to senior, principal, or staff-level individual-contributor roles, Applied AI / Forward Deployed Engineer positions at frontier AI labs, or first-engineering-hire / engineering-leadership positions at smaller teams where the platform-architecture work compounds across the company. Remote · based in Chiang Mai, Thailand (US Citizen · available US evening hours · Thailand morning).
 
 ---
 
@@ -104,7 +104,7 @@ I am open to senior, principal, or staff-level individual-contributor roles, App
 If any of the engineering claims above resonate with what your team needs · I'd welcome the conversation.
 
 - **GitHub:** [@RyanH-sudo](https://github.com/RyanH-sudo)
-- **Location:** Chiang Mai, Thailand · US Citizen · remote-first · US Pacific evening hours = Thailand morning
+- **Location:** Chiang Mai, Thailand · US Citizen · remote-first · available US evening hours (Thailand morning)
 - **Email:** available on request via LinkedIn or this repo's Issues tab
 - **Repository access to NinjaToolKit itself:** not available — the platform is private company IP — but every architectural claim in this case study is verifiable through live walkthrough, anonymised code excerpt, or reference conversation with the eMazzanti engineering team
 
