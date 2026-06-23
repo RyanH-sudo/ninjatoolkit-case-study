@@ -2,8 +2,8 @@
 
 **Author:** Ryan Haig
 **Role:** Engineering · eMazzanti Technologies (managed-service provider · NJ/NY metro)
-**Period:** Q4 2025 → present · ~8 months · in active development
-**Status at writing:** v7.6.1 LIVE (2026-05-10) · 27 named release versions · 847 commits · 11,368 active regression tests · zero force-pushes · zero mega-commits
+**Period:** Q4 2025 → present · in active development
+**Status at writing:** v7.6.7 LIVE (2026-06-23) · 49 tagged releases · ~1,000+ commits · 12,345 active regression tests · zero force-pushes · zero mega-commits
 **Companion:** the [README](README.md) is the short-form pitch. This document is the engineering-grade deep dive — designed to be read end-to-end by senior hiring managers and engineering leads at frontier AI labs and compliance-product DNA companies (Anthropic · Palantir · Glean · Vanta · OpenAI · Decagon · Sierra · Harvey · Drata · Sprinto · Mercor expert-network engagements).
 
 ---
@@ -435,7 +435,7 @@ This phase happened with Sonnet 4.6 in the partnership. The cadence: rapid struc
 
 **v7.6.0 — Unified UX Foundation + Comprehensive Narrative + Readable Help.** Twenty-five atomic commits ahead of v7.5.2. 10,528 → 10,632 green. Cross-pillar markup convergence via `.ntk-finding-card` shared root + `data-pillar` attribute. Comprehensive 16-section About narrative (4 NEW sections: §13 Atomic-Commit Cadence · §14 Human-AI Collaboration as Methodology · §15 The Verification Discipline · §16 The Forward Through v7.7+) at engineering specificity. Help operational trim (4 tabs → 3). About TOC layout fixed (CSS Grid + sticky · replaces fragile `position:fixed` viewport math that was re-fixed three times). Help redesigned with `.ntk-help-topic` primitive replacing the cramped pill-list pattern. Walk-fix bug bundle (firewall workspace amendment-save · Industry visibility on firewall report cover · site-audit industry wiring through canonical). 5th verification harness (class-level parity verification) joins standing pre-ship sweep. Personal-reference neutralization sweep on all user-visible content.
 
-### 8.10 · v7.6.1 The AI Cornerstone (May 2026 · current)
+### 8.10 · v7.6.1 The AI Cornerstone (May 2026)
 
 **v7.6.1 — The AI Cornerstone.** Eighty-plus atomic commits across seven phases (A discovery → B AI integration → C firewall dashboard → D clipboard formatters → E retirements → F integration polish → G verification + ship), plus 5 walkfix rounds (A/B/C/D/E) responding to per-walk feedback, plus α-3 binding fix, plus α-4 Help refresh, plus α-5 ship-prep. 10,632 → 11,368 green (+736 net new tests). Three pillars composed:
 
@@ -447,7 +447,15 @@ Plus 32 specialized clipboard formatters across both pillars, sidebar 3-group re
 
 Six standing harnesses ALL GREEN at ship: 112 verification checks total · cornerstone harness 63 PASS / 0 FAIL / 0 N/A · sectional 17 PASS · persona-print 18 PASS · class-level parity 14 PASS · release-gate ALL 5 sub-gates GREEN. Customer-fallback ladder spans 5 simultaneously-live releases (v7.4.0 · v7.5.0 · v7.5.2 · v7.6.0 · v7.6.1).
 
-### 8.11 · The cadence the timeline reveals
+### 8.11 · v7.6.2 → v7.6.5 · Card Depth Pages, cross-fleet binding, data-fidelity hardening (May 2026)
+
+v7.6.2 shipped Card Depth Pages (every dashboard card opens into a dedicated, exportable detail page in seven formats), the AI Remediation Partner (a four-voice composite console), and cross-fleet AI binding. v7.6.3 was a tightening cycle — foreign-key enforcement at every database connection, secret-scrubbing of logs and error output, and a cost-cap pre-flight on the AI composite path. v7.6.4 ("The Polish Wave") bundled the tightening with a surgical-fix batch plus seven new report sub-sections surfacing previously-silent collector data. v7.6.5 ("The Verification + Enrichment Wave") closed a six-month-old data-extraction regression, surfaced auditor-grade asset-inventory completeness, and added an eleventh standing verification harness that catches "captured-but-dropped-before-render" defects automatically.
+
+### 8.12 · v7.6.6 → v7.6.7 · The Score-Truth Fix and The AI Consolidation (June 2026 · current)
+
+v7.6.6 ("The Score-Truth Fix") corrected a structural defect where the site-audit readiness score was security-blind — a PrintNightmare-exposed domain controller could score "100 / Healthy" because the score read section data off the wrong layer. The capture and the finding cards were correct all along; the loss was isolated to the scoring layer, and the fix was surgical and minimal-blast (only the headline score and readiness labels changed in a rendered report). v7.6.7 ("The AI Consolidation," shipped 2026-06-23) turned the site-audit AI pipeline on for the first time — a key-resolution defect had silently degraded every layer since inception — fed the per-server AI specialists the real captured evidence (they had been reasoning over an empty fleet view through stale field names), rendered the full Azure / modernization plan, upgraded to Claude Opus 4.8, and corrected firewall rule-number citations to match the WatchGuard web-UI exactly with 100% audit integrity (every policy still parsed, audited, and listed; system and Mobile-VPN policies that the UI omits from its numbering simply show "—"). 85 standing product invariants, 12,345 regression tests, six release-gate sub-gates — all green, zero new regressions, verified end-to-end against real client data (a manufacturing client's server fleet and a live firewall configuration). v7.6.7 was merged via a clean fast-forward (zero conflicts), tagged, and published as the latest GitHub Release the same day.
+
+### 8.13 · The cadence the timeline reveals
 
 Eight months. Twenty-seven named release versions. 847 commits. Zero force-pushes. Zero mega-commits. Zero regressions across the entire v7.5.x rebirth + v7.6.x cornerstone arc. Six-phase ship cycles labelled α/β/γ/δ/ε/ζ where no phase advances on assumed correctness; every phase ends with an explicit ratification checkpoint where the work is walked end-to-end before the next phase opens.
 
