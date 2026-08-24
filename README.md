@@ -157,3 +157,6 @@ Looking forward to it.
 
 *Anonymisation rules honoured throughout: no client company names, no proprietary business detail beyond what the engineering discipline requires for context. Every concrete number in this case study is auditable in the source tree of the platform under discussion.*
 
+---
+
+*Every figure in this document was re-measured against the source tree on 2026-08-24 rather than carried forward. Where a claim could not be verified in code, it was corrected or removed — see the commit history.*
