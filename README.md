@@ -3,160 +3,161 @@
 
 **Author:** Ryan Haig
 **Role:** Engineering · eMazzanti Technologies (managed-service provider · NJ/NY metro)
-**Period:** October 2025 → present · 8+ months of focused development, in active development
-**Status:** In production · multi-tenant client engagement use · v7.6.10 (shipped 2026-07-10) · 51 tagged releases · ~1,900 commits · zero force-pushes
+**Period:** October 2025 → present · ~10 months of focused development, in active development
+**Status:** In production · multi-tenant client engagement use · **v7.6.13** · **55 tags · 53 GitHub Releases** · zero force-pushes
 
 ---
 
-> **TL;DR** · I'm a **production agentic-systems engineer** building the AI-integrated workflow patterns that frontier AI labs are racing to ship as product — except I ship them at MSP scale, against daily customer-engagement pressure, before off-the-shelf product exists. **NinjaToolKit** is one shipped instance of that operating model: a ~70,000-LOC production agentic-audit platform with 13,966 passing regression tests (zero failures), 51 tagged releases, a 23-module `ai_pipeline/` package implementing a 5-layer chained-Claude generation stack, a Floating Opus Console with deep binding payload that walks the DOM at hover-time and resolves card-scope context for AI conversation, symmetric two-pillar engagement-grade dashboards (Clients · Firewalls) where every count is clickable into the named entities behind it, and a specified-but-not-yet-shipped server-side agent (`Agent/`, a 639-line working prototype plus a provisioned queue table) intended to close the diagnose-and-remediate loop inside the customer estate. The platform bridges previously-siloed enterprise systems (Microsoft 365 · Active Directory · multi-vendor firewalls · Hyper-V · Azure) into a canonical audit substrate, surfaces compliance and configuration gaps invisible to native vendor dashboards, and runs gated agentic workflows with human-in-the-loop approval over the AI pipeline. Open to Solutions Engineer · Applied AI Engineer · Forward Deployed Engineer · Solutions Architect roles. US Citizen · remote (Chiang Mai, Thailand) · available US business hours.
+> **TL;DR** · I build production agentic-AI systems at MSP scale — against live customer-engagement pressure, before off-the-shelf product exists. **NinjaToolKit** is the shipped instance: **~157,000 lines of production application code** (plus 19,000 lines of standing verification harnesses and 112,000 lines of tests across 448 modules), a **12,139-line firewall audit engine running 52 checks** across four vendors, a **47-section Windows Server collector**, an **18-module `ai_pipeline/` package** implementing a 5-layer chained-Claude generation stack, symmetric two-pillar engagement dashboards where every count is clickable into the named entities behind it, and **four project-permanent invariants** enforced structurally rather than by convention. **53 releases in ten months, zero force-pushes.**
+>
+> The part worth reading is not the scale. It is **§7 — the August 2026 forensic campaign**, where I audited my own platform, wrote down every fix's expected numbers before making the edit, and recorded that **66 predictions held and 32 were refuted.** Several refutations caught a defect *in the repair*. That is the engineering judgment this document is actually about.
+
+**Open to** Solutions Engineer · Applied AI Engineer · Forward Deployed Engineer · Solutions Architect. US Citizen · remote (Chiang Mai, Thailand) · available US business hours.
 
 ---
 
 ## The operating model · six pillars
 
-NinjaToolKit is the shipped instance. The operating model behind it is the actual pitch — six pillars I bring to any team I join.
+NinjaToolKit is the shipped instance. The operating model is the transferable part.
 
-**1 · Silo-bridging via agentic architecture.** Take previously-disconnected enterprise systems — Microsoft 365, Active Directory, multi-vendor firewalls (WatchGuard, Palo Alto, Fortinet, Cisco ASA), Hyper-V, Azure — and integrate them into a single canonical audit substrate. Configuration and compliance gaps invisible in any native vendor dashboard become visible in the integrated view. This is silo-busting at the architectural layer, not dashboard-aggregation.
+**1 · Silo-bridging via canonical substrate.** Previously-disconnected enterprise systems — Microsoft 365, Active Directory, multi-vendor firewalls, Hyper-V, Azure — normalised into one canonical audit model. Configuration gaps invisible in any native vendor dashboard become visible in the integrated view. This is architectural silo-busting, not dashboard aggregation.
 
-**2 · Gated agentic workflows · human-in-the-loop approval.** Frontier-AI multi-pass generation behind explicit approval gates. Engineer reviews proposed remediation, ratifies, the agent executes via vendor-native APIs, re-audits, proves the gap closed. The canonical "agents with bounded autonomy / engineer-in-the-loop discipline" pattern that AI safety teams describe as a research roadmap — I'm shipping it in production today.
+**2 · Gated agentic workflows · human-in-the-loop by design.** Multi-pass AI generation behind explicit approval gates, with the model proposing and a human executing. Every AI-authored claim in a rendered report is required to carry a provenance pointer to the field it came from — *a sentence that cannot cite is not emitted.*
 
-**3 · GUI-bypass via CLI scripting · diagnosis where dashboards can't reach.** PowerShell, bash, and API scripts that go where vendor GUIs refuse to go. The 47-section Windows-server collector captures data depth most MSP audits never reach (Kerberoastable accounts · unconstrained-delegation principals · LSA Protection state · LAPS posture · BitLocker-vs-TPM coupling · spooler-disabled audit-policy triangulation · much more). The CLI is the source of truth; the GUI is marketing.
+**3 · GUI-bypass via CLI · diagnosis where dashboards cannot reach.** The 47-section collector captures depth most MSP audits never touch — Kerberoastable accounts, unconstrained-delegation principals, LSA Protection state, LAPS posture, BitLocker/TPM coupling, per-store certificate enumeration. The CLI is the source of truth; the GUI is marketing.
 
-**4 · Server-side agent · designed and prototyped, not yet shipped.** A Windows-side agent intended to stream diagnostics to the engineer dashboard and accept gated remediation commands, closing the diagnose-and-remediate loop inside the customer estate rather than bouncing it through tickets. **Current state, stated precisely: a 639-line working prototype (`Agent/agent_v2.py`), a provisioned `agent_remediation_queue` table with no consumers yet, and a narrowed MVP scope document. It is not integrated into the platform and does not ship in the EXE.** I list it because the design work is real and the substrate is deliberately in place — not because it is running. The threat-model reasoning that motivates it (LLM-accelerated offensive tooling collapsing the attacker/defender automation asymmetry) is argued in the case study; **no detection code for that threat class exists yet.**
+**4 · Instrument before you trust.** The platform's standing verification harnesses do not re-run the test suite. They prove that specific historical defects are still closed — *because in this codebase green tests have repeatedly coexisted with wrong output.* That distinction is the whole discipline.
 
-**5 · Multi-substrate integration · whatever medium fits.** Scripting, vendor APIs, MCP servers, webhook integrations, ConnectWise PSA + RMM hooks, Azure Resource Manager, WatchGuard Cloud API — whichever data-collection medium fits each system. Every integration wires into the agentic substrate. Not vendor-locked, not protocol-locked, medium-agnostic by design.
+**5 · Multi-substrate integration.** Scripting, vendor APIs, PSA/RMM hooks, Azure Resource Manager — whichever medium fits each system. Not vendor-locked, not protocol-locked.
 
-**6 · Productionizing AI-integrated workflows that don't yet exist as products.** Speed-running the future. Anthropic, OpenAI, and the rest of the frontier labs are racing to ship the patterns I've been shipping at MSP scale for ~6 months. Not waiting for product — building the integrations because customer-engagement work demands them today.
+**6 · Productionising AI-integrated workflows before they exist as products.** Building the integrations because customer-engagement work demands them today, not waiting for a vendor to ship them.
 
 ---
 
 ## Why this work happened
 
-The engagement team I joined was producing configuration-audit deliverables the hard way. We had a stack of vendor tools that each saw a sliver of the picture — Nipper for firewall posture, Tenable for vulnerability inventory, Lansweeper for asset state, ad-hoc PowerShell for the Windows-server side — and senior engineers were spending 60-80 hours per major audit stitching the outputs into something a client could read. None of it composed. None of it compounded. Every audit was a one-off.
+The engagement team I joined was producing configuration-audit deliverables the hard way. Vendor tools each saw a sliver — Nipper for firewall posture, Tenable for vulnerability inventory, Lansweeper for asset state, ad-hoc PowerShell for the Windows side — and senior engineers were spending 60-80 hours per major audit stitching outputs into something a client could read. None of it composed. None of it compounded. Every audit was a one-off.
 
-The strategic case for fixing that gap got harder to ignore in late 2025, when the threat landscape shifted in a way that turned configuration audit from a periodic compliance exercise into a load-bearing defensive layer. The asymmetry between offensive and defensive automation has been collapsing fast: by Q2 2026, a single-engineer offensive operator running open-weight LLMs and agentic frameworks (WormGPT, FraudGPT, BlackMamba, Morris II, plus the wider agentic-offensive ecosystem) can produce more attack surface in a week than a six-person defensive team can audit in a month. If our managed-service practice couldn't measure configuration posture across the entire client estate at high cadence — and respond to it inside that estate when needed — we couldn't defend it either.
+The strategic case got harder to ignore in late 2025, when configuration audit stopped being a periodic compliance exercise and became a load-bearing defensive layer. The asymmetry between offensive and defensive automation has been collapsing: a single operator running open-weight models and agentic frameworks can now generate more attack surface in a week than a small defensive team can audit in a month. **If a managed-service practice cannot measure configuration posture across the whole estate at high cadence, it cannot defend it either.**
 
-The work was simple to state: build the audit platform that would let our engineering team operate at the cadence the threat picture demanded, with deliverables that justified the engagement fee, and embed a live agent in the estates we audit so the diagnostic-and-remediation loop closes inside the customer environment instead of bouncing back through tickets.
-
-What it took to build it was a ~6-month run of compounding architectural decisions. This is what shipped.
+So: build the audit platform that lets the team operate at the cadence the threat picture demands, with deliverables that justify the engagement fee.
 
 ---
 
-## What's running in production today
+## What is running in production today
 
-**Firewall Audit pillar.** A 12,139-line Python audit engine running 52 checks against a normalised configuration model, fed by four vendor parsers (WatchGuard XML · Palo Alto PAN-OS XML · Fortinet FortiOS text · Cisco ASA running-config). Cross-mapped to 50 compliance controls across four frameworks (PCI DSS v4.0 · CIS v8 · NIST CSF 2.0 · CMMC 2.0). The engine emits findings into a 19-chapter engagement-quality report renderer with a static-SVG network-exposure topology (W3 radius cap · W5 multi-ring concentric layout for fleets ≥ 9 zone-nodes) and attack-chain correlation across findings. Adding a fifth vendor parser is a 200-300 line job because the engine reads the normalised model, not vendor-specific structures. v7.6.1 added a NEW Firewalls dashboard mirroring the existing Clients dashboard · engagement-grade portfolio surface with 4-KPI strip + card grid + 15-tile per-firewall detail (4 primary + 11 secondary band-coded tiles · drawer drill paginated severity-filterable) · symmetric two-pillar architecture across the engagement workflow.
+*Every figure below was measured against the source tree on 2026-08-25.*
 
-**Site Audit pillar.** A 3,692-line PowerShell collector running 47 data-capture sections on every Windows server in scope (hardware · OS · patches · services · ports · accounts · groups · shares · NTFS deltas · certificate stores · firewall posture · backup state · audit-policy state · Kerberos delegation · LAPS · LSA Protection · SMB version posture · much more). A five-layer Python aggregator chain feeds both an 11-chapter site-audit report and a 1,500-card live engineer dashboard with 21 drill-downs across 9 server-detail tabs — about 190 named-entity drill-downs in a 29-server fleet. Every count on the dashboard is clickable into the named entities behind it. The report is the print-form of the dashboard.
+**Firewall Audit pillar.** A **12,139-line** Python audit engine (`firewall_audit.py`) running **52 checks** against a normalised configuration model, fed by four vendor parsers (WatchGuard XML · Palo Alto PAN-OS XML · Fortinet FortiOS text · Cisco ASA running-config). Cross-mapped to **50 compliance controls** across PCI DSS v4.0 · CIS v8 · NIST CSF 2.0 · CMMC 2.0, inside a canonical envelope that carries **ten frameworks**. Emits into a **19-chapter** engagement-quality report with static-SVG network-exposure topology and attack-chain correlation. Adding a fifth vendor parser is a 200-300 line job because the engine reads the normalised model, not vendor structures.
 
-**AI pipeline.** A 23-module `ai_pipeline/` package implementing a 5-layer chained Claude pipeline for narrative generation across audit findings. Each layer carries explicit inputs, outputs, and evaluation gates — claim extraction, evidence verification against lineage records, narrative composition with citation, comprehensiveness check against original findings, and a final regression-gate review. The 13,966-test suite functions as the eval framework: zero-regressions-per-ship is the deployment gate. Anthropic's "evaluation frameworks · context engineering · agent architectures" land here as production code, not as research roadmap.
+**Site Audit pillar.** A **3,692-line** PowerShell collector running **47 data-capture sections** on every Windows server in scope. A 19-aggregator Python chain feeds both an **11-chapter** site report and a live engineer dashboard carrying **70 distinct AI-bound card scopes across 9 server-detail tabs**. Every count on the dashboard is clickable into the named entities behind it. **The report is the print-form of the dashboard.**
 
-**Floating Opus Console with deep binding (v7.6.1 cornerstone).** A scope-aware AI conversation surface that floats over the dashboard at all times · launched via Ctrl+Shift+O · binds to whatever scope the engineer is hovering at click-time · sees the actual card data not just metadata pointers. DOM-walks `data-ntk-card-ai` + `data-ntk-section` attributes via `closest()` · resolves the scope key + structured card data verbatim · feeds the binding payload to the backend system-prompt builder. 102 binding stampings across 7 JS files · resolver branching prioritizes firewall-shape and site-audit-shape cardKey patterns over stale clientId state from prior section navigation (the v7.6.1-α-3 fix · branch-order matters when sibling controllers can leak state). 32 specialized clipboard formatters across both pillars produce paste-ready text blocks tailored per card type · the engineer drops them directly into ConnectWise tickets, SSH terminals, or firewall web UIs without manual reformatting. This realises the "AI binds to whatever scope engineer is in · sees actual data not just metadata" framing the platform had been promising at the structural level since v7.4.
+**AI pipeline.** An **18-module `ai_pipeline/` package** implementing a 5-layer chained-Claude stack: deterministic input prep → per-server forensic narrative → cross-server correlation → environmental synthesis → kill-chain narrative → executive summary. Each layer carries explicit inputs, outputs and evaluation gates. A never-raises contract, atomic budget reserve/settle against a per-engineer cost cap, content-hash response caching keyed on a pipeline version, and a single SDK chokepoint. **Frontier tiers only — Opus for reasoning, Sonnet as the sole acceptable degrade, enforced at the routing boundary.**
 
-**Server-side agent — NOT in production. Prototype only.** Listed here because an earlier version of this document claimed it as shipped, and correcting that in place is more useful than deleting it. What exists: `Agent/agent_v2.py`, a 639-line standalone prototype last touched 2026-04-22, plus `central_server.py`; Migration 006's `agent_remediation_queue` table, which currently has **zero code consumers**; and a narrowed MVP scope doc. What does not exist: integration with the platform (the EXE does not bundle it), real-time streaming, remote command execution, and any detection code for the morphic/agentic-AI threat class. **The roadmap for it is real; the capability is not yet.**
+**Scope-aware AI conversation.** A console that binds to whatever scope the engineer is working in by walking the DOM at hover-time via `closest('[data-ntk-card-ai]')`, resolving the scope key plus the structured card data verbatim — the model sees the actual finding, evidence and severity, not a label. **102 binding stampings** across the two pillars. Specialised clipboard formatters emit paste-ready blocks per card type, dropped straight into tickets, SSH sessions or firewall web UIs.
 
-**Test discipline.** 13,966 passing regression tests across 444 modules. Zero-regressions-per-ship-cycle as a non-negotiable build gate. Custom `tmp_db` fixture runs the full migration chain against a disposable SQLite database per test. A dedicated failure-mode taxonomy regression suite (Class A aggregator-collapse · Class B renderer-misread · Class C display-collapse) protects against the same failure mode reoccurring silently. A 6-sub-gate release gate (`tools/release_gate.py`) — exemplar voice · rendered-report review · prompt-library coverage · compliance-gap inventory · dependency CVE · template-syntax validation — exits non-zero on any failure and blocks the EXE build.
+**Test discipline.** **112,150 lines of tests · 7,296 test functions across 448 modules · 14,034 passing cases, zero failures.** A custom `tmp_db` fixture runs the full migration chain against a disposable SQLite database per test. A failure-mode taxonomy suite (Class A aggregator-collapse · Class B renderer-misread · Class C display-collapse) prevents silent recurrence. A **6-sub-gate release gate** blocks the EXE build on any failure.
 
-**Build and distribution.** Single ~91 MB PyInstaller EXE. 4-thread Waitress WSGI. SQLite with forward-only transactional migrations (currently at Migration 013 · cost-meter + agent_remediation_queue foundation + binding_payload schema all applied). Distribution via GitHub Releases with versioned `.zip` plus companion `.zip.sha256` checksum per ship cycle. **51 tagged releases across ~1,900 commits in 10 months** — zero force-pushes, zero mega-commits — each release regression-clean, each ratified live against customer data. The customer fallback ladder spans 5 simultaneously-live GitHub Releases (v7.4.0 · v7.5.0 · v7.5.2 · v7.6.0 · v7.6.1) so the ship discipline preserves rollback paths.
+**Build and distribution.** Single-file PyInstaller EXE. 4-thread Waitress WSGI. SQLite with forward-only transactional migrations, currently at **Migration 013**. Distribution via GitHub Releases with a `.zip` plus companion `.zip.sha256` per cycle. **53 releases across 55 tags — zero force-pushes, zero mega-commits**, each regression-clean, each ratified against customer data. A customer-fallback ladder keeps multiple prior releases simultaneously live so every ship preserves a rollback path.
 
-**Total scope.** Roughly 70,000 lines of production code across the audit engines (the firewall engine alone at 12,139 lines · the 3,692-line PowerShell collector), the canonical Flask app (5,340 lines), ~7,500 lines of IIFE controller modules (Clients · Firewalls · About · Help · Opus Console · Workspace · Library · etc.), a 7,461-line design-system CSS with a token + primitive layer, the AI pipeline package, and four AI-prompt envelope files. Plus a 12-document, 6,116-line domain-specification corpus authored before the v6.3+ implementations were written. Zero offshore contractors. Solo engineer in active human-AI collaboration with Claude (Sonnet 4.6 in early cycles · Opus 4.6 in middle cycles · Opus 4.7 1M context across the v7.6+ cornerstone work).
-
----
-
-## The engineering philosophy that produced it
-
-Three project-permanent invariants encoded in the architecture and enforced through the test suite. These are the load-bearing engineering ideas that hold the deliverable bar across every renderer, every aggregator, every parser, and every future architectural change. I'd bring this philosophy to any engineering team I joined.
-
-**Invariant 1 · Evidence-First Emission.** Every report renders the named entities behind every count. A report that says "8 expired certificates" without listing the certificate subjects is structurally incomplete, regardless of how nicely the chapter envelope is laid out. Counts are derived statistics on top of the named-entity layer, never substitutes for it. The PowerShell collector is the foundation; the aggregators preserve named entities; the renderers emit them. Locked at v7.0.1 after the polish ship that took the LARGE-fleet exemplar render from 173 KB and zero finding cards to 516 KB and 38 five-part finding cards with 660+ §-cited evidence rows.
-
-**Invariant 2 · Audit Comprehensiveness Lock.** A firewall audit is THE FIREWALL. There is no "Top 10" anything. It is only EVERYTHING that will ensure the protection of what is behind it. Same applies to the site audit. Navigation primitives — chip rows, severity tallies, table-of-contents rails, risk badges — layer over the comprehensive content as engineer-aid wayfinding. They never substitute. Locked at v7.0.2.
-
-**Invariant 3 · Granular-Data-Preservation.** Every piece of granular data the PowerShell collector captures must traverse all four layers (PS1 capture → parser/aggregator → dashboard card → site report chapter) without being collapsed to a count, until the rendering layer chooses how to display it. Even at render time, the named-entity list is one click or expand away — never lost. Locked at v7.2.0.
-
-These invariants compose with what I call the **Constitutional Rule** — every count on the dashboard is clickable into the named entities behind it, and the report is the print form of the dashboard. The audit machine and the audit deliverable read from the same canonical schema. That isomorphism is what makes the deliverables hold up under engagement-grade scrutiny. Clients can read the report; engineers can drill the dashboard; both surfaces show the same evidence.
+**Total scope.** **~157,000 lines of production application code** — the firewall engine (12,139) · the Flask application (10,345) · two report renderers (25,966 and 13,073) · the collector parser (5,570) · 20 vanilla-JS IIFE controllers (26,320) · a 7,091-line design-system CSS with a token and primitive layer · the AI pipeline package · the PowerShell collector (3,692). Plus **19,000 lines of standing verification harnesses** and **112,000 lines of tests** — **289,000 lines total**. Plus a 12-document, 6,116-line domain-specification corpus authored *before* the implementations it governs. Solo engineer, in active collaboration with Claude.
 
 ---
 
-## Engineering practice · transferable claims
+## The four project-permanent invariants
 
-Three engineering disciplines locked across the ship cycles that I bring to any team. These are *transferable* — they hold regardless of stack or domain.
+Encoded in the architecture, enforced through the test suite. These are the load-bearing ideas that hold the deliverable bar across every renderer, aggregator, parser, and future change.
 
-**Specification-as-Substrate.** Specs as durable architectural infrastructure, not wiki pages that decay. Twelve domain documents authored as a 6,116-line research corpus before the v6.3+ implementations were written. Implementations cite the F-implication numbers they satisfy. Corrections feed back into the corpus rather than into chat context. The spec is the durable artifact; future engineers, future model versions, and future architectural decisions rest on it.
+**1 · Evidence-First Emission.** Every report renders the named entities behind every count. *"8 expired certificates"* without the certificate subjects is structurally incomplete regardless of how well the chapter is laid out. Counts are derived statistics on top of the named-entity layer, never substitutes for it. Locked at v7.0.1 after a polish cycle took the large-fleet exemplar from 173 KB with zero finding cards to 516 KB with 38 finding cards and 660+ §-cited evidence rows.
 
-**Audit-as-Durable-Artifact.** At every major release boundary, structured engineering artefacts ship — forensic audits, retrospectives, threat models, roadmap recommendations, consolidated phase plans. Operational substrate for the next ship cycle, not after-the-fact documentation. Honest about what they don't cover. Findings ranked by severity. Future sessions, future engineers, and future architectural decisions read these artefacts before touching code.
+**2 · Audit Comprehensiveness Lock.** A firewall audit is **the firewall**. There is no "Top 10" anything — only everything that protects what is behind it. Navigation primitives layer *over* comprehensive content as wayfinding; they never substitute for it. Locked at v7.0.2.
 
-**Honest-Scope-Naming.** Every engineering artefact carries an explicit "what this didn't cover" section. What's covered. What's not. What was intentionally deferred. What requires more data. This epistemic honesty in engineering documents is rare and substantially more useful than overclaimed alternatives. Senior hiring managers in cybersec-adjacent and Applied-AI roles read this register as a strong signal.
+**3 · Granular-Data-Preservation.** Every piece of granular data the collector captures traverses all four layers — capture → aggregator → dashboard card → report chapter — without collapsing to a count. Even at render time the named-entity list is one expand away. Locked at v7.2.0.
 
-A fourth claim that comes alongside these three: **failure-mode taxonomy as engineering vocabulary.** Three named failure classes (Class A aggregator-collapse · Class B renderer-misread · Class C display-collapse) with documented signatures, regression-test patterns, and permanent test suites. Named failures turn one-off bugs into reusable engineering knowledge. Most codebases of comparable size ship ad-hoc post-mortems and ad-hoc regression tests; here the bug classes have a vocabulary, an enforcement layer, and protected regression suites.
+**4 · Commercial-Content Persona Boundary.** Client-facing report HTML carries zero commercial framing unless management has ratified that specific surface. Engineer view sees pricing, cost ranges and margin signals; the client-facing artifact does not. Enforced structurally by a dedicated test suite, not by convention. Locked at v7.5.1.
 
----
-
-## The discipline that compounded
-
-The compounding shows up in the numbers. v6.x baseline test suite was 184 tests. v7.0.0 was 8,417. The current main is at **13,966 passing regression tests**. **51 tagged releases** in 8 months. Four project-permanent invariants locked (Evidence-First Emission · Audit Comprehensiveness Lock · Granular-Data-Preservation · Commercial-Content Persona Boundary). **~1,900 commits with zero force-pushes and zero mega-commits.** 6-phase ship cycles labelled α/β/γ/δ/ε/ζ where no phase advances on assumed correctness; every phase ends with an explicit ratification checkpoint where the work is walked end-to-end before the next phase opens. The last ship cycle started from a foundation materially stronger than the previous one. That is what compounding architectural discipline produces.
-
-- **Atomic-commit cadence with regression-clean per commit.** No mega-commits, no force-pushes, no "fix everything" rebases. The git history reads as a narrative. Any commit can be reverted in isolation; any ship cycle can be reasoned about by reading the log.
-- **Specification-first authoring.** See above — twelve domain documents, 6,116-line corpus, F-implication numbers cited in code.
-- **Real-corpus verification.** No hypothetical claims. Every renderer change tested against actual production vendor configurations and actual Windows-server collector data, across the WHOLE corpus, before declaring ship-ready. The platform-defining bugs (an orphan-`</div>` regression that broke the DOM tree past the firewall section, the v7.0.6 audit-run-endpoint payload-shape divergence, the v7.1.0 single-subnet topology edge case) all surfaced from real-corpus verification rather than from synthetic fixtures. Each one became a permanent regression test the next morning.
-- **Per-phase ratification with named ratification gates.** 6-phase ship cycles α/β/γ/δ/ε/ζ where no phase advances on assumed correctness.
-- **6-sub-gate release gate.** Exemplar voice · rendered-report review · prompt-library coverage · compliance-gap inventory · pip-audit CVE. Any sub-gate failure blocks the EXE build.
-- **Failure-mode taxonomy as protected regression suites.** See above — Class A / B / C.
+These compose into the **Constitutional Rule**: every count on the dashboard is clickable into the named entities behind it, and the report is the print-form of the dashboard. The audit machine and the audit deliverable read from the same canonical schema. **That isomorphism is what makes the deliverables survive scrutiny.**
 
 ---
 
-## Honest about failures · what real-deploy taught me
+## The August 2026 forensic campaign · the section that matters
 
-Two specific lessons I want to surface, because how an engineer recovers from production failure tells you more than any list of successes.
+Ten months in, I stopped building and audited what I had built. A complete code crawl of both pillars, ~1,300 findings triaged, ~86 fixes landed. **Every fix's expected numbers were written into a ledger before the edit was made.**
 
-**v7.1.0 single-subnet topology.** The site-audit visual-topology adapter shipped, was verified against multi-subnet test fixtures, passed the regression gate, and broke 11 of 23 multi-server customer sites the moment it hit production deploy. The bug: single-subnet sites emitted 1 zone-node and 0 edges, the renderer's empty-edges branch returned an empty-state SVG, and the body fell to a prose-only fallback. The multi-subnet fixtures had masked the single-subnet edge case entirely. v7.1.1 hot-fix shipped within 24 hours with a corrected graph-semantics model (subnet becomes the visual hub for single-subnet sites, each server becomes a labelled zone-node), corpus-wide re-verification across all 23 sites, and a permanent regression test that runs the WHOLE corpus end-to-end before any future topology change can ship. The lesson got encoded into the engineering discipline as a memory file: real-corpus verification must run the production code path against the WHOLE corpus, not a representative sample, before declaring ship-ready.
+**66 predictions held. 32 were recorded as refuted.** Several refutations caught a defect *in the repair itself* before it shipped. In one cycle, **four recorded prescriptions would each have introduced a new defect** if applied literally — measuring first changed the fix, not the estimate.
 
-**v7.0.6 endpoint payload divergence.** Two endpoints (`POST /api/audit/run` and `GET /api/audit/results`) were serving the same conceptual data through independently-evolved code paths. The previous fix updated only the GET path. The SPA hit the POST path and saw empty topology + compliance fields. The fix extracted a shared payload-builder helper that both endpoints invoke, with a regression test that confirms the two endpoints emit byte-identical payload shape. The lesson: two endpoints serving the same conceptual data must share a single payload-builder, or shape mismatches between them will produce silent SPA bugs.
+That produced the rule the platform now runs on: **locations are reliable; prescriptions are hypotheses.**
 
-Both incidents made the platform stronger. The discipline that catches them now exists because of them. I am honest about engineering failure because the recovery from failure is where real engineering judgement gets demonstrated.
+**What it found, all measured rather than inferred:**
 
----
+- **A delivered client report asserted "No internet-facing RDP exposures detected"** while nine enabled policies published RDP to named internal hosts via static NAT on obfuscated external ports. The port-exposure check read the *policy* port and correctly saw nothing; the only check that followed the NAT translation was structurally dead.
+- **Findings were identified by list position** — 25 of 26 changed meaning between two runs. Made content-derived, which made the entire back-catalogue comparable and made audit-over-audit diffing possible for the first time.
+- **A cross-client data-bleed defect.** One module-level engine object read by 97 call sites, served by a 4-thread WSGI server, with an audit lifecycle spanning multiple requests — two concurrent uploads could save one client's configuration under another client's name. **Four obvious fixes were each ruled out by measurement** (a lock cannot span separate requests; thread-local breaks because the server reuses threads; a session cookie cannot distinguish two browser tabs; HTTP Basic auth skips entirely when unconfigured) before the one that worked: a per-request context registry behind an attribute-forwarding proxy that left all 97 call sites untouched.
+- **A shadow-rule detector that had never fired** — zero findings across every config in the corpus — because it compared unresolved aliases, making every policy a unique singleton.
+- **A coverage instrument** built to answer a question nobody could: *what does the capture hold that the dashboards never show?* Measured: **site 78.0%, firewall 51.7%** — and a category the instrument's own design note calls out as the one that earns it, **REPORT-ONLY**: a field reaching a client report but no engineer dashboard *inverts* Invariant 1.
 
-## What I'd bring to your team
+**The methodological finds are the ones I would defend in an interview:**
 
-- **Production agentic-systems engineering at customer-engagement cadence.** I ship the AI-integrated workflow patterns frontier labs are racing to ship as product, except at MSP scale, against daily customer pressure, before off-the-shelf product exists. Six pillars detailed above. NinjaToolKit is the proof.
-- **Production-cadence architectural leadership.** Underspecified problem domain → spec corpus → implementation → enforcement layer (tests, invariants, release gates). 8+ months of compounding architectural decisions on a production platform is the proof.
-- **Production discipline at engagement-quality.** Atomic commits · per-phase ratification · real-corpus verification · 6-sub-gate release gates · zero-regressions-per-ship. When live-deploy edge cases surface (and they do), the recovery cycle is fast, honest, and ratchets the engineering discipline forward.
-- **Transferable engineering practice.** Specification-as-Substrate · Audit-as-Durable-Artifact · Honest-Scope-Naming · failure-mode taxonomy as engineering vocabulary. These are method-claims, not project-claims; they compose into any team's engineering culture.
-- **Domain depth in cybersecurity, MSP operations, multi-vendor configuration audit, and 2026 frontier AI defense.** WatchGuard · Palo Alto · Fortinet · Cisco ASA · Active Directory · certificate hygiene · listening-port mapping · identity posture · 50 compliance controls across four frameworks · morphic-AI-attack and agentic-AI-attack defensive layering. I read the configurations as native language.
-- **Applied AI engineering at production cadence.** Production Claude API integration with multi-pass generation, context engineering, agent architectures, and evaluation frameworks. Anthropic's exact JD language ("MCP servers, sub-agents, agent skills · evaluation frameworks · deployment patterns") lands here as shipped code, not as research roadmap.
+- **A dead field read is only a defect when nothing else supplies the value.** Filing all 24 dead reads would have claimed 32 correct findings were false.
+- **Never grade an undocumented enum.** A finding written up as "DH group 2, 1024-bit, CRITICAL" was retracted when the value proved to be a UI dropdown index, not IETF numbering.
+- **A pattern that cannot distinguish the two answers it is separating will confidently give you one.** Six instances in a single session, including a regex that matched `Azure Arc.*INSTALLED` inside the string *"NOT INSTALLED"*.
+- **A zero is only meaningful once the instrument has been shown capable of returning non-zero.** Over thirty instrument errors were caught during the campaign — every one because the evidence was printed beside the conclusion.
 
-I'm open to Solutions Engineer · Applied AI Engineer · Forward Deployed Engineer roles at frontier AI labs, Solutions Architect roles in the same orbit, or first-engineering-hire positions at smaller teams where the platform-architecture work compounds across the company. Remote · based in Chiang Mai, Thailand · US Citizen · available US business hours.
-
----
-
-## Appendix · what I can share on request
-
-- Anonymised architecture diagrams (system-level, dataflow, failure-mode taxonomy enforcement chain, ship-cycle phase architecture, AI-pipeline layer architecture)
-- Code samples extracted from non-client-IP material (engineering patterns, the design-system token + primitive layer, the IIFE-controller pattern, the migration framework, the AI-pipeline layer interfaces)
-- Expanded technical write-ups on the three project-permanent invariants, the failure-mode taxonomy, the six-pillar operating model, and the engineering disciplines that produced the trajectory
-- Live walkthrough of the engineering discipline, the architecture, and any specific area you want depth on
-- Reference conversations with engagement-team senior engineers and the eMazzanti leadership team
+**Two standing harnesses now prove the fixes are still closed rather than asserting it.** Re-run 2026-08-24: **96/96 and 68/68, exit 0.** Their design note states the reason plainly: *tests prove structure; this proves the specific defects are still closed, because in this codebase green tests have repeatedly coexisted with wrong output.*
 
 ---
 
-## Contact + next steps
+## Honest about failures
 
-If any of the engineering claims above resonate with what your team needs, I'd welcome the conversation.
+**v7.1.0 single-subnet topology.** The topology adapter shipped, passed the regression gate against multi-subnet fixtures, and broke 11 of 23 multi-server customer sites on production deploy. Single-subnet sites emitted one zone-node and zero edges; the renderer's empty-edges branch returned an empty-state SVG and the body fell to prose-only. The multi-subnet fixtures had masked the edge case entirely. Hot-fixed within 24 hours with corrected graph semantics, corpus-wide re-verification across all 23 sites, and a permanent regression test that runs the *whole* corpus before any future topology change can ship. **The lesson became doctrine: real-corpus verification runs the production code path against the whole corpus, not a representative sample.**
+
+**v7.0.6 endpoint payload divergence.** Two endpoints served the same conceptual data through independently-evolved code paths. A prior fix updated only one. The SPA hit the other and saw empty fields. Fixed by extracting a shared payload-builder both endpoints invoke, with a test asserting byte-identical shape. **The generalised rule — one of two consumers of the same quantity is always the wrong one — later became the strongest defect predictor in the codebase, confirmed five times in a single cycle.**
+
+---
+
+## Forward scope
+
+**NTK-ONE** — a modular rebuild under one hard constraint: every module must be small enough to load, reason about and refactor in a single context window without mapping the whole codebase. The motivation is measured, not aesthetic: one renderer is **25,966 lines**, roughly a third of a 1M-token window just to read once. That cost is why a 108-document corpus was needed to change anything safely.
+
+In design:
+
+- **A vendor-neutral firewall configuration model** — read → normalise → edit in a uniform UI → diff *in vendor-native syntax* → push → re-read → verify. Research on all five vendor APIs is complete, including the finding that Cisco's ASA REST API terminates at 9.16 and is no longer enhanced, so SSH/CLI is the only forward transport there.
+- **An engineer console** over in-box OpenSSH and PowerShell Remoting — zero new dependencies, and the same authorised-execution channel the agent will use.
+- **Change-driven agentic monitoring** — a new ingest triggers a diff, a cheap deterministic policy gate decides whether it warrants reasoning, and only then does a model run. Bounded by the diff rather than the corpus, which is what makes always-on affordable.
+- **Exposure-window tracking** — first-seen, days-open, audits-carried per finding. A point-in-time scanner structurally cannot produce this; it requires stable identity plus persisted history, both of which now exist.
+
+---
+
+## What I would bring to your team
+
+- **Production agentic-systems engineering at customer-engagement cadence.** Shipping AI-integrated workflow patterns at MSP scale, against daily customer pressure, before off-the-shelf product exists.
+- **Architectural leadership through a full cycle.** Underspecified problem domain → specification corpus → implementation → enforcement layer → forensic audit of my own work → structural fixes. Ten months of compounding decisions on a production platform.
+- **Verification instinct.** The instruments in this platform exist because I did not trust my own green tests. That is the habit I would bring.
+- **Domain depth.** WatchGuard · Palo Alto · Fortinet · Cisco ASA · Active Directory · certificate hygiene · listening-port mapping · identity posture · 50 controls across four frameworks. I read these configurations as native language.
+- **Applied AI engineering.** Multi-pass generation, context engineering, evaluation gates, cost governance, and grounding discipline — as shipped code with a cost meter, not as a research roadmap.
+
+---
+
+## Appendix · available on request
+
+Anonymised architecture diagrams · code samples from non-client-IP material · expanded write-ups on the four invariants, the failure-mode taxonomy and the prediction ledger · live walkthrough of any area you want depth on · reference conversations with engagement-team senior engineers and eMazzanti leadership.
+
+**Repository access to NinjaToolKit itself is not available — the platform is private company IP.** Every architectural claim here is verifiable through live walkthrough, anonymised excerpt, or reference conversation.
+
+---
+
+## Contact
 
 - **GitHub:** [@RyanH-sudo](https://github.com/RyanH-sudo)
+- **Email:** [rytuality@gmail.com](mailto:rytuality@gmail.com) · **LinkedIn:** [linkedin.com/in/rytuality](https://linkedin.com/in/rytuality)
 - **Location:** Chiang Mai, Thailand · US Citizen · remote-first · available US business hours
-- **Email:** available on request via LinkedIn or this repo's Issues tab
-- **Repository access to NinjaToolKit itself:** not available — the platform is private company IP — but every architectural claim in this case study is verifiable through live walkthrough, anonymised code excerpt, or reference conversation with the eMazzanti engineering team
 
-I'm specifically targeting roles where the operating-model work I've described compounds across the company rather than being filed as one project. Frontier AI labs (Anthropic Solutions Engineer / Applied AI Engineer · OpenAI Applied AI · Glean Solutions / FDE · Decagon · Sierra · Harvey) are natural fits. Compliance-product DNA companies (Vanta · Drata · Sprinto) are direct fits given the 50-control multi-framework work. Cybersecurity-tooling firms · agentic-AI platforms · platform-engineering teams at well-funded startups · MSSPs with APAC operations · Mercor 1099 expert-network engagements are also natural fits.
-
-Looking forward to it.
+Targeting roles where platform-architecture work compounds across the company rather than being filed as one project — frontier AI labs, compliance-product companies, cybersecurity tooling, agentic-AI platforms, and first-engineering-hire positions at smaller teams.
 
 — Ryan
 
 ---
 
-*Anonymisation rules honoured throughout: no client company names, no proprietary business detail beyond what the engineering discipline requires for context. Every concrete number in this case study is auditable in the source tree of the platform under discussion.*
+*Anonymisation honoured throughout: no client company names, no proprietary business detail beyond what the engineering context requires.*
 
----
-
-*Every figure in this document was re-measured against the source tree on 2026-08-24 rather than carried forward. Where a claim could not be verified in code, it was corrected or removed — see the commit history.*
+*Every concrete figure in this document was re-measured against the source tree on **2026-08-25** rather than carried forward from a previous revision. Where a claim could not be verified in code, it was corrected or removed.*
