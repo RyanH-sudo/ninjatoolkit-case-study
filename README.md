@@ -8,7 +8,7 @@
 
 ---
 
-> **TL;DR** · I build production agentic-AI systems at MSP scale — against live customer-engagement pressure, before off-the-shelf product exists. **NinjaToolKit** is the shipped instance: **~157,000 lines of production application code** (plus 19,000 lines of standing verification harnesses and 112,000 lines of tests across 448 modules), a **12,139-line firewall audit engine running 52 checks** across four vendors, a **47-section Windows Server collector**, an **18-module `ai_pipeline/` package** implementing a 5-layer chained-Claude generation stack, symmetric two-pillar engagement dashboards where every count is clickable into the named entities behind it, and **four project-permanent invariants** enforced structurally rather than by convention. **53 releases in ten months, zero force-pushes.**
+> **TL;DR** · I build production agentic-AI systems at MSP scale — against live customer-engagement pressure, before off-the-shelf product exists. **NinjaToolKit** is the shipped instance: **~157,000 lines of production application code** (plus 19,000 lines of standing verification harnesses and 112,000 lines of tests across 448 modules), a **12,139-line firewall audit engine running 52 checks** across three vendors, a **47-section Windows Server collector**, an **18-module `ai_pipeline/` package** implementing a 5-layer chained-Claude generation stack, symmetric two-pillar engagement dashboards where every count is clickable into the named entities behind it, and **four project-permanent invariants** enforced structurally rather than by convention. **53 releases in ten months, zero force-pushes.**
 >
 > The part worth reading is not the scale. It is **§7 — the August 2026 forensic campaign**, where I audited my own platform, wrote down every fix's expected numbers before making the edit, and recorded that **66 predictions held and 32 were refuted.** Several refutations caught a defect *in the repair*. That is the engineering judgment this document is actually about.
 
@@ -48,7 +48,7 @@ So: build the audit platform that lets the team operate at the cadence the threa
 
 *Every figure below was measured against the source tree on 2026-08-25.*
 
-**Firewall Audit pillar.** A **12,139-line** Python audit engine (`firewall_audit.py`) running **52 checks** against a normalised configuration model, fed by four vendor parsers (WatchGuard XML · Palo Alto PAN-OS XML · Fortinet FortiOS text · Cisco ASA running-config). Cross-mapped to **50 compliance controls** across PCI DSS v4.0 · CIS v8 · NIST CSF 2.0 · CMMC 2.0, inside a canonical envelope that carries **ten frameworks**. Emits into a **19-chapter** engagement-quality report with static-SVG network-exposure topology and attack-chain correlation. Adding a fifth vendor parser is a 200-300 line job because the engine reads the normalised model, not vendor structures.
+**Firewall Audit pillar.** A **12,139-line** Python audit engine (`firewall_audit.py`) running **52 checks** against a normalised configuration model, fed by three vendor parsers (WatchGuard XML · Palo Alto PAN-OS XML · Fortinet FortiOS text). Cross-mapped to **50 compliance controls** across PCI DSS v4.0 · CIS v8 · NIST CSF 2.0 · CMMC 2.0, inside a canonical envelope that carries **ten frameworks**. Emits into a **19-chapter** engagement-quality report with static-SVG network-exposure topology and attack-chain correlation. Adding a fifth vendor parser is a 200-300 line job because the engine reads the normalised model, not vendor structures.
 
 **Site Audit pillar.** A **3,692-line** PowerShell collector running **47 data-capture sections** on every Windows server in scope. A 19-aggregator Python chain feeds both an **11-chapter** site report and a live engineer dashboard carrying **70 distinct AI-bound card scopes across 9 server-detail tabs**. Every count on the dashboard is clickable into the named entities behind it. **The report is the print-form of the dashboard.**
 
@@ -135,7 +135,7 @@ In design:
 - **Production agentic-systems engineering at customer-engagement cadence.** Shipping AI-integrated workflow patterns at MSP scale, against daily customer pressure, before off-the-shelf product exists.
 - **Architectural leadership through a full cycle.** Underspecified problem domain → specification corpus → implementation → enforcement layer → forensic audit of my own work → structural fixes. Ten months of compounding decisions on a production platform.
 - **Verification instinct.** The instruments in this platform exist because I did not trust my own green tests. That is the habit I would bring.
-- **Domain depth.** WatchGuard · Palo Alto · Fortinet · Cisco ASA · Active Directory · certificate hygiene · listening-port mapping · identity posture · 50 controls across four frameworks. I read these configurations as native language.
+- **Domain depth.** WatchGuard · Palo Alto · Fortinet · Active Directory · certificate hygiene · listening-port mapping · identity posture · 50 controls across four frameworks. I read these configurations as native language.
 - **Applied AI engineering.** Multi-pass generation, context engineering, evaluation gates, cost governance, and grounding discipline — as shipped code with a cost meter, not as a research roadmap.
 
 ---
