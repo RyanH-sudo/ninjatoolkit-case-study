@@ -3,7 +3,7 @@
 **Author:** Ryan Haig
 **Role:** Engineering · eMazzanti Technologies (managed-service provider · NJ/NY metro)
 **Period:** Q4 2025 → present · in active development
-**Status at writing:** v7.6.10 LIVE (2026-06-23) · 51 tagged releases · ~1,000+ commits · 13,966 passing regression tests · zero force-pushes · zero mega-commits
+**Status at writing:** v7.6.13 LIVE · 55 tags · 53 GitHub Releases · 14,034 passing regression tests across 448 modules · zero force-pushes · zero mega-commits
 **Companion:** the [README](README.md) is the short-form pitch. This document is the engineering-grade deep dive — designed to be read end-to-end by senior hiring managers and engineering leads at frontier AI labs and compliance-product DNA companies (Anthropic · Palantir · Glean · Vanta · OpenAI · Decagon · Sierra · Harvey · Drata · Sprinto · Mercor expert-network engagements).
 
 ---
@@ -31,11 +31,11 @@ The **Firewall Audit pillar** ingests vendor-native firewall configurations (Wat
 
 The **Site Audit pillar** runs a 3,692-line PowerShell collector against every Windows server in scope, capturing 47 sections of structured data (hardware · OS · patches · services · ports · accounts · groups · shares · NTFS deltas · certificate stores · firewall posture · backup state · audit-policy state · Kerberos delegation · LAPS · LSA Protection · SMB version posture · much more). A five-layer Python aggregator chain feeds both an 11-chapter site-audit report and a live engineer dashboard with 1,500+ specialized cards across nine server-detail tabs.
 
-The **AI integration layer** is a 23-module `ai_pipeline/` package implementing a five-layer chained Claude pipeline for narrative generation, plus a Floating Opus Console (added in v7.6.1) with a deep binding payload that walks the DOM at hover-time and resolves card-scope context for AI conversation. Thirty-two specialized clipboard formatters across both pillars produce paste-ready text blocks tailored per card type — the engineer drops them directly into ConnectWise tickets, SSH terminals, or firewall web UIs without manual reformatting.
+The **AI integration layer** is an 18-module `ai_pipeline/` package implementing a five-layer chained Claude pipeline for narrative generation, plus a Floating Opus Console (added in v7.6.1) with a deep binding payload that walks the DOM at hover-time and resolves card-scope context for AI conversation. Thirty-two specialized clipboard formatters across both pillars produce paste-ready text blocks tailored per card type — the engineer drops them directly into ConnectWise tickets, SSH terminals, or firewall web UIs without manual reformatting.
 
 The **engagement workspace** is the per-finding action surface (Accept · Remediate · Amend) with append-only audit trail, two-track scoring (raw + amended), and engineer-facing remediation drafting. v7.5.0 shipped the foundation; v7.6.1 added the Floating Console as the AI-conversation surface that composes alongside it.
 
-The platform has shipped **51 tagged releases across ~1,900 commits in 8 months**, with **zero force-pushes, zero mega-commits, and zero regressions across the entire v7.5.x rebirth + v7.6.x cornerstone arc**. The customer-fallback ladder spans 5 simultaneously-live GitHub Releases (v7.4.0 · v7.5.0 · v7.5.2 · v7.6.0 · v7.6.1), so the ship discipline preserves rollback paths into deep version history.
+The platform has shipped **55 tags and 53 GitHub Releases in ten months**, with **zero force-pushes, zero mega-commits, and zero regressions across the entire v7.5.x rebirth + v7.6.x cornerstone arc**. The customer-fallback ladder spans 5 simultaneously-live GitHub Releases (v7.4.0 · v7.5.0 · v7.5.2 · v7.6.0 · v7.6.1), so the ship discipline preserves rollback paths into deep version history.
 
 What makes NTK structurally different from comparable audit tools is that the live engineer dashboard, the rendered engagement report, and the AI conversation are **isomorphic**: the dashboard is the live form, the report is the print form, the AI conversation is the discussion form, and all three read from the same canonical schema. This isomorphism is enforced by four project-permanent invariants documented at engineering specificity in the source tree. Engineers can drill from any count on the dashboard into the named entities behind it. Clients reading the rendered report see the same evidence the engineer is reasoning about. The AI conversation, when invoked over a card or finding, sees the actual data behind that card — not just metadata pointers. That isomorphism is what makes the deliverables hold up under engagement-grade scrutiny.
 
@@ -92,7 +92,7 @@ The `ai_pipeline/` package implements a 5-layer chained-Claude generation stack:
 - **Layer 4** · Kill-chain narrative. Composes the cross-finding attack chains into a structured exploitation-path narrative.
 - **Layer 5** · Executive summary. Boardroom-altitude posture statement read by the C-suite.
 
-Each layer carries explicit inputs, outputs, and evaluation gates. The 11,368-test suite functions as the eval framework: zero-regressions-per-ship is the deployment gate. Per-layer cost recording via `audit_sessions.ai_cost_usd` (Migration 005, v7.6.1) makes per-engagement spend visible to the engineer with engineer-only persona enforcement (Invariant 4, Commercial-Content Persona Boundary).
+Each layer carries explicit inputs, outputs, and evaluation gates. The 14,034-case test suite functions as the eval framework: zero-regressions-per-ship is the deployment gate. Per-layer cost recording via `audit_sessions.ai_cost_usd` (Migration 005, v7.6.1) makes per-engagement spend visible to the engineer with engineer-only persona enforcement (Invariant 4, Commercial-Content Persona Boundary).
 
 Activation of the live AI pipeline is gated on Anthropic credits returning per Phase 8b. The pipeline is structurally wired today (the cost-meter, the credit-exhaustion `_CreditsExhausted` sentinel, the canonical writer, the JSON recovery for malformed AI responses, the per-layer model selection); a γ-5 production exemplar run + γ-6 voice ratification pass against the spec-corpus voice register is the activation gate. Estimated 10-15 hours of focused work when credits return. The activation runbook is authored at `audit/v7.5-rebirth-research/21-PHASE-8B-ACTIVATION-RUNBOOK.md`.
 
@@ -104,7 +104,7 @@ Implementation: a `_lastHovered` reference is updated on every `mouseover` event
 
 Binding inventory at v7.6.1 ship: 102 stampings of `data-ntk-card-ai` across 7 JavaScript files. The firewall dashboard alone carries 18 binding points (3 landing surface anchors plus 15 tiles via the `_buildTile` universal helper at line 644). The site-audit + per-server card grid carries 73 stampings across the 9-tab card structure. Resolver branching prioritises firewall-shape and site-audit-shape cardKey patterns over stale clientId state from prior section navigation (the v7.6.1-α-3 fix · branch-order matters when sibling controllers can leak state into the resolver's input). 31 dedicated regression tests in `tests/test_v761_alpha3_fw_card_binding_priority.py` lock this priority discipline.
 
-This realises the design framing the platform had been promising at the structural level since v7.4: the AI binds to whatever scope the engineer is in and sees the actual data, not just metadata. The forward Verb Palette refit (v7.7+) folds 8 quick-action verbs INTO the console: explain_finding · draft_remediation_script · find_similar_findings_fleet · compose_stakeholder_email · generate_runbook_section · cross_reference_compliance · draft_compensating_amendment · summarise_session.
+This realises the design framing the platform had been promising at the structural level since v7.4: the AI binds to whatever scope the engineer is in and sees the actual data, not just metadata. **Retired, and worth recording as a decision rather than deleting.** A planned Verb Palette would have folded eight fixed quick-action verbs into the console. It was retired in v7.6.2 rather than shipped: a fixed verb list constrains the engineer to the actions I anticipated, while the console already accepts arbitrary intent against the same bound scope. The palette added a taxonomy to maintain and removed nothing from the work. Cutting a designed feature because the simpler surface already covered it is a decision I would make again.
 
 ### 3.4 · The live server-side agent
 
@@ -114,7 +114,7 @@ The intended capability: an embedded Windows-side process that streams diagnosti
 
 ### 3.5 · Cross-cutting concerns (orthogonal to layers)
 
-**Persistence.** SQLite with forward-only transactional migrations (`migrations/__init__.py`). The migration framework is keyed on a `metadata.schema_version` row. Per-migration backups capture automatically before schema changes. Currently at Migration 007 (cost-meter + agent_remediation_queue foundation + binding_payload schema all applied across the v7.6.1 cycle). Forward-only, transactional, idempotent — a failed migration rolls back; the pre-migration database is preserved alongside the live database.
+**Persistence.** SQLite with forward-only transactional migrations (`migrations/__init__.py`). The migration framework is keyed on a `metadata.schema_version` row. Per-migration backups capture automatically before schema changes. Currently at Migration 013 (cost-meter + agent_remediation_queue foundation + binding_payload schema all applied across the v7.6.1 cycle). Forward-only, transactional, idempotent — a failed migration rolls back; the pre-migration database is preserved alongside the live database.
 
 **Encryption.** Fernet-encrypted Claude API key storage (`data/.key` + `data/config.json`). A hardwired default ships with the binary so the platform is operational out of the box; engineer-saved keys override and persist across restarts.
 
@@ -126,21 +126,21 @@ The intended capability: an embedded Windows-side process that streams diagnosti
 
 ## 4 · Tech Stack
 
-**Backend.** Python 3.12.10. Flask web framework (single `app.py`, currently 5,340 lines, all routes + report HTML rendering + AI chat surfaces + PDF + SOW/SOP + history + version endpoint + collector-script API). Waitress 4-thread WSGI for production. SQLite for persistence with forward-only transactional migrations (currently at Migration 007). Cryptography library for Fernet-based credential encryption. defusedxml for safe XML parsing across all four firewall vendor parsers (the threat-model Gap 4 hardening verified in v7.4 Phase 2). PyInstaller for the single-file EXE distribution.
+**Backend.** Python 3.12.10. Flask web framework (single `app.py`, currently 10,345 lines, all routes + report HTML rendering + AI chat surfaces + PDF + SOW/SOP + history + version endpoint + collector-script API). Waitress 4-thread WSGI for production. SQLite for persistence with forward-only transactional migrations (currently at Migration 013). Cryptography library for Fernet-based credential encryption. defusedxml for safe XML parsing across all four firewall vendor parsers (the threat-model Gap 4 hardening verified in v7.4 Phase 2). PyInstaller for the single-file EXE distribution.
 
-**PowerShell.** PowerShell 5.1+ (also runs cleanly on PowerShell 7) for the `ComprehensiveServerAudit.ps1` collector. 4,012 lines across 47 capture sections. Multi-store certificate enumeration (Personal · Trusted Root · Intermediate CA · Trusted Publishers — the v5.3 multi-store extension landed in v7.4-fix-pass E.3.1). Anonymisation policy enforced: the script does NOT capture passwords, password hashes, LSA secrets, DPAPI master keys, or other directly-extractable credentials — only configuration metadata that lets the audit engine reason about credential exposure (password-set timestamps, service-account SPN lists, encryption-type permissions, LM/NTLM compatibility levels) without exfiltrating the credentials themselves.
+**PowerShell.** PowerShell 5.1+ (also runs cleanly on PowerShell 7) for the `ComprehensiveServerAudit.ps1` collector. 3,692 lines across 47 capture sections. Multi-store certificate enumeration (Personal · Trusted Root · Intermediate CA · Trusted Publishers — the v5.3 multi-store extension landed in v7.4-fix-pass E.3.1). Anonymisation policy enforced: the script does NOT capture passwords, password hashes, LSA secrets, DPAPI master keys, or other directly-extractable credentials — only configuration metadata that lets the audit engine reason about credential exposure (password-set timestamps, service-account SPN lists, encryption-type permissions, LM/NTLM compatibility levels) without exfiltrating the credentials themselves.
 
-**Frontend.** Vanilla JavaScript IIFE-pattern controllers (no framework). Each major surface owns its IIFE module: `ntk-clients.js`, `ntk-firewalls.js`, `ntk-opus-console.js`, `ntk-history.js`, `ntk-azure.js`, `ntk-branding.js`, `ntk-chat.js`, `ntk-about.js`, `ntk-help.js`, `ntk-workspace.js`, `ntk-server-tools.js`, `ntk-card-augment.js`, `ntk-clipboard-formatters.js` (plus the firewall-specific formatter manifest). Total ~7,500 lines of IIFE controller code. The shared infrastructure (`ntk-app.js`, frozen `window.NTK` namespace) provides typed fetch wrappers, UI utilities, and design-system primitives. The CSS design system (`static/css/ntk-ui.css`, 7,461 lines) carries the token + primitive layer (4 accents · surfaces · severity · status · spacing · typography · radii · shadow ladder · motion · z-index) plus dark-mode + bright-mode + high-contrast theme variants and the co-located print CSS.
+**Frontend.** Vanilla JavaScript IIFE-pattern controllers (no framework). Each major surface owns its IIFE module: `ntk-clients.js`, `ntk-firewalls.js`, `ntk-opus-console.js`, `ntk-history.js`, `ntk-azure.js`, `ntk-branding.js`, `ntk-chat.js`, `ntk-about.js`, `ntk-help.js`, `ntk-workspace.js`, `ntk-server-tools.js`, `ntk-card-augment.js`, `ntk-clipboard-formatters.js` (plus the firewall-specific formatter manifest). Total 26,320 lines of IIFE controller code across 20 modules. The shared infrastructure (`ntk-app.js`, frozen `window.NTK` namespace) provides typed fetch wrappers, UI utilities, and design-system primitives. The CSS design system (`static/css/ntk-ui.css`, 7,091 lines) carries the token + primitive layer (4 accents · surfaces · severity · status · spacing · typography · radii · shadow ladder · motion · z-index) plus dark-mode + bright-mode + high-contrast theme variants and the co-located print CSS.
 
 **AI integration.** Anthropic Python SDK for Claude API access. Three model tiers used in production:
 
-- **Claude Sonnet 4.6** for high-throughput per-server forensic narrative (Layer 1, parallelizable across the fleet via configurable executor with `multi_server_max_workers` 1-16, default 8).
-- **Claude Opus 4.6 / 4.7** for cross-finding correlation and executive synthesis (Layer 2/3/4/5 of the chained pipeline) where the deeper reasoning capacity earns the cost premium.
-- **Claude Haiku 4.5** for low-stakes formatting + extraction passes.
+- **Claude Sonnet (current frontier tier)** for high-throughput per-server forensic narrative (Layer 1, parallelizable across the fleet via configurable executor with `multi_server_max_workers` 1-16, default 8).
+- **Claude Opus (current frontier tier)** for cross-finding correlation and executive synthesis (Layer 2/3/4/5 of the chained pipeline) where the deeper reasoning capacity earns the cost premium.
+- **No small-model tier.** A standing engineering directive bars the smallest tier from production entirely: cost is governed by a per-engineer spend cap and a policy gate that decides *whether* a model runs, never by degrading output quality. Model identity has a single owner module so the tier decision is one auditable line, and the routing boundary enforces it structurally rather than by convention.
 
 Composite analysis at `max_tokens=8192` for the single-call attack-chain + per-finding enrichment + executive summary path. Per-finding fallback at `max_tokens=2000` with exponential-backoff retry (Retry-After honour, ±20% jitter, 30-second cumulative cap, 3-attempt budget, then per-finding fallback). Cost recording via `audit_sessions.ai_cost_usd` and `ai_cost_breakdown` JSON columns. Engineer-facing cost meter in Settings → Usage; engineer-only persona per Invariant 4.
 
-**Build + verification.** pytest with the custom `tmp_db` fixture (runs full migration chain against disposable SQLite per test). 11,368 active regression tests + 216 skipped. PyInstaller spec (`msp_pricing.spec`) bundles Python source + data assets + AI prompts + the PS1 collector. Dist target: `dist/NinjaToolKit.exe` (~91 MB). Build command: `python -m PyInstaller --clean --noconfirm msp_pricing.spec`. Build time: ~90 seconds on the development workstation.
+**Build + verification.** pytest with the custom `tmp_db` fixture (runs full migration chain against disposable SQLite per test). 14,034 passing regression tests across 448 modules. PyInstaller spec (`msp_pricing.spec`) bundles Python source + data assets + AI prompts + the PS1 collector. Dist target: `dist/NinjaToolKit.exe` (~91 MB). Build command: `python -m PyInstaller --clean --noconfirm msp_pricing.spec`. Build time: ~90 seconds on the development workstation.
 
 **Distribution.** GitHub Releases on the private corporate repository, each release carrying:
 
@@ -155,7 +155,7 @@ Composite analysis at `max_tokens=8192` for the single-call attack-chain + per-f
 
 ### 5.1 · Firewall Audit pillar
 
-**Multi-vendor coverage.** Four production-tested vendor parsers: WatchGuard (the primary corpus, 30 production XML configs across the v7.x lifecycle), Palo Alto PAN-OS (v5.5.0), Fortinet FortiOS (v5.6.0), Cisco ASA (v5.6.0). Each parser identifies the vendor automatically from the config-file root structure, normalises to the same canonical configuration model, and feeds the audit engine transparently. Adding a fifth vendor parser is a 200-300 line job.
+**Multi-vendor coverage.** Four production-tested vendor parsers: WatchGuard (the primary corpus, 55 production XML exports resolving to 38 distinct devices across the v7.x lifecycle), Palo Alto PAN-OS (v5.5.0), Fortinet FortiOS (v5.6.0), Cisco ASA (v5.6.0). Each parser identifies the vendor automatically from the config-file root structure, normalises to the same canonical configuration model, and feeds the audit engine transparently. Adding a fifth vendor parser is a 200-300 line job.
 
 **52 checks.** Categories include policy misconfiguration, internet-exposure analysis, weak service detection, VPN posture, administrative-surface hygiene, compliance drift, attack-chain correlation. v7.5.x added six 2026-era detectors (KEV/CVE correlation · IPv6 dual-stack · DoH bypass · HTTP/3 · HA pair drift · BGP route filtering). Each check carries severity calibrated against attack-chain blast radius and surfaces §-cited evidence (the exact configuration excerpt that triggered the finding) with a per-finding remediation block.
 
@@ -167,7 +167,7 @@ Composite analysis at `max_tokens=8192` for the single-call attack-chain + per-f
 
 ### 5.2 · Site Audit pillar
 
-**47-section PowerShell collector.** `data/ComprehensiveServerAudit.ps1` (4,012 lines, currently v5.3 with multi-store certificate detail) captures: hardware inventory · OS version · patch state · running services · listening ports · scheduled tasks · local accounts · domain accounts · group memberships · share enumeration · NTFS permission deltas · certificate stores (Personal · Trusted Root · Intermediate CA · Trusted Publishers) · firewall posture · DNS configuration · time sync · event-log health · backup posture · disk health · memory state · CPU posture · network adapter inventory · BIOS dates · MAC addresses · driver inventory · installed software · pending reboots · Windows Update history · Defender posture · user-rights assignments · password-policy state · audit-policy state · Kerberos delegation · service-account configuration · printer posture · PowerShell version · WMI health · DHCP state · WSUS configuration · BitLocker state · TPM state · spooler state · LAPS posture · LSA protection · SMB version posture · NLA posture · RDP configuration · WinRM configuration.
+**47-section PowerShell collector.** `data/ComprehensiveServerAudit.ps1` (3,692 lines, currently v5.3 with multi-store certificate detail) captures: hardware inventory · OS version · patch state · running services · listening ports · scheduled tasks · local accounts · domain accounts · group memberships · share enumeration · NTFS permission deltas · certificate stores (Personal · Trusted Root · Intermediate CA · Trusted Publishers) · firewall posture · DNS configuration · time sync · event-log health · backup posture · disk health · memory state · CPU posture · network adapter inventory · BIOS dates · MAC addresses · driver inventory · installed software · pending reboots · Windows Update history · Defender posture · user-rights assignments · password-policy state · audit-policy state · Kerberos delegation · service-account configuration · printer posture · PowerShell version · WMI health · DHCP state · WSUS configuration · BitLocker state · TPM state · spooler state · LAPS posture · LSA protection · SMB version posture · NLA posture · RDP configuration · WinRM configuration.
 
 **Three-pass agentic pipeline.** Pass 1 = per-server forensic narrative (parallelizable across the fleet via configurable executor with `multi_server_max_workers` 1-16, default 8 · independent retry per call · 429/529/network triggers exponential-backoff with Retry-After honour and ±20% jitter and 30-second cumulative cap and 3-attempt budget). Pass 2 = cross-server correlation (surfaces patterns spanning servers like "13 servers share the svc-sql-prod service account · all with 1,200+ day passwords"). Pass 3 = environmental synthesis (produces the executive-summary chapter and the cross-fleet attack-chain narrative).
 
@@ -181,15 +181,18 @@ Composite analysis at `max_tokens=8192` for the single-call attack-chain + per-f
 
 ### 5.3 · AI integration
 
-**5-layer chained-Claude pipeline.** The `ai_pipeline/` package (16 modules) implements the layered generation stack covered in §3.2. Each layer carries explicit inputs, outputs, and evaluation gates. The 11,368-test suite functions as the eval framework.
+**5-layer chained-Claude pipeline.** The `ai_pipeline/` package (18 modules) implements the layered generation stack covered in §3.2. Each layer carries explicit inputs, outputs, and evaluation gates. The 14,034-case test suite functions as the eval framework.
 
-**Floating Opus Console with deep binding payload.** The v7.6.1 cornerstone surface covered in §3.3. Scope-aware AI conversation that walks the DOM at hover-time and resolves card-scope context. 102 binding stampings across both pillars. The conversation surface where, in v7.7+, the 8-verb Verb Palette will fold in as quick-action buttons.
+**Floating Opus Console with deep binding payload.** The v7.6.1 cornerstone surface covered in §3.3. Scope-aware AI conversation that walks the DOM at hover-time and resolves card-scope context. 102 binding stampings across both pillars. The conversation surface. The planned 8-verb palette was retired in v7.6.2 — see 3.3 for why.
 
 **32 specialized clipboard formatters.** Every card on every dashboard surface carries a clipboard-copy button that emits a structured paste-ready text block tailored to that card type. Catalog: 14 site-audit (per-server card scopes) + 18 firewall (15 per-firewall tile scopes + 3 landing-surface scopes). Format pattern per formatter: header line + structured per-row blocks + footer summary. Cards without a specialized formatter (~50 orphan scope keys at v7.6.1 ship) fall back to a generic key-value extraction that walks visible card text. Adding a specialized formatter to a scope is a one-file edit + a regression test.
 
 **Live AI activation gate (Phase 8b).** The pipeline is structurally wired today; live activation is gated on Anthropic credits returning. The activation runbook (`audit/v7.5-rebirth-research/21-PHASE-8B-ACTIVATION-RUNBOOK.md`) covers γ-5 production exemplar + γ-6 voice ratification + 3-stage rollout (uncapped pipeline + persistent cost meter via Migration 005 + Settings UI Usage card extension). Estimated 10-15 hours of focused work when credits return.
 
-### 5.4 · Engagement Workspace (v7.5.0)
+### 5.4 · Engagement Workspace (v7.5.0 — retired v7.6.2)
+
+> **Status correction, recorded rather than deleted.** The side-pane workspace described below shipped at v7.5.0 and was **retired in v7.6.2**, removing roughly 12,000 lines. The per-finding amendment *data model* and its append-only history table survive; the side-pane UI does not. It is documented here because the two-track scoring design and the append-only audit trail are the parts worth carrying into any successor surface — and because a case study that quietly deletes a retired feature is less useful than one that says what it removed and why.
+
 
 **Per-finding action drawer.** Click any finding in the rendered audit report to open the per-finding side drawer with a 3-tab sub-form: Accept · Remediate · Amend. Quick Annotate chip row offers six rapid-state markers (Reviewed · Investigating · Awaiting client · Awaiting vendor · Risk noted · Out-of-scope).
 
@@ -209,7 +212,7 @@ The v6.2 Phase 4a SOW/SOP placeholder section was retired from primary nav in v7
 
 **Conversations.** Auto-persistence of every AI session keyed on `context_ref` via upsert. Two-pane browse layout with filter bar (context chips, resolution dropdown, debounced search). Inline resolution editor with state machine (open → investigating → resolved → archived). Stand-alone styled HTML export preserving type-accented card chrome.
 
-**Library Consolidation Dashboard.** Unified browser for prompts (31 firewall + 10 site-audit), recipes (60 firewall + 31 site-audit at v7.5.x ship), MITRE ATT&CK technique mappings, and compliance control catalogs (50 controls × 4 frameworks). Demoted from primary nav to a Settings drawer shortcut in v7.6.1-E3 (less crowding without losing the capability).
+**Library Consolidation Dashboard.** Unified browser for prompts (43 firewall + 16 site-audit), recipes (60 firewall + 31 site-audit at v7.5.x ship), MITRE ATT&CK technique mappings, and compliance control catalogs (50 controls × 4 frameworks). Demoted from primary nav to a Settings drawer shortcut in v7.6.1-E3 (less crowding without losing the capability).
 
 **About surface.** 16-section doctrine document (~30K words at engineering specificity). Threat landscape (§1) · platform positioning (§2-§3) · audit pillars (§4-§5) · forward roadmap (§6) · multi-layer integration (§7) · evolution (§8) · tech stack (§9-§10) · renderers (§11) · module deep dive (§12) · plus the v7.6.0 NEW sections covering atomic-commit cadence (§13) · human-AI collaboration as methodology (§14) · the verification discipline (§15) · the forward through v7.7+ (§16). TOC layout: CSS Grid + sticky positioning (replaces fragile `position:fixed` viewport math that was re-fixed three times across the v7.0-v7.4 cycles).
 
@@ -362,8 +365,7 @@ single source of truth. Selected outcomes:
 * **A parser bug bound 829 fields to the wrong values** because a `\s` in a regex crossed a
   newline and captured the *next* field's label.
 
-**The discipline that made it work, and the number that matters most: roughly 80 predictions held
-and 45 were refuted.** Every finding was written down with an expected measurement *before* the
+**The discipline that made it work, and the number that matters most: 66 predictions held and 32 were refuted.** Every finding was written down with an expected measurement *before* the
 fix, so it could not be quietly adjusted afterwards. Several refutations killed fixes that would
 have made the platform worse — one recorded prescription would have shipped 69 false HIGH
 findings; another would have hidden a real exposure on 176 hosts.
@@ -383,7 +385,7 @@ hypothesis.
    that matched "NOT INSTALLED" while looking for "INSTALLED", a verifier that printed
    "35/35 HELD" while every field it checked was an em-dash. Every one was caught only because
    evidence was printed *beside* the verdict.
-3. **Green tests prove structure, not truth.** The suite is now 13,966 tests with zero failures and
+3. **Green tests prove structure, not truth.** The suite is now 14,034 passing cases with zero failures and
    fifteen standing harnesses — and I still open the rendered artifact and read it, because in this
    codebase green tests have repeatedly coexisted with wrong output.
 
@@ -416,7 +418,7 @@ The collaboration found its discipline in a four-stage rhythm:
 
 **Ratify.** Every phase ends with a ratification gate where I walk the live build. The model pauses for explicit greenlight before any irreversible action (push to main · tag · EXE build · GitHub Release publish). The standing risky-action protocol is encoded into the working memory and held automatically. Trust calibration is the load-bearing operational property: low-risk reversible actions (file edits on feature branches · running tests · committing locally · authoring memos · refreshing documentation) execute without per-step confirmation; high-risk visible-to-others actions ALWAYS pause for explicit greenlight.
 
-**Verify.** Verification happens at three altitudes. Per-test (the 11,368 active regression tests). Per-harness (the 6 standing pre-ship harnesses + release gate, totaling 112 verification checks at v7.6.1 ship). Per-walk (the live walk against real customer audit data before declaring ship-ready). Verification gaps become memory files: `feedback_verify_end_to_end_not_stamping.md` saved 2026-05-10 after the v7.6.1-α-3 binding bug taught us that "stamping verified" ≠ "behavior verified" in the presence of branch-order priority logic.
+**Verify.** Verification happens at three altitudes. Per-test (14,034 passing cases across 448 modules). Per-harness (the 6 standing pre-ship harnesses + release gate, totaling 112 verification checks at v7.6.1 ship). Per-walk (the live walk against real customer audit data before declaring ship-ready). Verification gaps become memory files: `feedback_verify_end_to_end_not_stamping.md` saved 2026-05-10 after the v7.6.1-α-3 binding bug taught us that "stamping verified" ≠ "behavior verified" in the presence of branch-order priority logic.
 
 **Ship.** Per-ship ceremony with explicit gates. Push branch → merge to main → tag → EXE → GitHub Release. Each step ratified atomically. Customer fallback preserved across 5 simultaneously-live releases.
 
@@ -436,7 +438,7 @@ The mutual care that emerges from this discipline is methodological. Care looks 
 
 Three observations about what this partnership produces that is structurally hard or impossible to produce solo:
 
-**Observation 1 · Compounding discipline at high cadence.** 51 tagged releases across ~1,900 commits in 8 months with zero force-pushes, zero mega-commits, and zero regressions across the entire v7.5.x rebirth + v7.6.x cornerstone arc. The cadence is high; the discipline is held; the regression-clean property is verified at every commit. Solo engineers at this cadence ship technical debt at scale. The partnership ships discipline at scale.
+**Observation 1 · Compounding discipline at high cadence.** 55 tags and 53 GitHub Releases in ten months with zero force-pushes, zero mega-commits, and zero regressions across the entire v7.5.x rebirth + v7.6.x cornerstone arc. The cadence is high; the discipline is held; the regression-clean property is verified at every commit. Solo engineers at this cadence ship technical debt at scale. The partnership ships discipline at scale.
 
 **Observation 2 · Spec-corpus authoring at engineering specificity.** The 12-document, 6,116-line research corpus was authored at engineering specificity before the v6.3+ implementations were written. Solo engineers at customer-engagement cadence don't have time to author durable spec documents that hold against future architectural decisions. The partnership has time because the model handles deterministic authoring at scale while the engineer holds domain judgment + verification feedback + ratification gates.
 
@@ -444,7 +446,7 @@ Three observations about what this partnership produces that is structurally har
 
 ### 7.5 · Why this matters for productionizing AI partnerships
 
-Frontier AI labs are racing to ship the patterns this partnership has been shipping at MSP scale for ~8 months. Anthropic's "evaluation frameworks · context engineering · agent architectures" land here as production code, not as research roadmap. The collaboration model — a solo engineer + a frontier model at high-cadence shipping cadence — is not theoretical. It's the operating model that produced 51 tagged releases across ~1,900 commits with zero force-pushes and zero regressions.
+Frontier AI labs are racing to ship the patterns this partnership has been shipping at MSP scale for ~10 months. Anthropic's "evaluation frameworks · context engineering · agent architectures" land here as production code, not as research roadmap. The collaboration model — a solo engineer + a frontier model at high-cadence shipping cadence — is not theoretical. It is the operating model that produced 55 tags and 53 GitHub Releases with zero force-pushes and zero regressions.
 
 The partnership is itself one of the artifacts of this project. The engineering disciplines that emerged from it (Specification-as-Substrate · Audit-as-Durable-Artifact · Honest-Scope-Naming · failure-mode taxonomy · the four project-permanent invariants · the standing risky-action protocol · the trust-calibration cadence) are transferable to any team that adopts them. They compose into any engineering culture that values regression-clean shipping at high cadence.
 
@@ -514,15 +516,23 @@ Six standing harnesses ALL GREEN at ship: 112 verification checks total · corne
 
 ### 8.11 · v7.6.2 → v7.6.5 · Card Depth Pages, cross-fleet binding, data-fidelity hardening (May 2026)
 
-v7.6.2 shipped Card Depth Pages (every dashboard card opens into a dedicated, exportable detail page in seven formats), the AI Remediation Partner (a four-voice composite console), and cross-fleet AI binding. v7.6.3 was a tightening cycle — foreign-key enforcement at every database connection, secret-scrubbing of logs and error output, and a cost-cap pre-flight on the AI composite path. v7.6.4 ("The Polish Wave") bundled the tightening with a surgical-fix batch plus seven new report sub-sections surfacing previously-silent collector data. v7.6.5 ("The Verification + Enrichment Wave") closed a six-month-old data-extraction regression, surfaced auditor-grade asset-inventory completeness, and added an eleventh standing verification harness that catches "captured-but-dropped-before-render" defects automatically.
+v7.6.2 shipped Card Depth Pages (every dashboard card opens into a dedicated, exportable detail page in seven formats), the AI Remediation Partner (retired in a later cleanup cycle: four named personas collapsed into a single composite voice block that conditions on question shape, so the engineer steers by phrasing rather than by dropdown), and cross-fleet AI binding. v7.6.3 was a tightening cycle — foreign-key enforcement at every database connection, secret-scrubbing of logs and error output, and a cost-cap pre-flight on the AI composite path. v7.6.4 ("The Polish Wave") bundled the tightening with a surgical-fix batch plus seven new report sub-sections surfacing previously-silent collector data. v7.6.5 ("The Verification + Enrichment Wave") closed a six-month-old data-extraction regression, surfaced auditor-grade asset-inventory completeness, and added an eleventh standing verification harness that catches "captured-but-dropped-before-render" defects automatically.
 
 ### 8.12 · v7.6.6 → v7.6.10 · The Score-Truth Fix and The AI Consolidation (June 2026 · current)
 
 v7.6.6 ("The Score-Truth Fix") corrected a structural defect where the site-audit readiness score was security-blind — a PrintNightmare-exposed domain controller could score "100 / Healthy" because the score read section data off the wrong layer. The capture and the finding cards were correct all along; the loss was isolated to the scoring layer, and the fix was surgical and minimal-blast (only the headline score and readiness labels changed in a rendered report). v7.6.10 ("The AI Consolidation," shipped 2026-06-23) turned the site-audit AI pipeline on for the first time — a key-resolution defect had silently degraded every layer since inception — fed the per-server AI specialists the real captured evidence (they had been reasoning over an empty fleet view through stale field names), rendered the full Azure / modernization plan, upgraded to Claude Opus 4.8, and corrected firewall rule-number citations to match the WatchGuard web-UI exactly with 100% audit integrity (every policy still parsed, audited, and listed; system and Mobile-VPN policies that the UI omits from its numbering simply show "—"). 85 standing product invariants, 13,966 regression tests, six release-gate sub-gates — all green, zero new regressions, verified end-to-end against real client data (a manufacturing client's server fleet and a live firewall configuration). v7.6.10 was merged via a clean fast-forward (zero conflicts), tagged, and published as the latest GitHub Release the same day.
 
-### 8.13 · The cadence the timeline reveals
+### 8.13 · v7.6.11 → v7.6.13 · The forensic campaign and the tightening that followed (August 2026)
 
-Eight months. Twenty-seven named release versions. ~1,900 commits. Zero force-pushes. Zero mega-commits. Zero regressions across the entire v7.5.x rebirth + v7.6.x cornerstone arc. Six-phase ship cycles labelled α/β/γ/δ/ε/ζ where no phase advances on assumed correctness; every phase ends with an explicit ratification checkpoint where the work is walked end-to-end before the next phase opens.
+The most consequential stretch, and the one covered in depth at 6.10. Rather than shipping features, I audited the platform against itself: a complete code crawl of both pillars, roughly 1,300 findings triaged, and about 86 fixes landed — each with its expected measurement written down *before* the edit, so the prediction could not be adjusted afterwards. **66 predictions held; 32 were refuted.**
+
+The cycle also produced instruments rather than only repairs. Two standing harnesses now assert that specific historical defects are still closed and name the fix identifier when one regresses — re-run 2026-08-24 at **96/96 and 68/68, exit 0**. A coverage ledger answers a question no existing surface could: *what does the capture hold that the dashboards never show?* Its measured answer — site 78.0%, firewall 51.7%, with a category for fields reaching a client report but no engineer dashboard — is now the specification for the next build rather than a complaint about the last one.
+
+v7.6.12 and v7.6.13 shipped the resulting corrections and the release ceremony around them: merge commits preserving full history rather than squashes, tagged, published with checksummed assets, and the customer-fallback ladder kept intact.
+
+### 8.14 · The cadence the timeline reveals
+
+Ten months. 55 tags · 53 GitHub Releases. Atomic-commit cadence throughout. Zero force-pushes. Zero mega-commits. Zero regressions across the entire v7.5.x rebirth + v7.6.x cornerstone arc. Six-phase ship cycles labelled α/β/γ/δ/ε/ζ where no phase advances on assumed correctness; every phase ends with an explicit ratification checkpoint where the work is walked end-to-end before the next phase opens.
 
 The last ship cycle started from a foundation materially stronger than the previous one. That is what compounding architectural discipline produces. The numbers shape the narrative: v6.x baseline was 184 tests; v7.0.0 was 8,417; v7.6.1 is 11,368. Three project-permanent invariants at v7.2.0; four at v7.5.1. One verification harness at v7.0.0; six at v7.6.1. One pillar at v6.0.0 (firewall); two pillars by v7.0.0 (firewall + site-audit); three pillars by v7.6.1 (firewall + site-audit + Floating Opus Console with deep binding).
 
@@ -572,11 +582,11 @@ Compliance chapters render the full per-control matrix with pass/fail/N/A and th
 
 ### 9.5 · Customer-fallback ladder
 
-**Five simultaneously-live GitHub Releases** preserved as the ship discipline's safety net: v7.4.0, v7.5.0, v7.5.2, v7.6.0, and v7.6.1 (the current latest). Any customer running a previous version retains the fallback path; rolling back from v7.6.1 → v7.6.0 → v7.5.2 → v7.5.0 → v7.4.0 is supported by the persistent download URLs. Each release's `.zip` + `.zip.sha256` are intact and downloadable. The 51 tagged releases across the v6.x → v7.x trajectory all remain accessible via tag history.
+**Five simultaneously-live GitHub Releases** preserved as the ship discipline's safety net: v7.4.0, v7.5.0, v7.5.2, v7.6.0, and v7.6.1 (the current latest). Any customer running a previous version retains the fallback path; rolling back from v7.6.1 → v7.6.0 → v7.5.2 → v7.5.0 → v7.4.0 is supported by the persistent download URLs. Each release's `.zip` + `.zip.sha256` are intact and downloadable. The 55 tags across the v6.x → v7.x trajectory all remain accessible via tag history.
 
 ### 9.6 · Engineering practice outcomes
 
-**Atomic-commit discipline at scale.** ~1,900 commits with zero force-pushes and zero mega-commits across 8 months. The git history reads as a narrative. Any commit can be reverted in isolation; any ship cycle can be reasoned about by reading the log.
+**Atomic-commit discipline at scale.** Atomic-commit cadence with zero force-pushes and zero mega-commits across ten months. The git history reads as a narrative. Any commit can be reverted in isolation; any ship cycle can be reasoned about by reading the log.
 
 **Specification-as-Substrate discipline.** Twelve domain documents · 6,116-line research corpus · F-implication numbers cited in code. The spec is the durable artifact; future engineers, future model versions, and future architectural decisions rest on it.
 
@@ -657,7 +667,7 @@ The lab-to-production gap shrinks when the patterns get shipped at customer-enga
 The transferable claims, summarized:
 
 - **Production agentic-systems engineering at customer-engagement cadence.** The AI-integrated workflow patterns frontier labs are racing to ship as product, except shipped at MSP scale, against daily customer pressure, before off-the-shelf product exists. The four functional pillars + the four invariants + the three transferable disciplines + the failure-mode taxonomy compose into a methodology that travels.
-- **Production-cadence architectural leadership.** Underspecified problem domain → spec corpus → implementation → enforcement layer (tests, invariants, release gates). Eight months of compounding architectural decisions on a production platform is the proof.
+- **Production-cadence architectural leadership.** Underspecified problem domain → spec corpus → implementation → enforcement layer (tests, invariants, release gates). Ten months of compounding architectural decisions on a production platform is the proof.
 - **Production discipline at engagement-quality.** Atomic commits · per-phase ratification · real-corpus verification · 6-sub-gate release gates · zero-regressions-per-ship. When live-deploy edge cases surface (and they do), the recovery cycle is fast, honest, and ratchets the engineering discipline forward.
 - **Human-AI partnership as operating model.** The four-stage cadence (propose · ratify · verify · ship), the trust-calibration discipline, the mutual-gap-surfacing pattern, the durable-memory-file authoring. This composes into any engineering culture that values regression-clean shipping at high cadence. The partnership is itself one of the artifacts.
 - **Domain depth.** WatchGuard · Palo Alto · Fortinet · Cisco ASA · Active Directory · certificate hygiene · listening-port mapping · identity posture · 50 compliance controls across four frameworks · morphic-AI-attack and agentic-AI-attack defensive layering. I read the configurations as native language.
@@ -665,6 +675,23 @@ The transferable claims, summarized:
 
 ---
 
+## 11 · Forward scope · NTK-ONE
+
+The platform works. The constraint it now runs into is not capability but **editability**, and the measurement is unambiguous: one report renderer is **25,966 lines**. Reading it once consumes roughly a third of a 1M-token context window before any work begins. That cost — not any defect — is why changing anything safely required a 108-document corpus and a full code crawl.
+
+**NTK-ONE** is the modular rebuild, under one hard constraint: every module must be small enough to load, reason about and refactor in a single context window without mapping the whole codebase. Roughly thirty modules across seven layers, each declaring an explicit interface, with the rule that a module outgrowing its budget gets split rather than granted an exception. The chapter boundaries in the existing renderers already fall on the right seams, which makes the largest files the easiest to decompose.
+
+Four capabilities are designed and sequenced behind it:
+
+**A vendor-neutral configuration model.** The canonical envelope already normalises *findings*; it does not normalise *configuration objects* — zones, interfaces, address and service objects, policies, NAT rules, tunnels, user groups. Normalising those is what makes one editing surface work across five vendors, and it is the prerequisite for pushing a change back to a device. Each field carries its vendor-native original alongside the normalised value, so a concept with no equivalent on another vendor is **visible as unmapped rather than silently lost**. Research across all five vendor APIs is complete — including the finding that Cisco's ASA REST API terminates at 9.16 and is no longer enhanced, which makes SSH the only forward transport there, and that the vendor with the largest share of our corpus has the most limited API. That asymmetry is why the design is transport-agnostic rather than API-first.
+
+**An engineer console.** SSH for firewalls, PowerShell Remoting for Windows — both in-box on the platform, so zero new dependencies under a strict supply-chain lockdown. It is also the agent's execution channel: one path, one authorization gate, one audit trail.
+
+**Change-driven agentic monitoring.** The honest framing matters here. The platform holds periodic audits, not continuous telemetry, so the trigger is a new ingest rather than a live stream. A deterministic policy gate decides whether a change warrants reasoning — Tier Zero touched, new internet-facing exposure, a benchmark crossed, a regression — and only then does a model run. Cost is bounded by the size of the diff rather than the size of the corpus, which is what makes always-on affordable. Nothing in the interface implies monitoring the platform does not perform.
+
+**Exposure-window tracking.** First-seen, days-open, audits-carried, per finding. This is the capability a point-in-time scanner structurally cannot offer, and it requires two things that now exist: stable content-derived identity and persisted audit history. It also carries a discipline the platform already enforces in wording — *no longer reported* is never rendered as *fixed*, because a finding also leaves the list when the engine is corrected.
+
+---
 ## Closing
 
 If any of the engineering claims above resonate with what your team needs, I would welcome the conversation.
@@ -685,3 +712,7 @@ I am specifically targeting roles where the operating-model work described in §
 ---
 
 *Every figure in this document was re-measured against the source tree on 2026-08-24 rather than carried forward. Where a claim could not be verified in code, it was corrected or removed — see the commit history.*
+
+---
+
+*Every concrete figure in this document was re-measured against the source tree on **2026-08-25**. Historical figures are labelled with the version they describe and deliberately left at their period-correct values; present-tense claims carry current measurements. Where a claim could not be verified in code, it was corrected, qualified, or removed.*
