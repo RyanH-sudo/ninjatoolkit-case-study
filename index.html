@@ -1,0 +1,1356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NinjaToolKit Case Study</title>
+<meta name="description" content="A technical case study of an agentic audit and remediation platform for managed Windows Server estates and WatchGuard firewalls: architecture, adversarial multi-agent orchestration, safety model and release engineering.">
+<meta name="author" content="Ryan Haig">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NinjaToolKit: an agentic audit and remediation platform">
+<meta property="og:description" content="A technical case study of an agentic audit and remediation platform for managed Windows Server estates and WatchGuard firewalls: architecture, adversarial multi-agent orchestration, safety model and release engineering.">
+<meta property="og:url" content="https://ryanh-sudo.github.io/ninjatoolkit-case-study/">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://ryanh-sudo.github.io/ninjatoolkit-case-study/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2308080A'/%3E%3Cpath d='M16 5l3 8-3 3-3-3zM27 16l-8 3-3-3 3-3zM16 27l-3-8 3-3 3 3zM5 16l8-3 3 3-3 3z' fill='%23E9E4D8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+<style>
+:root{--ground:#08080A;--surface:#0F1013;--raise:#15161A;--ink:#E9E4D8;--ink-2:#ABA597;--ink-3:#716C62;
+--rule:#23252A;--rule-2:#30333A;--link:#C9D6E6;--mark:oklch(0.70 0.105 162);color-scheme:dark}
+@media (prefers-color-scheme:light){:root{--ground:#F6F4EF;--surface:#FFFFFF;--raise:#FBFAF7;--ink:#17181B;
+--ink-2:#4A4C51;--ink-3:#7A7C80;--rule:#E1DDD3;--rule-2:#D3CEC2;--link:#28527D;--mark:oklch(0.52 0.105 162);
+color-scheme:light}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--ground);color:var(--ink);font:18px/1.66 "Newsreader",Georgia,"Times New Roman",serif;
+-webkit-font-smoothing:antialiased;padding-inline:20px}
+a{color:var(--link);text-decoration:underline;text-decoration-color:var(--rule-2);text-underline-offset:3px}
+a:hover,a:focus-visible{text-decoration-color:var(--link)}
+:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.top{position:sticky;top:0;z-index:10;margin-inline:-20px;padding:14px 20px;background:var(--ground);
+border-bottom:1px solid var(--rule)}
+.top-in{max-width:1180px;margin:0 auto;display:flex;gap:16px;align-items:baseline;justify-content:space-between;
+font:500 13px/1.2 "Geist",system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.top-in a{color:var(--ink-2);text-decoration:none}
+.top-in a:hover{color:var(--ink)}
+.top-in .who{display:flex;gap:18px}
+.hero{max-width:1180px;margin:0 auto;padding:72px 0 40px;border-bottom:1px solid var(--rule)}
+.eyebrow{font:500 12px/1 "Geist",system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
+margin:0 0 22px}
+.hero h1{font:400 clamp(36px,5.6vw,64px)/1.06 "Newsreader",Georgia,serif;letter-spacing:-.015em;margin:0;
+max-width:17ch;text-wrap:balance}
+.lede{font-size:21px;line-height:1.55;color:var(--ink-2);max-width:62ch;margin:28px 0 0}
+.byline{font:14px/1.5 "Geist",system-ui,sans-serif;color:var(--ink-3);margin:26px 0 0}
+.byline strong{color:var(--ink);font-weight:500}
+.figures{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+border-bottom:1px solid var(--rule)}
+.fig{padding:26px 20px;border-right:1px solid var(--rule)}
+.fig:first-child{padding-left:0}
+.fig:last-child{border-right:0}
+.fig b{display:block;font:400 30px/1.1 "JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+color:var(--ink);letter-spacing:-.02em}
+.fig span{display:block;margin-top:8px;font:13px/1.4 "Geist",system-ui,sans-serif;color:var(--ink-3)}
+.layout{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:64px;padding-top:48px}
+nav.toc{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;
+font:13.5px/1.35 "Geist",system-ui,sans-serif}
+nav.toc p{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:grid;grid-template-columns:26px 1fr;gap:6px;padding:5px 8px;border-radius:4px;color:var(--ink-2);
+text-decoration:none;border-left:2px solid transparent}
+nav.toc a:hover{color:var(--ink);background:var(--surface)}
+nav.toc a.on{color:var(--ink);border-left-color:var(--mark);background:var(--surface)}
+nav.toc a i{font:normal 12px "JetBrains Mono",ui-monospace,monospace;color:var(--ink-3);padding-top:1px}
+details.toc-m{display:none}
+article{min-width:0;max-width:760px}
+article h2{font:400 32px/1.2 "Newsreader",Georgia,serif;letter-spacing:-.01em;margin:72px 0 18px;padding-top:28px;
+border-top:1px solid var(--rule);text-wrap:balance}
+article h2:first-child{margin-top:0;border-top:0;padding-top:0}
+article h3{font:600 17px/1.35 "Geist",system-ui,sans-serif;letter-spacing:.01em;margin:40px 0 10px}
+article p,article li{max-width:68ch}
+article ul,article ol{padding-left:1.3em}
+article li{margin:6px 0}
+article strong{font-weight:600}
+article hr{display:none}
+article code{font:.84em "JetBrains Mono",ui-monospace,monospace;background:var(--surface);border:1px solid var(--rule);
+padding:.08em .38em;border-radius:3px}
+article pre{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px;overflow-x:auto;
+font-size:14px;line-height:1.55}
+article pre code{background:none;border:0;padding:0;font-size:inherit}
+.table{overflow-x:auto;margin:22px 0;border:1px solid var(--rule);border-radius:6px}
+table{border-collapse:collapse;width:100%;font:14.5px/1.5 "Geist",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--rule)}
+tr:last-child td{border-bottom:0}
+th{font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+background:var(--raise)}
+td:first-child{color:var(--ink);font-weight:500}
+figure.diagram{margin:28px 0;padding:22px 16px;background:var(--surface);border:1px solid var(--rule);border-radius:6px;
+overflow-x:auto}
+figure.diagram pre.mermaid{margin:0;background:none;border:0;padding:0;text-align:center;font:14px "Geist",sans-serif;
+color:var(--ink-3)}
+footer{max-width:1180px;margin:96px auto 0;padding:36px 0 72px;border-top:1px solid var(--rule);display:grid;
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:28px;font:14.5px/1.6 "Geist",system-ui,sans-serif;
+color:var(--ink-2)}
+footer h4{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;font-weight:500}
+footer p{margin:0}
+@media (max-width:960px){.layout{grid-template-columns:minmax(0,1fr);gap:0;padding-top:28px}nav.toc{display:none}
+details.toc-m{display:block;margin:0 0 8px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);
+font:15px/1.4 "Geist",system-ui,sans-serif}
+details.toc-m summary{cursor:pointer;padding:12px 14px;color:var(--ink-2)}
+details.toc-m ol{margin:0;padding:0 14px 12px 34px}
+details.toc-m a{color:var(--ink-2);text-decoration:none;display:block;padding:4px 0}
+.fig{border-right:0;border-bottom:1px solid var(--rule);padding:18px 0}.hero{padding-top:44px}}
+@media (max-width:520px){body{font-size:17px}.lede{font-size:19px}.top-in .who a:not(:first-child){display:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in"><span>NinjaToolKit &middot; Technical case study</span>
+<span class="who"><a href="https://github.com/RyanH-sudo">Ryan Haig</a><a href="https://github.com/RyanH-sudo/ninjatoolkit-case-study">Source on GitHub</a></span></div></header>
+<section class="hero">
+<p class="eyebrow">Technical case study &middot; v8.1.0 &middot; September 2026</p>
+<h1>An agentic audit and remediation platform for managed infrastructure</h1>
+<p class="lede">NinjaToolKit judges every server and firewall in a managed estate with deterministic code, runs an
+adversarial multi-agent diagnosis on any server or fleet, and walks each issue to a verified close through read-only
+tests, reviewed and reversible fixes, and a record the next capture confirms or reopens. The engineer approves every
+step that touches a server. It ships as one self-contained Windows executable.</p>
+<p class="byline"><strong>Ryan Haig</strong>, Forward Deployed Engineer, eMazzanti Technologies. Every figure was measured
+against the v8.1.0 release on September 28, 2026. The platform is private company software; this page describes its
+design without its source or any client data.</p>
+</section>
+<section class="figures" aria-label="Key figures"><div class="fig"><b>204,142</b><span>lines of product code</span></div><div class="fig"><b>13,822</b><span>of 13,875 tests passed, 0 failed</span></div><div class="fig"><b>55</b><span>deterministic server judges</span></div><div class="fig"><b>52</b><span>firewall checks, 50 compliance controls</span></div><div class="fig"><b>7</b><span>agent roles, held to evidence in code</span></div><div class="fig"><b>$2.21</b><span>for a full paid diagnosis, 21 issues</span></div></section>
+<div class="layout">
+<nav class="toc" aria-label="Contents"><p>Contents</p><ol><li><a href="#1-summary"><i>1</i><span>Summary</span></a></li><li><a href="#2-the-problem-and-its-constraints"><i>2</i><span>The problem and its constraints</span></a></li><li><a href="#3-system-architecture"><i>3</i><span>System architecture</span></a></li><li><a href="#4-data-engineering-from-a-powershell-capture-to-one-list-of-problems"><i>4</i><span>Data engineering: from a PowerShell capture to one list of problems</span></a></li><li><a href="#5-network-engineering-the-firewall-audit-engine"><i>5</i><span>Network engineering: the firewall audit engine</span></a></li><li><a href="#6-server-architecture-what-the-judges-read"><i>6</i><span>Server architecture: what the judges read</span></a></li><li><a href="#7-agentic-orchestration-the-adversarial-diagnosis"><i>7</i><span>Agentic orchestration: the adversarial diagnosis</span></a></li><li><a href="#8-from-diagnosis-to-verified-fix-the-issue-lifecycle"><i>8</i><span>From diagnosis to verified fix: the issue lifecycle</span></a></li><li><a href="#9-cybersecurity-the-safety-model"><i>9</i><span>Cybersecurity: the safety model</span></a></li><li><a href="#10-model-governance-routing-refusals-and-cost"><i>10</i><span>Model governance: routing, refusals and cost</span></a></li><li><a href="#11-the-engineers-surface"><i>11</i><span>The engineer&#x27;s surface</span></a></li><li><a href="#12-devops-and-release-engineering"><i>12</i><span>DevOps and release engineering</span></a></li><li><a href="#13-verification-measurement-over-assertion"><i>13</i><span>Verification: measurement over assertion</span></a></li><li><a href="#14-results"><i>14</i><span>Results</span></a></li><li><a href="#15-how-i-build"><i>15</i><span>How I build</span></a></li><li><a href="#16-lessons"><i>16</i><span>Lessons</span></a></li><li><a href="#17-what-comes-next"><i>17</i><span>What comes next</span></a></li><li><a href="#18-appendix-glossary"><i>18</i><span>Appendix: glossary</span></a></li></ol></nav>
+<article>
+<details class="toc-m"><summary>Contents</summary><ol><li><a href="#1-summary">1. Summary</a></li><li><a href="#2-the-problem-and-its-constraints">2. The problem and its constraints</a></li><li><a href="#3-system-architecture">3. System architecture</a></li><li><a href="#4-data-engineering-from-a-powershell-capture-to-one-list-of-problems">4. Data engineering: from a PowerShell capture to one list of problems</a></li><li><a href="#5-network-engineering-the-firewall-audit-engine">5. Network engineering: the firewall audit engine</a></li><li><a href="#6-server-architecture-what-the-judges-read">6. Server architecture: what the judges read</a></li><li><a href="#7-agentic-orchestration-the-adversarial-diagnosis">7. Agentic orchestration: the adversarial diagnosis</a></li><li><a href="#8-from-diagnosis-to-verified-fix-the-issue-lifecycle">8. From diagnosis to verified fix: the issue lifecycle</a></li><li><a href="#9-cybersecurity-the-safety-model">9. Cybersecurity: the safety model</a></li><li><a href="#10-model-governance-routing-refusals-and-cost">10. Model governance: routing, refusals and cost</a></li><li><a href="#11-the-engineers-surface">11. The engineer&#x27;s surface</a></li><li><a href="#12-devops-and-release-engineering">12. DevOps and release engineering</a></li><li><a href="#13-verification-measurement-over-assertion">13. Verification: measurement over assertion</a></li><li><a href="#14-results">14. Results</a></li><li><a href="#15-how-i-build">15. How I build</a></li><li><a href="#16-lessons">16. Lessons</a></li><li><a href="#17-what-comes-next">17. What comes next</a></li><li><a href="#18-appendix-glossary">18. Appendix: glossary</a></li></ol></details>
+<h2 id="1-summary">1. Summary</h2>
+<p>NinjaToolKit turns the raw configuration of a managed estate into engineering work that closes. It ingests the
+output of a 47-section PowerShell collector and WatchGuard firewall exports, judges them with deterministic code,
+organizes every finding into one list of problems, and then runs a gated, adversarial multi-agent diagnosis on any
+server, area or client fleet. The diagnosis does not end in a report. It ends in issues, and each issue walks to a
+verified close: a read-only test the engineer runs and pastes back, a fix that a second agent reviews and the engineer
+approves, and a close that the next capture either confirms or reopens.</p>
+<p>Three design decisions define the system:</p>
+<ul>
+<li><strong>The model proposes; code decides; the engineer approves.</strong> Every agent output is parsed into a fixed shape and
+  held to evidence by code before it reaches a page. No module in the platform can execute anything on a client
+  machine. The engineer runs every script and approves every change.</li>
+<li><strong>Disagreement is structural.</strong> A single model asked to check its own diagnosis agrees with itself. The platform
+  gives a second agent a different task with a different success condition (break the diagnosis) and a third agent
+  the job of ruling between them.</li>
+<li><strong>Everything ships as one file.</strong> The platform is a single self-contained Windows executable with no runtime
+  dependency beyond the model API, so an engineer can run it on an office server from an empty folder.</li>
+</ul>
+<div class="table"><table>
+<thead>
+<tr>
+<th>At v8.1.0</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Product code</td>
+<td>204,142 lines of Python, plus a 4,021-line PowerShell collector</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>13,875 collected, 13,822 passed, 0 failed, in 156,974 lines of test code</td>
+</tr>
+<tr>
+<td>Standing verification</td>
+<td>19 harnesses and a 6-part release gate, run before every release</td>
+</tr>
+<tr>
+<td>Server judgment</td>
+<td>55 deterministic judges across nine areas of a server</td>
+</tr>
+<tr>
+<td>Firewall audit</td>
+<td>52 checks, mapped to 50 controls across four compliance frameworks</td>
+</tr>
+<tr>
+<td>Agents</td>
+<td>Proposer, challenger, arbiter and writer, plus a checker, a reviewer and a describer</td>
+</tr>
+<tr>
+<td>History</td>
+<td>4,585 commits and 56 tagged releases between March and September 2026</td>
+</tr>
+<tr>
+<td>Paid verification of the release</td>
+<td>One full diagnosis in the built executable: 4 model calls, $2.21, 21 issues</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="2-the-problem-and-its-constraints">2. The problem and its constraints</h2>
+<h3 id="21-the-operating-reality">2.1 The operating reality</h3>
+<p>A managed service provider audits estates it does not own, for clients who expect evidence, at a cadence set by
+the threat picture rather than by the calendar. Before this platform, a major audit meant senior engineers
+stitching together the partial views of several vendor tools, each of which saw one slice of the estate. By the
+team's own estimate that took 60 to 80 hours per engagement, and nothing carried forward: every audit was a one-off.</p>
+<p>The deeper problem was not the audit. It was what came after it. A report lists what is wrong; it does not
+diagnose why, it does not produce the test that would settle a doubt, and it does not track whether a fix held.
+That work happened in engineers' heads and in ticket threads, which is to say it was not recorded, not
+reproducible, and not reviewable.</p>
+<h3 id="22-what-the-platform-had-to-be">2.2 What the platform had to be</h3>
+<p>The constraints were set by the environment, and each one shaped the architecture:</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>Why it exists</th>
+<th>What it forced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One self-contained executable</td>
+<td>It runs on an office server used by the whole team, often with no development tooling installed</td>
+<td>No runtime dependencies beyond the model API; every asset bundled; a build check that nothing outside the bundle is opened</td>
+</tr>
+<tr>
+<td>The engineer is the gate</td>
+<td>The platform acts on client infrastructure under contract</td>
+<td>No transport to client machines at all; every script run by a person; every change approved by a person</td>
+</tr>
+<tr>
+<td>Evidence first</td>
+<td>Client deliverables must survive scrutiny</td>
+<td>Reports render the named entities behind every count; findings carry the lines that prove them</td>
+</tr>
+<tr>
+<td>Nothing seeded</td>
+<td>A demo estate in production code is a liability</td>
+<td>The application starts empty and shows only what was ingested</td>
+</tr>
+<tr>
+<td>Bounded, visible cost</td>
+<td>Model calls are paid per token, and a runaway argument is real money</td>
+<td>Every call priced before it is sent, a ceiling per argument, every call recorded</td>
+</tr>
+<tr>
+<td>Frontier models only</td>
+<td>A hallucinated finding in a client deliverable costs more than an expensive call</td>
+<td>No small-model tier; a cheaper model may describe but never diagnose</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="3-system-architecture">3. System architecture</h2>
+<h3 id="31-context">3.1 Context</h3>
+<figure class="diagram"><pre class="mermaid">flowchart LR
+    subgraph Estate[&quot;Client estate&quot;]
+        SRV[&quot;Windows servers&quot;]
+        FWD[&quot;WatchGuard firewalls&quot;]
+    end
+    subgraph NTK[&quot;NinjaToolKit: one executable on an office server&quot;]
+        ING[&quot;Ingest and parse&quot;] --&gt; WH[(&quot;Warehouse&quot;)]
+        WH --&gt; JDG[&quot;Judges and firewall engine&quot;]
+        JDG --&gt; PRB[&quot;One list of problems&quot;]
+        PRB --&gt; AGT[&quot;Agents&quot;]
+        AGT --&gt; CUR[&quot;Courier&quot;]
+        WH --&gt; REP[&quot;Client reports&quot;]
+    end
+    ENG((&quot;Engineer&quot;))
+    API[&quot;Claude API&quot;]
+    SRV --&gt;|&quot;collector output&quot;| ENG
+    FWD --&gt;|&quot;configuration export&quot;| ENG
+    ENG --&gt;|&quot;uploads&quot;| ING
+    AGT &lt;--&gt;|&quot;HTTPS, priced and recorded&quot;| API
+    CUR --&gt;|&quot;read-only test or reviewed fix&quot;| ENG
+    ENG --&gt;|&quot;runs it&quot;| SRV
+    ENG --&gt;|&quot;pastes the output&quot;| CUR
+</pre></figure>
+<p>The platform sits between the engineer and the estate, never between the estate and anything else. Data reaches
+it only through the engineer (a collector run, a configuration export), and work leaves it only through the
+engineer (a script to run). The one external network dependency is the model API, and it is used only when the
+engineer has switched the AI on.</p>
+<h3 id="32-layers">3.2 Layers</h3>
+<figure class="diagram"><pre class="mermaid">flowchart TB
+    L1[&quot;Collection: PowerShell collector v5.3, 47 sections&quot;]
+    L2[&quot;Parsing: capture parser, WatchGuard parser, roster matching&quot;]
+    L3[(&quot;Warehouse: SQLite, 17 forward-only migrations&quot;)]
+    L4[&quot;Judgment: 55 server judges, 52-check firewall engine, one finding shape&quot;]
+    L5[&quot;Record: append-only session events, Jobs, issues, reconciliation&quot;]
+    L6[&quot;Agents: argument, writer, checker, reviewer, describer, console turn&quot;]
+    L7[&quot;Evidence and custody: evidence cards, test packs, remediation packs, courier, return leg&quot;]
+    L8[&quot;Surface: Flask and Waitress, pages generated from the warehouse, live event channel&quot;]
+    L9[&quot;Reports: firewall and site audit client deliverables&quot;]
+    L1 --&gt; L2 --&gt; L3 --&gt; L4 --&gt; L5
+    L5 --&gt; L6 --&gt; L7 --&gt; L5
+    L3 --&gt; L8
+    L5 --&gt; L8
+    L3 --&gt; L9
+</pre></figure>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Representative modules</th>
+<th>Size at v8.1.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Collection</td>
+<td>the PowerShell collector</td>
+<td>4,021 lines</td>
+</tr>
+<tr>
+<td>Parsing</td>
+<td>capture parser, firewall engine and parser, client registry</td>
+<td>6,723, 12,940 and 4,078 lines</td>
+</tr>
+<tr>
+<td>Judgment</td>
+<td>server judges, one finding shape</td>
+<td>55 judges</td>
+</tr>
+<tr>
+<td>Record</td>
+<td>console session, event log, Jobs, run record, reconciliation</td>
+<td>13 event kinds</td>
+</tr>
+<tr>
+<td>Agents</td>
+<td>argument, issue write-up, reading check, fix review, describe, console runner</td>
+<td>7 agent roles</td>
+</tr>
+<tr>
+<td>Evidence and custody</td>
+<td>evidence cards, target packs, script analysis, remediation packs, courier, return leg</td>
+<td></td>
+</tr>
+<tr>
+<td>Surface</td>
+<td>the Flask application, the page server, 98 console modules</td>
+<td>68,088 lines in <code>ui/</code></td>
+</tr>
+<tr>
+<td>Reports</td>
+<td>the firewall and site audit renderers</td>
+<td>49,526 lines</td>
+</tr>
+<tr>
+<td>Model access</td>
+<td>one API client, model registry, call ledger, master switch</td>
+<td>24 modules in the AI package</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="33-runtime-model">3.3 Runtime model</h3>
+<p>The executable starts a Flask application under the Waitress WSGI server, creates a <code>data</code> folder beside itself
+for the SQLite warehouse and logs, and serves the console on a local port. Pages are generated on the server from
+the warehouse and carry their own scripts and styles; there is no front-end build step and no framework. A page
+build is reused only while it is less than 20 seconds old and the warehouse tables it reads have not changed, so no
+page opens out of date after a diagnosis writes to the record.</p>
+<p>Long-running work (an argument between agents takes minutes) runs on a background thread per session. The page
+follows it through a server-sent event stream keyed by the session's event sequence number, so a dropped
+connection resumes exactly where it stopped, and one shared poller tells every open page which runs are live.</p>
+<h3 id="34-the-record-is-the-source-of-truth">3.4 The record is the source of truth</h3>
+<p>Everything the console does is an event in an append-only log, one session per object (a server, a client, a
+problem). A Job is not a table. It is a reading of that log: the operator event that dispatched the agents, the
+agents' turns and claims, the case they built, the scripts they issued, the issues they wrote, and the events that
+closed them. Because the log is append-only and every projection is rebuilt from it, a restart cannot corrupt a
+Job, and a run that a dead process left open is found at boot, marked stopped, and offered for resumption.</p>
+<p>The log has one rule that runs through the whole platform: <strong>absence is not zero.</strong> A script with no returned
+output is "not returned", never "returned empty". A capture that could not read a section says so, and that is
+kept apart from "measured and found nothing". A missing setting for the AI switch reads as off.</p>
+<hr />
+<h2 id="4-data-engineering-from-a-powershell-capture-to-one-list-of-problems">4. Data engineering: from a PowerShell capture to one list of problems</h2>
+<h3 id="41-the-collector">4.1 The collector</h3>
+<p>The collector is a 4,021-line PowerShell script (version 5.3) that runs on each Windows server through the
+remote-management tool the team already uses, or directly on the console. It captures 47 sections of configuration
+and state: hardware and firmware, the operating system and its servicing stack, patches, services and their
+accounts, listening ports, scheduled tasks, local and domain accounts, group membership, shares and NTFS
+permissions, all four certificate stores, the host firewall, DNS, time, event logs, backup and volume shadow copy
+state, disk health, BitLocker and TPM, Kerberos delegation, LAPS, LSA protection, SMB, TLS and RDP posture, WinRM,
+installed software, and more.</p>
+<p>It is designed around one rule: <strong>it captures what an engineer needs to reason about credential exposure, and never
+the credentials themselves.</strong> It reads password-set timestamps, service principal names, encryption types and
+NTLM compatibility levels. It does not read passwords, hashes, LSA secrets or DPAPI keys.</p>
+<h3 id="42-ingestion">4.2 Ingestion</h3>
+<p>Three inputs go in, in a fixed order, through one drop on the Add data page:</p>
+<ol>
+<li><strong>The device roster</strong> (an export from the remote-management portal). It defines which clients and servers
+   exist, and nothing else can be saved until it is in.</li>
+<li><strong>The collector's capture.</strong> One text file may hold hundreds of servers. The parser splits it by host, strips
+   the remote-management tool's wrapper text, matches each host to the roster, and stores the parsed sections.</li>
+<li><strong>The firewall exports.</strong> Each WatchGuard XML export is parsed, audited by the full engine, and stored with its
+   canonical audit in one transaction, keyed to its client.</li>
+</ol>
+<p>The parser tolerates missing sections, partial sections and version drift between collector versions without
+dropping data, and it records what it could not read rather than defaulting it. Host names arrive uppercase in one
+source and lowercase in another; every join between them is case-insensitive, in the browser as well as on the
+server.</p>
+<h3 id="43-one-finding-shape">4.3 One finding shape</h3>
+<p>The two pillars produce findings in different ways. The server judges are functions over a parsed capture; the
+firewall engine is a set of checks over a normalized configuration model. An adapter maps both into one finding
+shape (what was found, why it is true on this machine, the evidence lines, what would make it wrong, the fix), and
+every consumer reads that shape. The judges and the engine were never rewritten to fit each other; the shape sits
+between them.</p>
+<p>On top of that shape sits <strong>one list of problems</strong>. The judges find what they were written to find. The agents,
+reading a server's whole capture, find the rest. Both land in the same list, one page per problem, worst first. An
+issue has exactly one home (a server and an area), an issue an older open Job already holds is shown as "already
+open" there rather than filed twice, and a problem found at two or more clients becomes a Global: a single brief
+for the team's project list rather than a separate ticket per client.</p>
+<h3 id="44-stable-identity">4.4 Stable identity</h3>
+<p>A finding that is renumbered between two audits cannot be tracked, compared or reopened. Findings therefore carry a
+content-derived identity: a registry of 91 signature recipes, one per finding type, each declaring which target
+fields and anchor fields identify it. The identity is the SHA-256 of the recipe and those normalized values. The same
+finding on the same target produces the same identity on every run; a different certificate, policy, listener or
+server produces a different one. Recipe identifiers are permanent: renaming one would orphan every record that
+refers to it.</p>
+<h3 id="45-four-invariants">4.5 Four invariants</h3>
+<p>Four rules hold across every layer, and each exists because breaking it once produced a wrong client deliverable:</p>
+<ol>
+<li><strong>Evidence first.</strong> A report renders the named entities behind every count. "Eight expired certificates" without
+   the certificate subjects is incomplete, however well it is laid out.</li>
+<li><strong>Comprehensiveness.</strong> A firewall audit is the whole firewall. There is no "top ten"; navigation layers over the
+   complete content and never replaces it.</li>
+<li><strong>Granularity preserved.</strong> Every field the collector captures survives capture, parsing, the page and the report
+   without collapsing into a count.</li>
+<li><strong>Commercial boundary.</strong> Client-facing reports carry no pricing, cost or margin content. The engineer's view
+   carries all of it. A test walks the rendered report and fails on any currency amount outside an engineer-only
+   container.</li>
+</ol>
+<hr />
+<h2 id="5-network-engineering-the-firewall-audit-engine">5. Network engineering: the firewall audit engine</h2>
+<h3 id="51-model-and-parser">5.1 Model and parser</h3>
+<p>The firewall pillar reads WatchGuard Fireware configuration exports. The parser builds a normalized model of the
+device: policies in their true processing order, aliases resolved to their members, service objects, NAT
+translations, interfaces and zones, IKE and IPsec policies, VPN tunnels, accounts and authentication servers,
+subscription services, and management settings. XML is parsed with a hardened parser, and the engine for each
+upload is its own instance, so two engineers auditing at once can never overwrite each other's device.</p>
+<h3 id="52-the-52-checks">5.2 The 52 checks</h3>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rule base</td>
+<td>overly permissive rules, shadowed rules, duplicate rules, unused and disabled rules, unattached and sparsely used objects, policy logging, configuration hygiene</td>
+</tr>
+<tr>
+<td>Exposure</td>
+<td>internet-facing services, dangerous ports, NAT exposure, deep NAT follow-through, remote access portal, geo-blocking posture</td>
+</tr>
+<tr>
+<td>Cryptography and VPN</td>
+<td>VPN security, VPN algorithms, tunnel scope, L2TP, SSL VPN, mobile VPN identity, TLS profiles</td>
+</tr>
+<tr>
+<td>Management plane</td>
+<td>management access, SNMP, logon banner, authentication posture, directory transport, credential exposure, plaintext integration credentials</td>
+</tr>
+<tr>
+<td>Inspection and threat services</td>
+<td>HTTPS inspection, proxy coverage, IPS, antivirus, advanced threat services, WebBlocker, application control, HTTP/3 and QUIC posture, DNS egress posture, DoS prevention, anti-spoofing</td>
+</tr>
+<tr>
+<td>Resilience and routing</td>
+<td>HA failover state, dynamic routing posture, IPv6 posture, wireless posture, missing security features</td>
+</tr>
+<tr>
+<td>Vulnerability intelligence</td>
+<td>firmware correlation against the known-exploited vulnerabilities catalog</td>
+</tr>
+<tr>
+<td>Traffic-log analysis</td>
+<td>traffic anomalies, denied patterns, policy hit correlation, geo-IP risks, command-and-control beaconing, lateral movement, blind spots</td>
+</tr>
+</tbody>
+</table></div>
+<p>Eight checks read traffic or device logs (the traffic-log group, plus unused and disabled rules, which needs hit
+counts). When the logs are not supplied, the audit states which checks did not run and why, rather than presenting a
+narrower audit as a complete one.</p>
+<h3 id="53-the-analysis-that-matters">5.3 The analysis that matters</h3>
+<p>Three pieces of network analysis do most of the work that a rule-by-rule reading cannot:</p>
+<ul>
+<li><strong>Precedence simulation.</strong> Policies are evaluated in the order the device evaluates them, with aliases resolved,
+  so a rule that can never match because an earlier rule already takes its traffic is found as a shadowed rule.
+  The detector compares the address space the aliases resolve to. An earlier version compared alias names, which
+  are unique per policy, so it could never match and never fired.</li>
+<li><strong>NAT follow-through.</strong> An exposure is not the policy port. A static NAT can publish an internal RDP host on a
+  non-standard external port, and a policy-level check that looks for port 3389 will see nothing. The engine follows
+  the translation to the real internal host and service, and names both.</li>
+<li><strong>Attack-chain correlation.</strong> Findings that are individually moderate can compose into a path: an exposed
+  service, a weak authentication posture behind it, and no inspection in between. The engine correlates findings
+  into chains and tags them with MITRE ATT&amp;CK techniques.</li>
+</ul>
+<h3 id="54-compliance-mapping">5.4 Compliance mapping</h3>
+<p>Every finding maps to the controls it affects across four frameworks, and every control's status (pass, fail, or not
+applicable because the data is not present) is derived from the findings rather than asserted:</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Framework</th>
+<th>Controls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PCI DSS v4.0</td>
+<td>11</td>
+</tr>
+<tr>
+<td>CIS Controls v8</td>
+<td>12</td>
+</tr>
+<tr>
+<td>NIST CSF 2.0</td>
+<td>14</td>
+</tr>
+<tr>
+<td>CMMC 2.0</td>
+<td>13</td>
+</tr>
+</tbody>
+</table></div>
+<p>A positive finding (a service confirmed enabled and active) affirms its control rather than failing it. That
+distinction was a defect once, and it is now a rule of the mapping.</p>
+<h3 id="55-at-scale">5.5 At scale</h3>
+<p>Run over the 36 WatchGuard exports available for this measurement, the engine produced 1,415 findings: 184 critical,
+260 high, 352 medium, 307 low and 312 informational. Every one carries the configuration evidence that raised it and
+the policy it concerns, cited by the number the device's own management interface shows.</p>
+<p>The engine's output feeds a 19-chapter client report and the firewall's page in the console, which can reopen the
+stored report at any time.</p>
+<hr />
+<h2 id="6-server-architecture-what-the-judges-read">6. Server architecture: what the judges read</h2>
+<p>The server pillar's 55 judges are deterministic functions over a parsed capture. Each one raises a finding only when
+the capture establishes it, names what would make it wrong, and files it into one of nine areas of a server:
+endpoint agents, network path, session host, identity and name, OS and resource, hardware, third-party software,
+policy, and outside the host.</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Area of concern</th>
+<th>Representative judges</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identity and Active Directory</td>
+<td>Domain Admins sprawl, unconstrained delegation, Kerberoastable service accounts, LDAP signing not required, legacy domain functional level, stale user and computer accounts, WDigest credential caching, services running as domain users or local administrators</td>
+</tr>
+<tr>
+<td>Exposure and protocols</td>
+<td>legacy SMB, legacy TLS, RDP without Network Level Authentication, WinRM Basic authentication, WinRM trusted-hosts wildcard, exposed database or cleartext services, host firewall off or open, custom rules opening risky ports, legacy name resolution, public DNS resolvers on domain members, unsafe dynamic DNS updates</td>
+</tr>
+<tr>
+<td>Endpoint protection</td>
+<td>no real-time protection, two endpoint products active at once, stale signatures, third-party remote access installed, Print Spooler on a domain controller</td>
+</tr>
+<tr>
+<td>Resilience and recovery</td>
+<td>no backup agent, unhealthy VSS writers, disk errors in the system log, volumes critically low, memory pressure, virtual machines in a critical state</td>
+</tr>
+<tr>
+<td>Lifecycle and servicing</td>
+<td>end-of-life operating systems and SQL Server instances, end-of-life software, stuck servicing stack, automatic updates disabled, unsupported firmware age, certificates expiring without replacement</td>
+</tr>
+<tr>
+<td>Configuration hygiene</td>
+<td>volume encryption absent, Secure Boot disabled, unrestricted PowerShell execution policy, legacy PowerShell engine, Telnet client present, broad share permissions, shares owned by deleted accounts, roles installed and never used</td>
+</tr>
+</tbody>
+</table></div>
+<p>Eighteen judges also declare a named doubt: a condition the capture cannot settle on its own, such as whether a
+legacy protocol is still in use by something on the network. Those doubts are what the agents' tests are built to
+settle (Section 8). Thirty-nine judges carry a remediation, so a finding the engineer wants fixed without a
+diagnosis can go straight to a Change Job whose issues come from code rather than a model.</p>
+<hr />
+<h2 id="7-agentic-orchestration-the-adversarial-diagnosis">7. Agentic orchestration: the adversarial diagnosis</h2>
+<h3 id="71-why-one-agent-is-not-enough">7.1 Why one agent is not enough</h3>
+<p>A model asked "what is wrong with this server" commits to an answer and then defends it. Asked to check its own
+proposal, it agrees with itself. In a real investigation the most expensive fault is the one everybody agreed on,
+because an over-determined problem (several independent faults that can each produce the symptom) hides behind the
+first plausible cause.</p>
+<p>The platform's answer is to separate the roles and give each a different success condition. Retractions that took
+an engineer a day by hand now happen inside the same run.</p>
+<h3 id="72-the-protocol">7.2 The protocol</h3>
+<figure class="diagram"><pre class="mermaid">sequenceDiagram
+    autonumber
+    participant E as Engineer
+    participant A as Application
+    participant P as Proposer
+    participant C as Challenger
+    participant R as Arbiter
+    participant W as Writer
+    E-&gt;&gt;A: Start a Job on a server, an area or a fleet
+    A-&gt;&gt;A: Build evidence cards and price every seat against the ceiling
+    A-&gt;&gt;P: The capture and the evidence cards
+    P--&gt;&gt;A: Candidate causes, streamed line by line
+    A-&gt;&gt;C: The capture, the evidence and the proposer's candidates
+    C--&gt;&gt;A: Downgrades, exonerations and missed causes
+    A-&gt;&gt;R: The capture and both positions
+    R--&gt;&gt;A: A ruling on every candidate, disputed ones first
+    A-&gt;&gt;W: The rulings, the findings and the case
+    W--&gt;&gt;A: Issues grouped by what settles or fixes them
+    A-&gt;&gt;A: Strike anything the rulings do not support
+    A--&gt;&gt;E: Issues on the Job page, filed under problems
+</pre></figure>
+<ul>
+<li><strong>The proposer</strong> enumerates candidate causes exhaustively, across all nine areas. A cause it thinks unlikely still
+  goes on the tree at a low status, because the value of the tree is that the whole solution space is visible.</li>
+<li><strong>The challenger</strong> is told that its task is not to agree. It receives the proposer's candidates and attacks each one
+  it can, with evidence: usually a downgrade, and "exonerated" when the capture actually rules the cause out. It is
+  told not to downgrade what it cannot attack, and to add the causes the proposer missed.</li>
+<li><strong>The arbiter</strong> receives the capture and both positions and rules on every candidate either seat raised, naming the
+  evidence that decided each dispute. It may rule that two candidates are the same fault on different machines, or
+  that one is a consequence of another. It is told not to split the difference.</li>
+<li><strong>The writer</strong> turns the rulings into issues: what was found, what it does, and what to do, grouped by what settles
+  or fixes them (the same test settles them, or the same change closes them), in the order an engineer works them:
+  tests first, then fixes, then questions for the client, then projects.</li>
+</ul>
+<h3 id="73-the-claim-as-a-contract">7.3 The claim as a contract</h3>
+<p>Every agent writes candidates in one fixed line format:</p>
+<pre><code>CANDIDATE: &lt;id&gt; | &lt;area A-I&gt; | &lt;symptom&gt; | &lt;status&gt; | &lt;hypothesis&gt; | &lt;evidence&gt; | &lt;hosts&gt;
+</code></pre>
+<p>and every status has one meaning:</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>confirmed</td>
+<td>The capture establishes that the fault is present.</td>
+</tr>
+<tr>
+<td>strong</td>
+<td>It leads, and something still has to prove it.</td>
+</tr>
+<tr>
+<td>plausible</td>
+<td>It fits, and nobody has tested it. The honest state of most of a real investigation.</td>
+</tr>
+<tr>
+<td>weak</td>
+<td>Noted, minor, and would not change what anyone does.</td>
+</tr>
+<tr>
+<td>exonerated</td>
+<td>Tested and ruled out by evidence in this capture, which must be named.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A candidate is always written as the fault, never as its negation, so "confirmed" always means the fault is present.
+That rule came from measurement: when agents were allowed to write "memory is not a contributor", a later seat
+promoted it to "confirmed", and the page listed a healthy subsystem among the confirmed faults.</p>
+<p>The format is deliberately six fields and no more. Every extra field is one more thing a line can get wrong, and a
+malformed line is a lost hypothesis. Code parses the lines; the model never decides what the page shows.</p>
+<h3 id="74-designed-for-truncation">7.4 Designed for truncation</h3>
+<p>The arbiter's work grows with the number of candidates, and a real server can produce dozens. Its output can be cut
+off at a length limit. The protocol makes that failure graceful rather than silent:</p>
+<ul>
+<li>The tree is folded by <strong>last assertion wins</strong>, so a candidate the arbiter never reaches keeps the status the
+  earlier seats gave it. That is a true statement about the investigation, not a gap.</li>
+<li>The arbiter is told to rule on <strong>disputed candidates first</strong>, so a cut loses only the candidates nobody was
+  arguing about.</li>
+<li>Every seat is told to <strong>lead with its lines</strong> and put commentary after them, so a truncation never destroys a
+  seat's entire contribution.</li>
+</ul>
+<h3 id="75-context-engineering">7.5 Context engineering</h3>
+<p>Each seat reasons over <strong>evidence cards</strong> built by code, and every claim must cite a card:</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Card</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F</td>
+<td>The server's judged findings: what, why, the evidence, and what would make it wrong</td>
+</tr>
+<tr>
+<td>P</td>
+<td>How the server differs from its peers (same client, same role): services, software, endpoint products, DNS servers, pending reboot, uptime</td>
+</tr>
+<tr>
+<td>E</td>
+<td>The last critical and error events the capture kept, and event sources compared with the peer median</td>
+</tr>
+<tr>
+<td>M</td>
+<td>What the capture could not say, kept apart from what it measured and found clean</td>
+</tr>
+<tr>
+<td>N</td>
+<td>The client's standing notes: what must not be touched, and why</td>
+</tr>
+</tbody>
+</table></div>
+<p>A seat that needs more context can ask for it in the same fixed format (<code>NEED: &lt;host&gt; | &lt;reason&gt;</code>), and the platform
+supplies a neighbor's capture within the cost ceiling. The capture itself is never summarized or truncated to fit a
+budget: a digest hands the model the statistic and throws away the evidence, so a seat that cannot be afforded in
+full is refused instead.</p>
+<h3 id="76-holding-the-output-to-the-evidence">7.6 Holding the output to the evidence</h3>
+<p>Three agents exist only to hold other agents to evidence, and code makes the final decision in each case:</p>
+<ul>
+<li><strong>The writer is held to the rulings.</strong> An issue that names a machine, a number, a path or a quoted name that is not
+  in the rulings, the findings or the case is dropped and reported, never kept. Ruling identifiers and finding keys it
+  does not recognize are struck.</li>
+<li><strong>The checker holds a reading to its output.</strong> When the engineer pastes a test's output, a principal agent rules
+  causes confirmed or ruled out. The checker sees only the raw output and those rulings, and must quote, for each
+  ruling, the line of the output that shows it. Code then keeps a ruling only if its quoted line is really in the
+  output. What the output shows that no ruling addresses comes back as new, untested candidates.</li>
+<li><strong>The reviewer checks a fix before it is offered.</strong> It reads the server's capture, the case and the change in its
+  four parts, and objects only on the machine's own evidence: a backup that saves nothing the revert can use, a revert
+  that does not restore, a verification that cannot see the fault, dependencies of what the change touches, and
+  whether it runs under Windows PowerShell 5.1 as SYSTEM. A blocking objection to the backup or the revert holds the
+  fix; a change that cannot be undone is not offered on a promise.</li>
+</ul>
+<p>A fourth, the <strong>describer</strong>, runs on a cheaper model and does only one thing: it names the problem a ruling states,
+so the same problem on another server files with it. It rules on nothing and adds nothing to an issue's evidence.</p>
+<h3 id="77-live-orchestration">7.7 Live orchestration</h3>
+<p>Claims are drawn as the agents write them. The model's streamed text is read line by line as it arrives; each
+completed candidate line is parsed and handed to the page, where it appears as a provisional mark on its seat's
+lane and in the Job's board ("3 claims so far" and the newest title). The writer's issues appear as rows while it
+writes them. When a seat finishes, its claims are saved to the record with the moment each was written, and the
+provisional marks become permanent.</p>
+<p>In-flight claims live only in the run's memory. A claim counts only when its seat finishes, so a stopped or failed
+seat saves nothing half-written, and every reader of the record sees exactly what it saw before live drawing
+existed.</p>
+<hr />
+<h2 id="8-from-diagnosis-to-verified-fix-the-issue-lifecycle">8. From diagnosis to verified fix: the issue lifecycle</h2>
+<h3 id="81-the-lifecycle">8.1 The lifecycle</h3>
+<figure class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --&gt; NeedsTest: an issue to settle
+    [*] --&gt; NeedsFix: an issue to fix
+    NeedsTest --&gt; TestIssued: agents write a read-only test
+    TestIssued --&gt; TestReturned: engineer runs it and pastes the output
+    TestReturned --&gt; Settled: courier verifies, checker holds the reading
+    Settled --&gt; NeedsFix: fault confirmed
+    Settled --&gt; Closed: checked, not a problem
+    NeedsFix --&gt; Proposed: agents write the fix
+    Proposed --&gt; Held: reviewer blocks the backup or revert
+    Held --&gt; Proposed: fix rewritten
+    Proposed --&gt; Approved: engineer approves
+    Proposed --&gt; NeedsFix: engineer refuses
+    Approved --&gt; Verified: engineer runs it and pastes the output
+    Verified --&gt; Closed: closed as fixed
+    Closed --&gt; Reopened: next capture still raises it
+    Reopened --&gt; NeedsFix
+</pre></figure>
+<p>The engineer can do everything from the issue's own page: ask the agents for a test or a fix, copy the script, paste
+the output back, approve or refuse, and close with a reason. The agents' answer lands on the same page.</p>
+<h3 id="82-tests-that-settle-one-doubt">8.2 Tests that settle one doubt</h3>
+<p>A test is not an improvised script. It is built from a <strong>target pack</strong>: a named, reviewable collection that exists to
+settle one disclosed doubt, and whose rule is that a pack with no doubt to settle is a fishing trip. That rule came
+from measurement. Measured across the live estate in September 2026, doubts the judges could already settle from the
+capture accounted for 83 findings; doubts only the machine could answer accounted for 770. Only the second kind
+earns a pack.</p>
+<p>Every pack is read-only and declares it in its first line, carries a manifest of the sections it attempted and
+returned, and is addressed by host name and doubt identifier, never by a database row number that could name a
+different record in another database. The shape is borrowed from digital forensics collection tooling: curated,
+named, composable targets that a person can review in one line ("settle this doubt on this server: six checks,
+read-only") instead of forty lines of PowerShell.</p>
+<h3 id="83-chain-of-custody">8.3 Chain of custody</h3>
+<figure class="diagram"><pre class="mermaid">flowchart LR
+    ISS[&quot;Issue a script under a run token&lt;br/&gt;token scope: host, pack declaration, body hash&quot;] --&gt; RUN[&quot;Engineer runs it on the server&quot;]
+    RUN --&gt; PST[&quot;Engineer pastes the output&quot;]
+    PST --&gt; TOK{&quot;Token known and outstanding?&quot;}
+    TOK -- no --&gt; REJ[&quot;Refused on the spot, no model call&quot;]
+    TOK -- yes --&gt; SHA{&quot;Output carries the same script hash?&quot;}
+    SHA -- no --&gt; REJ
+    SHA -- yes --&gt; MAN{&quot;Manifest complete?&quot;}
+    MAN -- &quot;cut off&quot; --&gt; PART[&quot;Read as incomplete, never as complete&quot;]
+    MAN -- yes --&gt; REB[&quot;Rebuild the pack from the token's declaration&quot;]
+    REB --&gt; CHK[&quot;Checker holds the reading to the output&quot;]
+    CHK --&gt; EVD[&quot;Evidence on the issue&quot;]
+</pre></figure>
+<p>The courier makes issuing and returning one transaction. The pack is always rebuilt from the token's own scope and
+never taken from the caller, because a caller that supplies a pack on return could supply a different pack from the
+one issued, and every check would then be read against the wrong questions without any error, since the shapes
+match. The script hash is the chain of custody: it proves that the script that ran is the script that was
+approved. A paste that is not the issued script's output is answered immediately, without a model call.</p>
+<p>A returned test is evidence, never a remediation. The distinction is encoded, not named: a read-only pack cannot mark
+anything as fixed, because if a diagnostic return could, every collection would flip its findings to "resolved" the
+moment the loop began to run.</p>
+<h3 id="84-fixes-with-four-parts">8.4 Fixes with four parts</h3>
+<p>A fix is a <strong>remediation pack</strong>, and a pack without all four parts is refused:</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backup</td>
+<td>Runs always, even in preview. A backup that only runs when the change applies has no backup at the moment one is needed.</td>
+</tr>
+<tr>
+<td>Apply</td>
+<td>Runs only when the engineer sets one variable. The script ships inert.</td>
+</tr>
+<tr>
+<td>Revert</td>
+<td>The literal command that undoes the change, printed into the transcript so it survives whether or not anyone kept the console. A pack may declare the change not reversible, and the proposal then says so where the engineer cannot miss it; it may not leave the field empty.</td>
+</tr>
+<tr>
+<td>Verify</td>
+<td>Runs before and after the change, so the transcript carries both states.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A script analyser classifies every script, test or fix, into one of three states: reads only; changes, with each change
+listed as a plain sentence ("stops the Print Spooler service, sets one registry value"); or unreadable, when any
+token cannot be classified. Unreadable is shown most prominently, because it is the one answer nobody can check.
+The analyser uses an allow list rather than a deny list: a deny list is never complete, and an allow list fails in
+the safe direction by refusing to describe some legitimate scripts rather than calling an unsafe one safe.</p>
+<h3 id="85-closing-and-reconciling">8.5 Closing and reconciling</h3>
+<p>An issue closes with one of a fixed set of reasons: fixed, the client accepts the risk, on the client's plan, not
+ours to fix, the client answered, checked and not a problem, or a duplicate. A decision (accepted, planned, not ours,
+answered, checked) holds for 90 days by default, or until the finding becomes worse than it was when decided, and the
+page keeps listing it as still present.</p>
+<p>When a new capture arrives, the platform reconciles every Job on that machine against what its judges now raise.
+An open issue whose findings a complete new capture no longer raises closes as fixed. An issue closed as fixed whose
+finding is still raised reopens: the fix did not hold. A capture that is incomplete closes nothing, because a judge
+that cannot see its input raises nothing, exactly as it does on a clean machine. This is how a risk register treats a
+decided risk: on record, on a clock, and back on the list the moment it grows.</p>
+<hr />
+<h2 id="9-cybersecurity-the-safety-model">9. Cybersecurity: the safety model</h2>
+<p>The platform acts on client infrastructure, and its safety model is built so that the strongest guarantees are
+structural rather than procedural.</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Threat</th>
+<th>Control</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>An agent changes a client system</td>
+<td>There is no transport. No module can open a session to a host; a test asserts that the console runner imports nothing capable of execution, and the courier is held to the same rule. The engineer runs every script.</td>
+</tr>
+<tr>
+<td>A diagnostic script mutates a server</td>
+<td>Test packs are read-only by construction and refused at build time otherwise. The script analyser lists every change a script makes, or marks it unreadable.</td>
+</tr>
+<tr>
+<td>A fix cannot be undone</td>
+<td>A remediation pack requires a backup that always runs and a literal revert command. The reviewer's blocking objection to either holds the fix.</td>
+</tr>
+<tr>
+<td>A fix runs without approval</td>
+<td>Fixes ship inert, and a proposal is offered to the engineer, who approves or refuses it on the issue page. Every decision is an event in the log.</td>
+</tr>
+<tr>
+<td>Pasted output is forged, altered, or from another script</td>
+<td>Run tokens, script hashes and manifests; the pack rebuilt from the token, never from the caller.</td>
+</tr>
+<tr>
+<td>An agent invents facts</td>
+<td>Fixed claim format parsed by code; the writer held to the rulings; the checker held to quoted lines; unknown identifiers struck.</td>
+</tr>
+<tr>
+<td>Secrets leak</td>
+<td>The collector captures no credentials. The API key is encrypted at rest. A scrubber redacts key, header, JSON and bearer-token patterns from any string headed to a page, a log or a response. A plaintext integration credential in a firewall export is fingerprinted at extraction, so the raw value never reaches the parser's objects or a report.</td>
+</tr>
+<tr>
+<td>Malicious configuration files</td>
+<td>XML is parsed with a hardened parser that refuses entity expansion.</td>
+</tr>
+<tr>
+<td>The AI runs when it should not</td>
+<td>One master switch, off by default. A missing, corrupt or non-literal setting reads as off, never as a default that something later overrides.</td>
+</tr>
+<tr>
+<td>Client pricing leaks into a deliverable</td>
+<td>The commercial boundary: client-facing HTML carries no currency amounts outside engineer-only containers, enforced by a test that walks the rendered document.</td>
+</tr>
+<tr>
+<td>The model is asked to produce offensive content</td>
+<td>Every agent's instructions state who the work is for and that it is defensive: describe a weakness in the terms needed to fix it, never the steps to exploit it.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Two principles run through all of it. The first is that <strong>the human gate must be informed to be real</strong>: a
+"mutating: true" flag tells an engineer to be careful, while a list of what the script changes tells them what to
+check. The second is that <strong>a guard must fail toward the safe state</strong>: an unknown model is priced at the most
+expensive rate, an unreadable setting is off, an unclassifiable script is unreadable, and an incomplete capture closes
+nothing.</p>
+<hr />
+<h2 id="10-model-governance-routing-refusals-and-cost">10. Model governance: routing, refusals and cost</h2>
+<h3 id="101-which-model-does-what">10.1 Which model does what</h3>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Opus 5.5</td>
+<td>Every diagnostic seat, the writer, the checker, the reviewer and the console</td>
+</tr>
+<tr>
+<td>Claude Opus 5</td>
+<td>The fallback when Opus 5.5 declines a request</td>
+</tr>
+<tr>
+<td>Claude Sonnet 5</td>
+<td>Description only: a problem's name, a brief field. It never diagnoses.</td>
+</tr>
+</tbody>
+</table></div>
+<p>There is no small-model tier. Cost is governed by the ceiling and by deciding whether a call runs at all, never by
+lowering the quality of the model that does the reasoning.</p>
+<h3 id="102-refusal-routing">10.2 Refusal routing</h3>
+<p>Frontier models decline some security synthesis, and a diagnostic platform for security configuration will meet
+that regularly. The platform handles it as a routing problem, openly:</p>
+<figure class="diagram"><pre class="mermaid">flowchart TD
+    Q[&quot;A call for a seat, the writer, the checker or the reviewer&quot;] --&gt; G{&quot;AI switch on?&quot;}
+    G -- &quot;no, or unreadable&quot; --&gt; X[&quot;Refused and recorded, no call&quot;]
+    G -- yes --&gt; B{&quot;Priced within the ceiling?&quot;}
+    B -- no --&gt; Y[&quot;Seat refused; the capture is never truncated&quot;]
+    B -- yes --&gt; H{&quot;Opus 5.5 declined this content before,&lt;br/&gt;or 2 of its last 3 calls of this kind?&quot;}
+    H -- no --&gt; O[&quot;Send on Opus 5.5&quot;]
+    H -- yes --&gt; F[&quot;Send on Opus 5 first&lt;br/&gt;(every 10th call retries Opus 5.5)&quot;]
+    O --&gt; R{&quot;Declined?&quot;}
+    R -- yes --&gt; F2[&quot;Resend once on Opus 5&quot;]
+    R -- no --&gt; L[&quot;Record the call and its price&quot;]
+    F --&gt; L
+    F2 --&gt; L
+</pre></figure>
+<p>A refused request is resent once on the fallback model. After that, calls for the same content (one server's session)
+or the same kind of work (a seat, the reviewer) go to the fallback first, and every tenth such call tries the primary
+model again, so a model that starts answering is noticed. A refused call is priced at the dearer of the model asked
+and the model that answered. The platform never rewords a request to get past a model's safety classifier; the
+legitimate route for security work of this kind is the model provider's verification program.</p>
+<h3 id="103-cost-control">10.3 Cost control</h3>
+<ul>
+<li><strong>Priced before sent.</strong> Every seat is priced before it is sent against a ceiling of $8.00 for the whole argument,
+  sized to hold the capture, two neighbor captures and one resend.</li>
+<li><strong>One ledger.</strong> Every model call writes one row to a call ledger beside its log line, with the session, the
+  purpose, the model, the tokens, the cache reads and writes, the stop reason and the price, so the database and the
+  log always hold the same calls at the same prices.</li>
+<li><strong>One source of truth for models and prices.</strong> Before it existed, the codebase held 49 hard-coded model identifiers
+  across 13 files and two pricing tables that disagreed by a factor of 3.2 for the same model. Now one module owns
+  identity and pricing, and an unknown model is priced at the most expensive rate, because over-charging produces a
+  visible early stop and under-charging produces a silent overrun.</li>
+<li><strong>Measured, never recalled.</strong> Spend is read from the ledger and the logs. The paid model calls made to build and
+  prove the v8 release line, as recorded, cost $122.37 in total.</li>
+</ul>
+<h3 id="104-testing-without-spending">10.4 Testing without spending</h3>
+<p>Every agent flow was built and proven first against a local stand-in for the model API that streams scripted
+responses line by line at a chosen pace. On request it returns rate-limit, overload and authentication errors, a
+credit-exhausted error, a stream cut mid-answer, a reply stopped at the length limit, a refusal, an empty reply or a
+malformed write-up, and it can answer slowly enough that a test watches claims arrive mid-seat. Its costs are
+marked as pretend. Paid calls were reserved for proofs that only a real model can give, each with a budget set in
+advance.</p>
+<hr />
+<h2 id="11-the-engineers-surface">11. The engineer's surface</h2>
+<h3 id="111-pages">11.1 Pages</h3>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Page</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Home</td>
+<td>The inbox: what is waiting on the engineer, agents at work, servers ready to start</td>
+</tr>
+<tr>
+<td>Findings</td>
+<td>One list of problems, worst first, one page per problem</td>
+</tr>
+<tr>
+<td>Clients, and a client's page</td>
+<td>A fleet's problems sorted by shape: one change fixes it everywhere, spread across the fleet, or on a few machines</td>
+</tr>
+<tr>
+<td>A server's page</td>
+<td>Everything wrong on that machine, its capture section by section, and the Diagnose control</td>
+</tr>
+<tr>
+<td>Firewalls, and a firewall's page</td>
+<td>The device, its findings, its policies, and its stored report</td>
+</tr>
+<tr>
+<td>Jobs, a Job's page, an issue's page</td>
+<td>The work: the board of seats, the argument drawn live, the issues, and each issue's steps to a close</td>
+</tr>
+<tr>
+<td>Add data</td>
+<td>The three inputs in order, with what each file contributed and what it could not read</td>
+</tr>
+<tr>
+<td>Settings</td>
+<td>The AI switch and key, and only controls that work</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="112-the-console-and-the-drawing">11.2 The console and the drawing</h3>
+<p>Every page carries a console bound to that page's object: a server, a client, a problem or a Job. The engineer can
+ask a question, steer the next agent ("member servers only"), or stop a run in flight. The console's left pane lists
+every session with a live run, including runs started from another page or another browser tab, within seconds.</p>
+<p>The argument is drawn as it happens: one lane per seat, each claim a mark placed at the moment it was written, its
+shape and color carrying its status, and a thread connecting a claim's status across the seats that ruled on it. A
+Replay control plays a finished argument back in time.</p>
+<h3 id="113-the-guide">11.3 The guide</h3>
+<p>Every page names the one thing to do next and draws a line to it: "Copy the script and run it on this server",
+"Read the reviewer, then approve the fix", "Open the report". The guide exists because the target user is a colleague
+who opens the application for the first time and has to know how to start working on servers.</p>
+<h3 id="114-the-design-system">11.4 The design system</h3>
+<p>The console follows a written design system and a ratified set of templates, checked by a lint that runs with the
+release gates: a near-black ground with bone-colored ink, a serif face for narrative text, a sans-serif face for
+labels, a monospaced face for figures, and one perceptually uniform color ramp (defined in OKLCH) reserved for
+severity, so color always means an exception and never decoration. Every count on a page opens to the named entities
+behind it.</p>
+<hr />
+<h2 id="12-devops-and-release-engineering">12. DevOps and release engineering</h2>
+<h3 id="121-one-file">12.1 One file</h3>
+<p>The platform is built with PyInstaller into one executable of 68,995,857 bytes. The console's modules are bundled as
+data rather than analyzed as code, which means the packager cannot see what they import; a guard derives the list of
+hidden imports from the source so the build cannot silently omit one. A second check scans the runtime tree and fails
+if anything opens or defaults to a path outside the bundle and the data folder. Paths that are harmless from source
+can be wrong when frozen, so every release is proven on the built executable, not only on the source.</p>
+<h3 id="122-the-release-pipeline">12.2 The release pipeline</h3>
+<figure class="diagram"><pre class="mermaid">flowchart LR
+    B[&quot;Work on the branch&lt;br/&gt;each piece proven on the stand-in&quot;] --&gt; S[&quot;Full suite in three processes&quot;]
+    S --&gt; G[&quot;Release gate&lt;br/&gt;6 sub-gates&quot;]
+    G --&gt; H[&quot;19 standing harnesses&quot;]
+    H --&gt; P[&quot;Both client report proofs&quot;]
+    P --&gt; X[&quot;Build the executable&quot;]
+    X --&gt; W[&quot;Walk it from an empty folder&lt;br/&gt;every page, every act&quot;]
+    W --&gt; K[&quot;Package with its SHA-256&quot;]
+    K --&gt; M[&quot;Merge, tag, push, release&lt;br/&gt;each on the owner's approval&quot;]
+</pre></figure>
+<ul>
+<li><strong>The suite</strong> (13,875 tests) runs in three sequential processes so that peak memory stays at a third of a single
+  run on the development workstation.</li>
+<li><strong>The release gate</strong> has six sub-gates: an exemplar voice score for generated prose, a rendered report review,
+  prompt-library coverage, a compliance-gap inventory, a dependency vulnerability audit, and template syntax
+  validation. It exits non-zero on any failure.</li>
+<li><strong>The walk</strong> starts the built executable from an empty folder and drives it the way its buttons drive it: the
+  splash, the three inputs, a firewall audit and its reopened report, a Diagnose started from Home, the agents'
+  claims captured mid-seat, a test asked for and pasted back on the issue page, a fix reviewed, approved and run, and
+  the issue closed. Every page must show its next step and throw no error.</li>
+<li><strong>Every release is tagged</strong>, its notes are written before the tag, and earlier releases remain available so that
+  any version can be fallen back to. A pre-push hook in the repository refuses every push to the release branch;
+  its override is used only at an approved release, by the owner.</li>
+</ul>
+<h3 id="123-schema-evolution">12.3 Schema evolution</h3>
+<p>The warehouse is SQLite with 17 migrations, each forward-only, transactional and idempotent, keyed on a schema
+version row. A failed migration rolls back to its pre-migration state. A test fixture runs the whole migration chain
+against a disposable database for every test that needs one.</p>
+<hr />
+<h2 id="13-verification-measurement-over-assertion">13. Verification: measurement over assertion</h2>
+<h3 id="131-why-the-harnesses-exist">13.1 Why the harnesses exist</h3>
+<p>At one point in the platform's history, 85 rendered-output invariants, all six release gates and roughly 12,300 tests
+passed at the same time as a domain controller exposed to a well-known print-spooler vulnerability scored 100 and
+"Healthy" on the engineer's dashboard. Every verification surface said the product was correct, and the product was
+not correct.</p>
+<p>The response changed what gets verified. The 19 standing harnesses do not re-run the test suite. They prove that
+specific defects stay closed and that rendered output matches its evidence, and they print the evidence beside every
+verdict.</p>
+<h3 id="132-the-forensic-campaign-historical-august-2026">13.2 The forensic campaign (historical, August 2026)</h3>
+<p>I then stopped building and audited the platform against itself: a complete read of both pillars, 1,313 findings
+triaged, and about 86 fixes. Every fix's expected measurements were written down before the edit, so a prediction
+could not be adjusted to fit its result. <strong>66 predictions held and 32 were refuted</strong>, and several refutations stopped
+fixes that would have made the product worse: one recorded prescription would have shipped 69 false high-severity
+findings, another would have hidden a real exposure on 176 hosts.</p>
+<p>Representative findings, each measured rather than inferred:</p>
+<ul>
+<li>A delivered firewall report stated that no internet-facing RDP exposure existed, while nine enabled policies
+  published RDP to named internal hosts through static NAT on non-standard external ports. The port check was
+  correct and saw nothing; the only check that followed the NAT translation was unreachable. Corrected, that one
+  sentence became ten critical findings naming the terminal servers.</li>
+<li>Every server in every delivered site report was banded critical, because a certificate condition read all four
+  certificate stores where its own comment said it read the Personal store. Windows accumulates expired root
+  certificates, so the condition was true on every host, and every other threshold in the function was unreachable.</li>
+<li>A regular expression that crossed a line break bound 829 parsed fields to the next field's label.</li>
+<li>Finding identifiers were list positions, and 25 of 26 changed meaning between two runs. Making them content-derived
+  (Section 4.4) made the entire back catalogue comparable.</li>
+<li>Two concurrent uploads under a multi-threaded server could save one client's configuration under another client's
+  name. Four obvious fixes were each ruled out by measurement before the one that worked: a per-request context
+  registry behind a forwarding proxy that left all 97 call sites unchanged.</li>
+</ul>
+<p>The bias the refutations revealed is the finding I value most: almost every wrong prediction assumed the platform
+was worse than it measured. Knowing that changes how I read my next hypothesis.</p>
+<h3 id="133-rules-that-came-out-of-it">13.3 Rules that came out of it</h3>
+<ol>
+<li><strong>Measure before filing.</strong> Reading both ends of a data path proves a defect can happen; only measurement proves it
+   does.</li>
+<li><strong>Suspect the instrument first.</strong> About thirty measurement errors were caught during the campaign, including a
+   pattern that matched "NOT INSTALLED" while looking for "INSTALLED". Each was caught because the evidence was
+   printed beside the verdict.</li>
+<li><strong>A zero is meaningful only once the instrument has been shown able to return non-zero.</strong></li>
+<li><strong>Green tests prove structure, not truth.</strong> The rendered artifact is opened and read.</li>
+</ol>
+<h3 id="134-what-only-the-built-executable-shows">13.4 What only the built executable shows</h3>
+<p>Walking the built executable from an empty folder has found defects that no test could, in every release since it
+became a gate. For v8.0.0 it found a double-clicked executable that opened no browser window, a first diagnosis drawn
+as not running for the three minutes its first seat reads, a tab strip that jumped 274 pixels when a pane shortened,
+volumes under 20 GB flagged as full, and a module that wrote to a console the windowed executable does not have.
+For v8.1.0, a walk of the release candidate by the product owner found that the console missed a run started on
+another page, that claims arrived in one batch per seat rather than as written, and that asking for a test only typed
+into the console. All three were rebuilt, proven on the stand-in, and walked again in the rebuilt executable before
+the release.</p>
+<hr />
+<h2 id="14-results">14. Results</h2>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Measure</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Estate in production use</td>
+<td>224 servers across 48 client organizations ingested and judged; the firewall pillar exercised across 36 device exports</td>
+</tr>
+<tr>
+<td>Firewall findings on the export set</td>
+<td>1,415, each with configuration evidence and its policy number</td>
+</tr>
+<tr>
+<td>A full paid diagnosis in the built executable (v8.1.0)</td>
+<td>4 calls on Opus 5.5, $2.21, 21 issues, each filed under a problem with a severity</td>
+</tr>
+<tr>
+<td>A domain controller argued in full (v8.0.0)</td>
+<td>$2.97; 16 of 17 confirmed claims stand on the capture's own lines, checked by hand against the raw capture</td>
+</tr>
+<tr>
+<td>A 13-server client fleet argued in full (v8.0.0)</td>
+<td>$3.68; its one error was a cautious one</td>
+</tr>
+<tr>
+<td>A Global's brief for the project list</td>
+<td>$0.0055 on Sonnet 5</td>
+</tr>
+<tr>
+<td>Paid model spend across the whole v8 verification program</td>
+<td>$122.37</td>
+</tr>
+<tr>
+<td>Release quality</td>
+<td>13,822 of 13,875 tests passed, 0 failed; 6 of 6 gates; 19 of 19 harnesses; the executable walked with 0 dead ends</td>
+</tr>
+<tr>
+<td>Delivery</td>
+<td>56 tagged releases in six months; every release reversible to its predecessor</td>
+</tr>
+</tbody>
+</table></div>
+<p>The team's baseline for a major audit was 60 to 80 hours of stitching vendor output. An audit run now takes minutes
+from upload, and the engineer's time goes to the part that needs an engineer: deciding what to test, what to fix and
+what to tell the client.</p>
+<hr />
+<h2 id="15-how-i-build">15. How I build</h2>
+<p>I built NinjaToolKit with Claude as an engineering partner, and the way that partnership is run is as much a part of
+the work as the code.</p>
+<p><strong>What I own.</strong> The architecture, the domain judgment (what a server's configuration means, what an MSP engineer
+needs at two in the morning), the safety model, the invariants, and every decision that cannot be undone: a merge, a
+tag, a release, a change to a prompt, a paid call. The model writes and revises code at a volume no single engineer
+could, and I hold it to a process I designed.</p>
+<p><strong>The process.</strong></p>
+<ul>
+<li><strong>A plan before building.</strong> Every phase starts as a written plan that I approve. Continuing work covers only the
+  plan that was approved; anything new comes back as a proposal.</li>
+<li><strong>A durable project record.</strong> The position (a tracker of every phase and item), my standing rulings, and the design
+  system live in files in the repository, not in a conversation. A new working session starts by reading them, so
+  decisions survive context limits and model changes.</li>
+<li><strong>Predictions before edits.</strong> For defect work, the expected measurements are written down before the change and
+  never adjusted afterwards.</li>
+<li><strong>Proof at three altitudes.</strong> Targeted tests for each piece; a live run against the stand-in model API for every
+  agent flow; and a walk of the built executable from an empty folder before anything is called done.</li>
+<li><strong>Human gates on irreversible actions.</strong> Destructive git operations, pushes to the release branch, tags and releases
+  wait for my explicit approval at that moment; approval never carries forward. The repository enforces the release
+  branch with its own hook.</li>
+<li><strong>Measured, never recalled.</strong> Every number in a status report, a release note or this document is the output of a
+  command run at the time.</li>
+</ul>
+<p><strong>Why it matters for the work I do.</strong> A forward deployed engineer's job is to take frontier models into a real
+operating environment and make them produce reliable work there. This platform is that problem at small scale: an
+environment with real constraints, real clients and real cost, where the model's output has to be held to evidence by
+code and the human has to stay in control of everything that touches production. The same discipline that makes the
+product's agents trustworthy is the discipline I used to build the product.</p>
+<hr />
+<h2 id="16-lessons">16. Lessons</h2>
+<ol>
+<li><strong>Separate the roles, and give each a success condition the others cannot satisfy.</strong> The challenger's value is
+   that its task is to break the proposal. Asking one model to be both author and critic produces agreement.</li>
+<li><strong>Parse, do not trust.</strong> The fixed claim format, parsed by code, is what makes every downstream guarantee possible:
+   holding the writer to the rulings, holding the checker to quoted lines, folding the tree deterministically.</li>
+<li><strong>Design for truncation.</strong> Output limits are a certainty at scale. Ordering the work (disputed claims first, lines
+   before commentary) and folding by last assertion turns a cut-off reply into a true, smaller result instead of a
+   corrupted one.</li>
+<li><strong>Keep the human gate informed.</strong> A gate is only real if the person at it knows what they are approving: the list of
+   changes a script makes, the reviewer's objections first, the revert command in plain view.</li>
+<li><strong>Fail toward the safe state.</strong> Every guard in the platform has a default, and the default is the one that stops or
+   refuses: unknown models priced high, unreadable settings off, incomplete captures closing nothing.</li>
+<li><strong>Absence is not zero.</strong> Not returned is not empty; not measured is not clean; not raised by an incomplete capture is
+   not fixed. Most of the platform's historical defects were one of these confusions.</li>
+<li><strong>Refusals are a routing problem.</strong> Frontier models will decline some security work. Detect it, route around it
+   openly with a recorded reason, re-test the primary model periodically, and never disguise a request.</li>
+<li><strong>The artifact is the test.</strong> Green suites have coexisted with wrong output in this codebase more than once. The
+   built executable, walked from nothing, and the rendered report, opened and read, are the final checks.</li>
+</ol>
+<hr />
+<h2 id="17-what-comes-next">17. What comes next</h2>
+<p>The next release line is planned and not yet built:</p>
+<ul>
+<li><strong>Sign-in.</strong> Every engineer's name on every action, and a password before the application is opened beyond a single
+  office network.</li>
+<li><strong>Tests written during the diagnosis.</strong> Today the agents write a test when asked; the writer will produce the first
+  test for each issue as part of the diagnosis, which changes a reviewed prompt and needs its own paid proof.</li>
+<li><strong>Cheaper tests.</strong> A test currently reads the whole server capture; a test that reads only the sections its issue
+  needs will cost a fraction, to be proven with a measured before and after on real runs.</li>
+<li><strong>The report AI.</strong> The layered narrative pipeline for the client reports is built and parked, pending its own review.</li>
+<li><strong>A reopened firewall report that carries the engineer's run.</strong> Today a firewall's reopened report is the audit
+  stored when the export was dropped; it will carry the engineer, the industry's compliance lead and the traffic-log
+  checks of the run.</li>
+<li><strong>A third pillar for Microsoft 365 and Entra ID tenants</strong>, built to the same shape: an ingest module, judges and
+  report chapters against the same finding shape, inheriting stable identity, the agents and the issue lifecycle.</li>
+<li><strong>A transport, eventually, and only behind the same gates.</strong> When a signed agent on the server replaces the
+  engineer's copy and paste, the courier's shape does not change: a collection is identical whether a person pastes it
+  or a daemon posts it.</li>
+</ul>
+<hr />
+<h2 id="18-appendix-glossary">18. Appendix: glossary</h2>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Capture</td>
+<td>The output of the PowerShell collector for one or more servers</td>
+</tr>
+<tr>
+<td>Judge</td>
+<td>A deterministic function that raises a finding from a capture</td>
+</tr>
+<tr>
+<td>Finding</td>
+<td>One thing wrong on one server or firewall, with its evidence, in the shared finding shape</td>
+</tr>
+<tr>
+<td>Problem</td>
+<td>A finding type as it appears across servers and clients; one page per problem</td>
+</tr>
+<tr>
+<td>Global</td>
+<td>A problem found at two or more clients, handled as one project</td>
+</tr>
+<tr>
+<td>Job</td>
+<td>One piece of work on one object, read from that object's event log</td>
+</tr>
+<tr>
+<td>Seat</td>
+<td>One agent role in the argument: proposer, challenger or arbiter</td>
+</tr>
+<tr>
+<td>Candidate</td>
+<td>One claimed cause, in the fixed line format, with a status</td>
+</tr>
+<tr>
+<td>Ruling</td>
+<td>The arbiter's final status for a candidate, with the evidence that decided it</td>
+</tr>
+<tr>
+<td>Issue</td>
+<td>A unit of work the writer made from rulings: a test, a fix, a question for the client, or a project</td>
+</tr>
+<tr>
+<td>Doubt</td>
+<td>A condition a judge names but cannot settle from the capture alone</td>
+</tr>
+<tr>
+<td>Target pack</td>
+<td>A read-only collection that settles one doubt</td>
+</tr>
+<tr>
+<td>Remediation pack</td>
+<td>A fix with backup, apply, revert and verify</td>
+</tr>
+<tr>
+<td>Run token</td>
+<td>The identifier a script is issued under and returned under</td>
+</tr>
+<tr>
+<td>Courier</td>
+<td>The part of the platform that issues and accepts scripts under run tokens</td>
+</tr>
+<tr>
+<td>Stand-in</td>
+<td>A local imitation of the model API used to test every agent flow at no cost</td>
+</tr>
+<tr>
+<td>Walk</td>
+<td>Driving the built executable end to end from an empty folder</td>
+</tr>
+</tbody>
+</table></div>
+</article>
+</div>
+<footer>
+<div><h4>About the author</h4><p>Ryan Haig is a Forward Deployed Engineer with a background in network engineering,
+Windows Server architecture and security operations at a managed service provider. He won WatchGuard's 2026 AI
+Innovation Challenge, one of five winners selected worldwide, recognized at WatchGuard IMPACT North America in
+Nashville in October 2026.</p></div>
+<div><h4>Contact</h4><p><a href="https://github.com/RyanH-sudo">github.com/RyanH-sudo</a><br>
+rytuality@gmail.com<br><a href="https://linkedin.com/in/rytuality">linkedin.com/in/rytuality</a><br>
+A live walkthrough of the platform is available on request.</p></div>
+<div><h4>This document</h4><p>Also available as <a href="https://github.com/RyanH-sudo/ninjatoolkit-case-study/blob/main/CASE_STUDY.md">CASE_STUDY.md</a>
+on GitHub. No client names, machine names or client data appear in it.</p></div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+  var byId={};links.forEach(function(a){byId[a.getAttribute('href').slice(1)]=a;});
+  var heads=[].slice.call(document.querySelectorAll('article h2[id]'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){
+      links.forEach(function(a){a.classList.remove('on');});var a=byId[e.target.id];if(a)a.classList.add('on');}});},
+      {rootMargin:'-80px 0px -70% 0px'});
+    heads.forEach(function(h){io.observe(h);});
+  }
+  if(!window.mermaid)return;
+  var light=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches;
+  var v=light?{background:'#FFFFFF',primaryColor:'#FBFAF7',primaryTextColor:'#17181B',primaryBorderColor:'#C9C4B8',
+    lineColor:'#7A7C80',secondaryColor:'#F1EEE7',tertiaryColor:'#F6F4EF',textColor:'#17181B',noteBkgColor:'#F1EEE7',
+    actorBkg:'#FBFAF7',actorBorder:'#C9C4B8',signalColor:'#4A4C51',labelBoxBkgColor:'#FBFAF7'}
+   :{background:'#0F1013',primaryColor:'#15161A',primaryTextColor:'#E9E4D8',primaryBorderColor:'#3A3D45',
+    lineColor:'#8A857A',secondaryColor:'#1A1C21',tertiaryColor:'#121317',textColor:'#E9E4D8',noteBkgColor:'#1A1C21',
+    actorBkg:'#15161A',actorBorder:'#3A3D45',signalColor:'#ABA597',labelBoxBkgColor:'#15161A'};
+  v.fontFamily='Geist, system-ui, sans-serif';v.fontSize='15px';
+  mermaid.initialize({startOnLoad:false,theme:'base',themeVariables:v,securityLevel:'strict',
+    flowchart:{htmlLabels:true,curve:'basis'},sequence:{mirrorActors:false}});
+  /* Mermaid sizes each label with the font it measures at render time; rendering before the web fonts load
+     sizes the boxes for the fallback face and clips the labels once the real face arrives. */
+  var go=function(){mermaid.run({querySelector:'pre.mermaid'});};
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go,go);}else{go();}
+})();
+</script>
+</body>
+</html>

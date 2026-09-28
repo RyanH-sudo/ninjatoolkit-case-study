@@ -10,8 +10,8 @@ walks each resulting issue to a verified close through read-only tests, reviewed
 that the next capture confirms or reopens. The engineer approves every step that touches a server. It ships as one
 self-contained Windows executable.
 
-**Read the full technical case study: [CASE_STUDY.md](CASE_STUDY.md)** (about 10,000 words, with architecture and
-protocol diagrams). The platform itself is private company software; this repository describes its design and
+**Read the full technical case study online: [ryanh-sudo.github.io/ninjatoolkit-case-study](https://ryanh-sudo.github.io/ninjatoolkit-case-study/)**,
+or as [CASE_STUDY.md](CASE_STUDY.md) (about 10,000 words, with architecture and protocol diagrams). The platform itself is private company software; this repository describes its design and
 behavior without its source or any client data.
 
 ---
