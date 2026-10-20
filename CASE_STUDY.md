@@ -2,14 +2,16 @@
 
 **A technical case study**
 
-**Author:** Ryan Haig, Forward Deployed Engineer, eMazzanti Technologies
+**Author:** Ryan Haig, Forward Deployed Engineer and AI Automation Engineer
 
-**Subject:** NinjaToolKit, the October 2026 build (the line after the v8.2.0 release of September 30, 2026)
+**Subject:** NinjaToolKit v8.3.1, released October 17, 2026, and the October evaluation of the agents that shipped in it
 
-**Status:** In use by the engineering team of a managed service provider
+**Status:** In use by the engineering team of a managed service provider. The next version, v9, is in build and has
+its own case study.
 
-**Measurement:** Every figure in this document was measured against the October 2, 2026 build unless it is labelled
-with an earlier release or as historical. The platform is private company software. This document describes its
+**Measurement:** Release figures (size, history, certification, release checks) were measured at the v8.3.1 tag. The
+agents' accuracy, cost and stress figures were measured on the October 2, 2026 build, the line that became v8.3.0
+and v8.3.1; anything older is labelled with its release or as historical. The platform is private company software. This document describes its
 design and behavior without reproducing its source, and it contains no client names, machine names or client data:
 every server it describes is identified by its role alone.
 
@@ -54,8 +56,8 @@ the order an engineer would work them, each one carried to a verified close: a r
 and pastes back, a fix that a reviewer agent checks and the engineer approves, and a close that the next capture
 confirms or reopens. No module in the platform can execute anything on a client machine.
 
-The October 2026 build was evaluated on real servers it had never seen, against answer keys written from each
-server's own capture before each run:
+The agents that shipped in v8.3 were evaluated (on the October 2 build) on real servers they had never seen, against
+answer keys written from each server's own capture before each run:
 
 | Outcome | Measured |
 |---|---|
@@ -64,7 +66,7 @@ server's own capture before each run:
 | Cost and time | A first diagnosis cost $3.56 to $5.81 a server (about $4.50 on average over nine servers) and took 16 to 25 minutes |
 | Time to first value | From an empty folder, 48 clients, 189 servers and 54 firewall exports ingested and judged in about one minute |
 | Reach | 56 deterministic server judges, a 52-check firewall engine mapped to 50 compliance controls, and a role checklist for seven server roles |
-| Reliability | Every page the product serves (457) crawled twice with no script error; 13,409 tests passed; every agent failure mode ends in a stated, usable state |
+| Reliability | v8.3.1 certified by eight layered walks of the built executable from an empty folder, 91 defects found and fixed before release; 13,709 tests passed; every page crawled with no script error; every agent failure mode ends in a stated, usable state |
 
 Three design decisions define the system:
 
@@ -92,8 +94,9 @@ uses it. I own the architecture, the domain judgment, the safety model and every
 real data from the first day, walked every release in the built executable before it shipped, and scored the agents
 against problems the team had already solved by hand.
 
-**Timeline.** The first commit was on March 6, 2026. By October 2 the repository held 4,791 commits and 57 tagged
-releases, the newest being v8.2.0 on September 30. This document describes the build that followed it.
+**Timeline.** The first commit was on March 6, 2026. By the v8.3.1 release on October 17 the repository held 5,001
+commits and 59 tagged releases. This document describes that release; the design of its successor, v9, is the
+subject of a second case study.
 
 ---
 
@@ -224,7 +227,7 @@ flowchart TB
 | Reports | the firewall and site audit renderers | 48,286 lines |
 | Model access | one API client, model registry, call ledger, master switch | 24 modules in the AI package |
 
-The product is 209,792 lines of Python in 221 files, with 159,241 lines of tests in 606 files.
+At v8.3.1 the product is 213,888 lines of Python in 227 files, with 162,917 lines of tests in 678 files.
 
 ### 5.3 Runtime model
 
@@ -1006,7 +1009,8 @@ past a safety classifier.
 - **One source of truth for models and prices.** An unknown model is priced at the most expensive rate, because
   over-charging produces a visible early stop and under-charging a silent overrun.
 - **Measured, never recalled.** A first diagnosis costs $3.56 to $5.81 a server, about $4.50 on average over nine. The
-  October build's evaluation cost $59.71 in paid calls; the v8 line through v8.2.0 cost $157.02.
+  October build's evaluation cost $59.71 in paid calls; the v8 line through v8.2.0 cost $157.02; the real-model
+  checks of the v8.3.1 release cost $35.68 by the ledger, under a $47.50 stop.
 
 ### 14.4 Testing without spending
 
@@ -1159,7 +1163,8 @@ flowchart TB
     SHIP --> M["Merge, tag, push<br/>on the owner's approval"]
 ```
 
-- **The suite** runs in three sequential processes so peak memory stays at a third of a single run: 13,409 passed.
+- **The suite** runs in three sequential processes so peak memory stays at a third of a single run: 13,709 passed,
+  0 failed, at the v8.3.1 release.
 - **The release gate** has six sub-gates (generated-prose voice, rendered report review, prompt-library coverage,
   compliance-gap inventory, a dependency vulnerability audit, template syntax). It stopped the v8.2.0 release on
   advisories published that morning until two libraries were upgraded.
@@ -1178,6 +1183,27 @@ firewall's logs. A failed migration rolls back to its pre-migration state.
 
 ## 19. Results
 
+### The 8.3 releases
+
+- **v8.3.0 (October 13, 2026): the Job carries the work in order.** Every pasted output moves the Job: a console
+  paste is split by its machine headers, each machine's output goes to the script whose run token it carries, and a
+  writer agent updates the whole Job from it (the story, each issue, what is new). The lead engineer orders the issues
+  with reasons and says what each one waits on; when the next data must come from another server, the issue names that
+  machine and its test runs there. A firewall has a Job of its own, fixed by hand and verified by a new export.
+- **v8.3.1 (October 17, 2026): every defect found, fixed, and the release certified.** v8.3.0 was read line by line
+  against its own inputs (189 servers, 54 firewall exports, the roster), and every defect went into one ledger of 123
+  rows, each fixed in the finished output and checked on several clients, not only by its test. Among them: service
+  and listener lines lost in the parse, a timed-out update check read as fully patched, firewall port ranges and phase 1
+  VPN crypto missed, an older export able to replace a newer one, a licence assumed rather than read, and compliance
+  frameworks switched on by a word in the client's name. The release candidate was then walked in eight layers, each
+  from an empty folder with real drag-and-drop, and the 91 defects those walks found were fixed and walked again before
+  release.
+- **Certified on one build:** the whole walk, a two-hour soak (1,152 ms per page at p95), the console under load, the
+  upgrade over a v8.3.0 database (37 firewalls re-judged in 12.8 seconds, open Jobs kept), the suite and every gate.
+- **Verified independently:** 117 parsed fields on 189 servers and 198 of 198 firewall routes agree with an independent
+  reader; every dashboard figure agrees with an independent read of the inputs (12 of 12); the Job chain on a simulated
+  fleet took 105 of 105 pastes on 10 machines, a 14-machine sweep and 21 of 21 firewall Jobs.
+
 | Measure | Result |
 |---|---|
 | Accuracy (October build) | Eight servers scored against keys written in advance: 40 of 47 found in full, 4 partly, 3 missed, no ruled-out claim made |
@@ -1189,7 +1215,8 @@ firewall's logs. A failed migration rolls back to its pre-migration state.
 | Judge precision (v8.2.0) | Six judges re-measured on 200 servers: 198 to 6, 196 to 52, 74 to 7, 63 to 2, 61 to 8, 14 to 4 |
 | Reliability (October build) | 457 pages crawled twice without a script error; 13,409 tests passed; every failure mode stated |
 | Refusals | 6 of 69 real calls declined and resent, 12% of evaluation spend |
-| Delivery | 4,791 commits and 57 tagged releases between March and October 2026; every release reversible |
+| Release certification (v8.3.1) | Eight layered walks of the built executable; 91 defects found and fixed before release; 13,709 tests passed, 0 failed; release gate 6 of 6; 19 of 19 standing harnesses; 72 of 72 rendered-product invariants |
+| Delivery | 5,001 commits and 59 tagged releases between March 6 and October 17, 2026; every release reversible |
 
 The team's baseline for a major audit was 60 to 80 hours of stitching vendor output. Judging the whole estate now takes
 a minute, and a machine's full diagnosis about twenty minutes and five dollars. The engineer's time goes to the part
@@ -1256,19 +1283,21 @@ code and the human has to stay in control of everything that touches production.
   output pasted back is the next evidence, and the team will produce it.
 - **The provider's verification program.** Declines were 12% of evaluation spend and add minutes to each; the
   verification program for defensive security work is the legitimate way to remove them.
-- **The collector's next version.** Uncapped event logs (the current read stops at 200 and hides counts), and reads for
-  Exchange, SQL Server, the certification authority and Hyper-V that today the agents must ask for in a test.
-- **Small typed models for fleet-wide reach.** Decision models such as TypeSafe's Jev and Fastino's GLiDE return a
-  typed choice with a calibrated confidence, and Fastino's open GLiNER2.5 models extract entities on a CPU, each at a
-  small fraction of a frontier model's price. None of them can read a whole server and write a diagnosis: a capture is
-  about 46,000 tokens at the median, and only 49 of the 189 fit the largest of these models' limits. They could take
-  small typed decisions across the whole fleet instead ("does this check's finding hold on this server's section",
-  "did this paste settle the question"). That adds reach rather than a cheaper diagnosis, and each use needs a decision
-  on sending client data to a new vendor or bundling a local model.
+- **The collector's next version** (collector v6, now built for v9 and proven across ten runs on the estate): typed
+  records instead of text, a status for every section, exact event counts in place of a 200-record cap, and reads for
+  Exchange, SQL Server, Hyper-V, Group Policy and the domain's logon scripts that the agents had to ask for in a test.
+- **v9, in build, with its own case study.** The next version keeps this release's accuracy and moves the work down
+  a ladder: code settles what can be computed; GLiNER 2.5 turns free text into typed fields on the server's own CPU; a
+  calibrated decision model (TypeSafe's Jev or a local equivalent) answers batteries of typed questions, accepted only
+  with a conformal guarantee at each action's error bound; the frontier model reasons only about what remains; the
+  engineer gates what touches a server. Underneath it: a typed collector, an observation store with provenance, a
+  dependency map with evidence on every link, live telemetry from an in-house agent, and many engineers at once. The
+  ground and the data foundation are built and measured; the rest is designed in full, with an answer key of 7,247
+  items (544 gold) built before the intelligence layer it will score.
 - **Findings the agents confirm, turned into free checks.** A problem the agents confirm on several servers becomes a
-  candidate judge, so the deterministic layer grows from what the agents learn.
-- **Sign-in.** Every engineer's name on every action, and a password before the application is opened beyond one
-  office network.
+  candidate judge, so the deterministic layer grows from what the agents learn (part of v9's learning loop).
+- **Sign-in.** Every engineer's name on every action (in v9 from its first phase) and single sign-on with MFA before
+  the application is opened beyond one office network.
 - **A third pillar for Microsoft 365 and Entra ID tenants**, built to the same finding shape, inheriting stable
   identity, the agents and the issue lifecycle.
 
@@ -1305,7 +1334,8 @@ code and the human has to stay in control of everything that touches production.
 
 | Figure | Source |
 |---|---|
-| Code size and history | Git plumbing over the build's tree (line counts per file); the same script reproduces v8.2.0's figures exactly |
+| Code size and history | Git plumbing over the v8.3.1 tag's tree (line counts per file); the same script reproduces earlier releases' figures exactly |
+| Release certification and checks | The v8.3.1 release notes and the certification log: each walk's defects, the suite, the gate, the harnesses |
 | Judges, checks, recipes, controls, firewall findings | The product's own registries and engine, imported and run over every export on the build machine |
 | Ingest timing | The application's request log for an empty-folder ingest in the built executable |
 | Accuracy | Keys written from each server's capture (and the team's engagement records) before each run, scored item by item |
