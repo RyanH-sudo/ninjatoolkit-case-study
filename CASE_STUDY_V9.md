@@ -6,9 +6,12 @@
 
 **Subject:** NinjaToolKit v9, the successor to the shipped v8.3.1 (released October 17, 2026)
 
-**Status, October 20, 2026:** in build. The ground (phase P0) and the data foundation (phase P2) are built, certified
-and running on real data; the telemetry agent, the check catalogue, the new screens and the intelligence layer are
-designed in full and scheduled, each opening with a written plan and closing with a walk of the built product.
+**Status, October 28, 2026:** in build. The ground (P0), the data foundation (P2), the telemetry agent (P3), the check
+catalogue (P4) and the new screens (P5) are built and recertified on real data. The intelligence layer (P6) has its
+engine built: one harness graph that a server's, a fleet's and a firewall's diagnosis and every alert run through, with
+the calibrated decision model live and a learning loop in the background. Measured at no cost on a simulated estate built
+from the engineer's own 19 placed cases (570 Jobs): precision **0.958**, coverage **0.930**, **$1.11 a Job** against $4.69
+for v8.3.1's three seats, 46.7% of the work settled below Opus. The measured run on real labels comes next.
 
 **How to read the figures:** every figure is labelled **measured** (the output of a command or a run, with its date),
 **published** (a result from the research literature or a vendor's documentation, named), or **target** (an estimate
@@ -77,10 +80,10 @@ the frontier model reasons only about what remains.
 |---|---|---|
 | P0 · The ground | A layered package with import rules enforced by tests; Python 3.15; an async web server with one live WebSocket per page; one writer, one job runner, one AI client; many engineers at once; a one-folder build | **Built and certified** (measured: the same results as v8.3.1, faster under load) |
 | P2 · The foundation | Collector v6 (typed records, a status for every section); host-by-host ingest under one batch; an observation store with provenance; entity matching; a dependency map with evidence on every link; a name map for model privacy; one firewall model with XML and cloud readers | **Built and recertified**; the collector proven across ten runs on a 185-server estate |
-| P3 · The agent | Live health, events and alerts from an in-house telemetry agent, outbound only, mutual TLS | Designed; plan written |
-| P4 · The catalogue | A judge contract; the Microsoft signature index; compliance per control in four states | Designed |
-| P5 · The screens | Every page rebuilt on projections; budgets of 400 ms at p95 and 60 frames a second | Designed |
-| P6 · The intelligence | The burn-down: GLiNER 2.5, the calibrated decision model, consistency probes, Opus 5.5 on the residue, the learning loop | Designed in full; the answer key built (7,247 items, 544 gold); the first rung measured on it |
+| P3 · The agent | Live health, events and alerts from an in-house telemetry agent, outbound only, mutual TLS | **Built**; reporting live from an in-house machine |
+| P4 · The catalogue | A judge contract; the Microsoft signature index; compliance per control in four states | **Built** (101 checks on one contract; 16 more firewall subtrees read) |
+| P5 · The screens | Every page rebuilt on projections; budgets of 400 ms at p95 and 60 frames a second | **Built and recertified**; every page budget met with 50 engineers simulated |
+| P6 · The intelligence | The burn-down: GLiNER 2.5, the calibrated decision model, consistency probes, Opus 5.5 on the residue, the learning loop | **Engine built** and measured at no cost (precision 0.958, coverage 0.930, $1.11 a Job); the decision model live, 88.4% on the engineer's cases (kappa 0.767); 14,778 tests pass; the measured run on real labels next |
 | P7 · The audits | Explainable scores, a register first, executive and technical editions, OSCAL | Designed |
 | P8 · Fixes in-house | Test, set, get and revert; risk tiers; waves across a fleet; a kill switch | Designed |
 | P9 · Security | Single sign-on with MFA, roles, HTTPS, signed builds | Designed |
