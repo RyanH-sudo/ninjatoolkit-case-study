@@ -1,1345 +1,1776 @@
-# NinjaToolKit: An Agentic Audit and Remediation Platform for Managed Infrastructure
+# NinjaToolKit v9
 
-**A technical case study**
+**A model reads the whole server. Code holds it to the evidence. An engineer decides every change.**
 
-**Author:** Ryan Haig, Forward Deployed Engineer and AI Automation Engineer
+A technical case study of NinjaToolKit v9.0.1, released 19 November 2026.
 
-**Subject:** NinjaToolKit v8.3.1, released October 17, 2026, and the October evaluation of the agents that shipped in it
+**Author:** Ryan Haig, Forward Deployed Engineer and AI Automation Engineer. I designed the platform, built it and
+released it.
 
-**Status:** In use by the engineering team of a managed service provider. The next version, v9, is in build and has
-its own case study.
+**What this document is.** NinjaToolKit is private company software, so its source is not public. This case study
+describes its architecture, its method and its measured behavior without reproducing source, and it contains no client
+names, machine names, addresses or client data. Every worked example and every screen in the film runs on an estate that
+does not exist: five invented clients, 31 invented servers and seven invented firewalls, generated for this purpose and
+checked by script against the real estate's names so that nothing invented collides with anything real.
 
-**Measurement:** Release figures (size, history, certification, release checks) were measured at the v8.3.1 tag. The
-agents' accuracy, cost and stress figures were measured on the October 2, 2026 build, the line that became v8.3.0
-and v8.3.1; anything older is labelled with its release or as historical. The platform is private company software. This document describes its
-design and behavior without reproducing its source, and it contains no client names, machine names or client data:
-every server it describes is identified by its role alone.
+**How to read the figures.** Every figure is **measured**: the output of a command or a run, taken at the v9.0.1 tag
+unless the sentence says otherwise. Where a figure comes from the estate the product was built against, it is a count
+only. Where something is built and not yet proved in production, section 16 says so.
+
+**The film.** The companion film is the released program itself working the invented estate, recorded as it happened:
+[watch it online](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/).
 
 ---
 
 ## Contents
 
-1. [Summary](#1-summary)
-2. [Context and role](#2-context-and-role)
-3. [The problem and its constraints](#3-the-problem-and-its-constraints)
-4. [How it was deployed](#4-how-it-was-deployed)
-5. [System architecture](#5-system-architecture)
-6. [Key decisions](#6-key-decisions)
-7. [How it works, capability by capability](#7-how-it-works-capability-by-capability)
-8. [Data engineering: from a PowerShell capture to one list of problems](#8-data-engineering-from-a-powershell-capture-to-one-list-of-problems)
-9. [Network engineering: the firewall audit engine](#9-network-engineering-the-firewall-audit-engine)
-10. [Server architecture: what the judges and the agents read](#10-server-architecture-what-the-judges-and-the-agents-read)
-11. [Agentic orchestration in depth](#11-agentic-orchestration-in-depth)
-12. [From diagnosis to verified fix: the issue lifecycle](#12-from-diagnosis-to-verified-fix-the-issue-lifecycle)
-13. [Cybersecurity: the safety model](#13-cybersecurity-the-safety-model)
-14. [Model governance: routing, refusals and cost](#14-model-governance-routing-refusals-and-cost)
-15. [Evaluation: accuracy, failure modes and stress](#15-evaluation-accuracy-failure-modes-and-stress)
-16. [What real data broke, and how each is now held](#16-what-real-data-broke-and-how-each-is-now-held)
-17. [The engineer's surface](#17-the-engineers-surface)
-18. [DevOps and release engineering](#18-devops-and-release-engineering)
-19. [Results](#19-results)
-20. [How I build](#20-how-i-build)
-21. [Lessons](#21-lessons)
-22. [What comes next](#22-what-comes-next)
-23. [Appendix A: glossary](#23-appendix-a-glossary)
-24. [Appendix B: how the figures were measured](#24-appendix-b-how-the-figures-were-measured)
+1. [At a glance](#1-at-a-glance)
+2. [Summary](#2-summary)
+3. [The problem, and the constraints that shaped the design](#3-the-problem-and-the-constraints-that-shaped-the-design)
+4. [The system in one picture](#4-the-system-in-one-picture)
+5. [Data engineering: an estate in one record](#5-data-engineering-an-estate-in-one-record)
+6. [Deterministic first: the check catalogue](#6-deterministic-first-the-check-catalogue)
+7. [The firewall pillar](#7-the-firewall-pillar)
+8. [Agents and the standing watch](#8-agents-and-the-standing-watch)
+9. [The harness](#9-the-harness)
+10. [One loop, end to end: a worked run](#10-one-loop-end-to-end-a-worked-run)
+11. [The operator's surface](#11-the-operators-surface)
+12. [The audits: client deliverables from the same record](#12-the-audits-client-deliverables-from-the-same-record)
+13. [Operating it](#13-operating-it)
+14. [How it was proved](#14-how-it-was-proved)
+15. [How it was built](#15-how-it-was-built)
+16. [What is not proved yet](#16-what-is-not-proved-yet)
+17. [Five disciplines, one system](#17-five-disciplines-one-system)
+18. [Lessons](#18-lessons)
+19. [Glossary](#19-glossary)
 
 ---
 
-## 1. Summary
+## 1. At a glance
 
-NinjaToolKit turns the raw configuration of a managed estate into engineering work that closes. An engineer drops in
-the output of a PowerShell collector and the estate's firewall exports. About a minute later every server and firewall
-has been judged by deterministic code. On any server, the engineer can then start a Diagnose, and three AI agents
-argue over the machine's whole capture until a lead engineer rules on every claim. The result is a list of issues in
-the order an engineer would work them, each one carried to a verified close: a read-only test that the engineer runs
-and pastes back, a fix that a reviewer agent checks and the engineer approves, and a close that the next capture
-confirms or reopens. No module in the platform can execute anything on a client machine.
-
-The agents that shipped in v8.3 were evaluated (on the October 2 build) on real servers they had never seen, against
-answer keys written from each server's own capture before each run:
-
-| Outcome | Measured |
+| | |
 |---|---|
-| Accuracy | On eight servers, 40 of 47 open problems found in full, 4 in part, 3 missed. None of the claims the keys ruled out was made. |
-| Evidence | Every deciding quote checked against the server's own output by code; 2 of 380 quoted spans across all the real Jobs were paraphrases |
-| Cost and time | A first diagnosis cost $3.56 to $5.81 a server (about $4.50 on average over nine servers) and took 16 to 25 minutes |
-| Time to first value | From an empty folder, 48 clients, 189 servers and 54 firewall exports ingested and judged in about one minute |
-| Reach | 56 deterministic server judges, a 52-check firewall engine mapped to 50 compliance controls, and a role checklist for seven server roles |
-| Reliability | v8.3.1 certified by eight layered walks of the built executable from an empty folder, 91 defects found and fixed before release; 13,709 tests passed; every page crawled with no script error; every agent failure mode ends in a stated, usable state |
-
-Three design decisions define the system:
-
-- **The model proposes; code decides; the engineer approves.** Every answer the code acts on arrives as a typed form,
-  is held to evidence before it reaches a page, and touches a server only through a person.
-- **Disagreement is structural.** A single model asked to check its own diagnosis agrees with itself. The platform
-  gives a second agent a different success condition (break the diagnosis) and a third the job of ruling between them.
-- **Everything ships as one file.** The platform is a single self-contained Windows executable, with no runtime
-  dependency beyond the model API, run from an office server by the whole team.
+| **What it is** | An audit and remediation platform for managed Windows Server estates and WatchGuard firewalls, used by a managed service provider's engineers. One self-contained Windows program on a server, used by the whole office, with its own agents on the servers it looks after. |
+| **What it does** | Takes in a PowerShell collector's capture, firewall configuration exports and live telemetry. Judges all of it with deterministic checks. Lets a frontier model read each server whole, then holds everything the model said to the evidence in code. Carries each problem through read-only checks to a fix that waits at an engineer's gate and proves itself afterwards. Renders two client audits from the same record. |
+| **Release** | v9.0.1, 19 November 2026, on v9.0.0 of the day before. v9 is a rebuild: nothing of the v8 code is left in the tree. |
+| **Size** | 138,202 lines of Python in 606 files across eleven layers; 32,284 lines of JavaScript and 10,227 of CSS as files; a 4,165-line PowerShell collector. |
+| **Tests** | 6,096 passing in 671 test files (117,381 lines), 17 standing verification harnesses, a five-part release gate, 16 invariants on the rendered product. |
+| **Deterministic checks** | 177: 117 for servers in 18 families, 52 in the firewall engine in 14 families, 8 more on a Firebox's own settings, certificates and reach. Mapped to the 287 controls of NIST SP 800-53 Rev 5's Moderate baseline and, through NIST's own references, to the 106 subcategories of CSF 2.0. |
+| **Models** | Claude Opus 5.5 for reasoning, with Opus 5 as the fallback when a request is declined. Claude Sonnet 5.5 only to describe, never to diagnose. GLiNER 2.5, a small local model, to read names out of free text on the server's own processor. A hosted calibrated decision model (TypeSafe's Jev) for typed questions with probabilities. |
+| **Data** | One SQLite schema at version 79: 100 tables and 131 indexes in a built database. |
+| **Operations proof** | Two hours forty minutes of load on one process: 80,161 requests, no error, 193 ms at the 95th percentile, memory flat. Fifty agents reporting for an hour: 650 batches in, 650 kept. The process killed in the middle of an ingest and of a model call: the record's own integrity check passed both times. |
+| **AI proof** | On the release candidate, with the real model: a firewall audit and a 23-server site audit written whole, 318 of 318 fields kept by code's check of the model's words against the facts. Three numbers the model wrote that were not in the facts were refused by code and rewritten on a second asking. |
+| **History** | 6,526 commits since 6 March 2026; 62 version tags; 111 numbered design decisions; 38 research files. |
+| **Built against** | A real estate of 234 rostered servers under 48 client organizations, 189 of them captured, and 54 configuration exports from 37 firewalls. Counts only appear here. |
 
 ---
 
-## 2. Context and role
+## 2. Summary
 
-**The operator.** A managed service provider runs the servers and firewalls of dozens of client organizations it does
-not own: Windows Server estates from 2012 R2 to 2025 with Active Directory, Exchange, SQL Server, Hyper-V and Remote
-Desktop roles, and WatchGuard firewalls at the perimeter. The engineering team works through a remote-management
-platform that can push a script to any managed machine and return what it printed.
+**The bottom line.** NinjaToolKit v9 puts a frontier model to work on production infrastructure without trusting a word
+it says. The model reads a server's entire raw output in one call and reasons freely. Nothing in the product acts on
+that prose. A second pass files it into typed items, and code checks each one against the record: every quoted line is
+found in the capture, every script is parsed and proved to only read, every fix carries its own proof and its way back
+and waits for a named engineer. The result is a system that keeps the model's range and removes its authority.
 
-**The estate in this document.** The newest collector capture covers 189 servers across 48 client organizations,
-from a roster of 234 managed devices. The firewall pillar holds 54 WatchGuard configuration exports from 37 devices.
+**Why that order matters.** The first v9 design did the opposite. It filtered a server's evidence through checks and
+small models first, and sent the frontier model only what was left. Then I measured it. One read of one server's
+entire output, 2,424 records and about 224,000 tokens with no checklist in front of it, named a root cause and an order
+of work that 176 deterministic checks and twenty model reads of the parts had not. All 18 of the records it quoted were
+real. The design was turned around on that measurement: **the model reads everything first, and code supports the read;
+code never narrows it.**
 
-**My role.** I conceived, designed and built NinjaToolKit as a forward deployed engineer embedded with the team that
-uses it. I own the architecture, the domain judgment, the safety model and every release. I worked from the team's
-real data from the first day, walked every release in the built executable before it shipped, and scored the agents
-against problems the team had already solved by hand.
+**What v9 adds over the shipped v8 line:**
 
-**Timeline.** The first commit was on March 6, 2026. By the v8.3.1 release on October 17 the repository held 5,001
-commits and 59 tagged releases. This document describes that release; the design of its successor, v9, is the
-subject of a second case study.
+- **Agents.** A small agent on each server reports health, events, the network and an inventory, and runs read-only
+  checks it is handed. It calls out over TLS 1.3 and holds the line open. Nothing listens at a client.
+- **A standing watch.** The product learns what each server looks like when it is fine, measures which fields move by
+  themselves, and reads only what deviates. A reading that leaves its baseline, or servers that go silent together,
+  open a Job without anyone pressing anything.
+- **One loop.** Read the server whole, file what the read found, send its checks, read again when they return, order
+  the fixes, write one fix whole, gate it, run it, prove it, watch it. The same loop serves one server and a fleet.
+- **Both audits written by the model and checked by code.** The model is given an audit's facts and nothing else, and
+  every name and number in its prose is checked against those facts before a client sees it.
+- **A real operating envelope.** Sign-in by name, roles, two-person approval where an office wants it, nightly backups
+  with a second location, a support file an engineer can send, and every model call priced before it is sent and written
+  to a ledger.
 
----
-
-## 3. The problem and its constraints
-
-### 3.1 The operating reality
-
-A managed service provider audits estates it does not own, for clients who expect evidence, at a cadence set by the
-threat picture rather than the calendar. Before this platform, a major audit meant senior engineers stitching together
-the partial views of several vendor tools, each of which saw one slice of the estate. By the team's own estimate that
-took 60 to 80 hours per engagement, and nothing carried forward: every audit was a one-off.
-
-The deeper problem was what came after the audit. A report lists what is wrong. It does not diagnose why, produce
-the test that would settle a doubt, order the work so that one fix does not undo another, or track whether a fix
-held. That work happened in engineers' heads and in ticket threads, so it was not recorded, not reproducible and not
-reviewable. And the knowledge it took (that a backup is unproven, that a firewall rule must not be turned on before
-the addresses behind it are settled) lived with whichever senior engineer happened to look.
-
-### 3.2 What the platform had to be
-
-The constraints were set by the environment, and each one shaped the architecture:
-
-| Constraint | Why it exists | What it forced |
-|---|---|---|
-| One self-contained executable | It runs on an office server used by the whole team, often with no development tooling installed | No runtime dependency beyond the model API; every asset bundled; a build check that nothing outside the bundle is opened |
-| The engineer is the gate | The platform acts on client infrastructure under contract | No transport to client machines at all; every script run by a person; every change approved by a person |
-| Evidence first | Client deliverables and engineering decisions must survive scrutiny | Findings carry the lines that prove them; agent claims that decide anything must quote the output, and code checks the quote |
-| Nothing seeded | A demo estate in production code is a liability | The application starts empty and shows only what was ingested |
-| Bounded, visible cost | Model calls are paid per token, and a runaway argument is real money | Every call priced before it is sent; a ceiling per argument and per console turn; every call recorded in one ledger |
-| Frontier models only | A hallucinated finding costs more than an expensive call | No small-model tier; a cheaper model may describe but never diagnose |
-| Usable by a colleague on day one | The target user opens it for the first time and must know how to start | Every page names the one thing to do next and draws a line to it |
+**How I know it works.** Section 14 has the full account. The short version: the suite, the harnesses and the gate are
+green on the release commit; the program was soaked, loaded, killed mid-write and walked from an empty folder at four
+screen widths; and the evening v9.0.0 was released I ran it end to end with the real model on the invented estate.
+That run, and the filming that followed it, found four defects no test had caught. They were fixed, each with a test
+that fails on v9.0.0, and shipped as v9.0.1 the next morning. A release process that finds its own defects within
+hours is the point of having one.
 
 ---
 
-## 4. How it was deployed
+## 3. The problem, and the constraints that shaped the design
 
-NinjaToolKit was built the way a forward deployed engineer builds: on the customer's real data, with the people who
-use it, and against the problems they already had.
+### 3.1 The work as it is actually done
 
-- **Real data from the first day.** Development ran on the team's own roster, collector captures and firewall exports.
-  The application seeds nothing; every screen reads the database the executable builds from what it is given. A
-  machine or client name never appears in product code.
-- **The walk is the acceptance test.** Every release is started from an empty folder and driven the way its buttons
-  drive it, then run for real on servers it has never seen. Passing tests have coexisted with wrong output in this
-  codebase more than once; the walk is what decides.
-- **Scored against solved problems.** Accuracy is measured against answer keys built from the team's tickets and a
-  hand-run engagement: what a correct diagnosis must say, what it must not say, and what had already been fixed.
-- **Time to first value of about a minute.** From an empty folder: the roster in 1.1 seconds, the 189-server capture
-  in 21.5 seconds, and the 54 firewall exports audited 38 seconds after that.
-- **Hand-off by design.** The guide names the next step on every page, the record keeps every decision with its
-  reason, and the console can write a time entry for a whole Job, so the work survives a change of engineer.
+A managed service provider looks after other companies' servers and firewalls. The engineering work has a shape that
+any senior engineer will recognize:
 
-The operating loop the team runs:
+1. Something is wrong, or might be. An alert fired, a user complained, or an audit is due.
+2. The engineer collects evidence: a script run through the remote monitoring tool, a configuration export, an event
+   log.
+3. They read it. This is where the skill is: knowing that a clock seven minutes ahead on a branch domain controller
+   explains the Kerberos errors on the file server next to it, and that the Group Policy failures are the same fault a
+   third time.
+4. They write the next script to confirm it, run it, read the result, and repeat until the cause is settled.
+5. They make one change, prove it worked, write down how to undo it, and write it up for the client.
 
-1. The remote-management platform pushes the collector to the fleet; its output is dropped on Ingest.
-2. The judges raise every finding; the engineer picks a server (or a client's fleet) and starts a Diagnose.
-3. The issues arrive in order. For each, the agents write a read-only test; the engineer pushes it through the same
-   platform and pastes back what each machine printed.
-4. The agents read the result, update the Job, and write a fix when the evidence supports one. A reviewer agent checks
-   it; the engineer approves it, runs it, and pastes the output back; a verification closes the issue.
-5. The next capture confirms every close or reopens what did not hold.
+Steps 2 to 5 are where a model can help, and where an unsupervised model is dangerous. I had already been doing this
+work by hand with a frontier model in a chat window: paste the whole output in, ask what is wrong, take its script, run
+it, paste the result back. It worked well. It also depended entirely on me noticing when the model was wrong, and it
+left nothing behind: no record, no audit trail, no second engineer able to pick up where I stopped.
+
+NinjaToolKit is that loop turned into a product, with the judgment that used to live in my head moved into code.
+
+### 3.2 The constraints
+
+Each of these came from the people who would use it, and each one removed easy options.
+
+| Constraint | What it forced |
+|---|---|
+| **It must run as one self-contained program.** No cloud service to stand up, no dependency to install, nothing fetched at run time. | A single-folder build with everything inside it, including a local model. A check at build time proves the program opens nothing outside its own folder and its data folder. |
+| **Client data is confidential.** | A name map that replaces every client, machine, domain and user name with a stable stand-in before text goes to any hosted model outside the primary provider. Web search is off per question and never sees a capture. Credentials are scrubbed from every string bound for a log or a page. |
+| **No change to a client's server without a named engineer's approval.** | Every fix waits at a gate. The gate is a table in code, never a question put to a model. An office can require two engineers. Changes through agents are off until the office turns them on. |
+| **Nothing may listen on a client's network.** | The agent only calls out. Work for it rides back on the answer to its own report. |
+| **The engineer is the customer.** They are busy, skeptical, and will stop using anything that wastes their time or lies to them once. | One act per screen. Every finding names its entity and the lines it rests on. "Cannot be determined" is a legal answer and is never drawn as a pass. Nothing explains the platform to the person using it. |
+| **Money is real.** | Every model call is priced before it is sent, held under a ceiling of $3.00 a question and $8.00 a run, and recorded. The AI is off in a new install. Background work spends nothing until a budget is set. |
+| **The tool must be honest about its own instrument.** | Absence is never rendered as zero. A count read from an event log that only holds a few hours says so. A finding that disappears is never called fixed unless a remediation is recorded against it. |
+
+### 3.3 Four invariants
+
+These hold on every surface and every report, and tests enforce them.
+
+1. **Evidence first.** A screen or a report renders named entities; counts are derived on top of them and every count
+   opens its list.
+2. **Comprehensiveness.** A firewall audit is everything behind the firewall. There is no "top ten".
+3. **Granularity preserved.** Every field the collector captures survives ingest, storage, judgment and rendering.
+4. **A commercial boundary.** A client-facing document carries no pricing or cost content.
 
 ---
 
-## 5. System architecture
-
-### 5.1 Context
+## 4. The system in one picture
 
 ```mermaid
-flowchart TB
-    subgraph Estate["Client estate"]
-        SRV["Windows servers"]
-        FWD["WatchGuard firewalls"]
+flowchart LR
+    subgraph IN["What comes in"]
+        R["Device roster"]
+        C["Collector capture<br/>47 sections a server"]
+        X["Firewall export<br/>configuration XML"]
+        A["Agents<br/>health, events, network, inventory"]
     end
-    ENG(("Engineer"))
-    subgraph NTK["NinjaToolKit, one executable"]
-        ING["Ingest and parse"] --> WH[("Warehouse")]
-        WH --> JDG["Judges and firewall engine"]
-        WH --> REP["Client reports"]
-        JDG --> PRB["One list of problems"]
-        PRB --> AGT["Agents and the console"]
-        AGT --> CUR["Courier"]
+    subgraph REC["The record"]
+        I["Ingest<br/>one reader per source"]
+        DB[("One schema<br/>100 tables")]
+        J["177 deterministic checks"]
+        M["Dependency map<br/>and exposure paths"]
     end
-    API["Claude API"]
-    SRV -->|"collector output"| ENG
-    FWD -->|"configuration export"| ENG
-    ENG -->|"uploads"| ING
-    CUR -->|"read-only test or reviewed fix"| ENG
-    ENG -->|"runs it"| SRV
-    ENG -->|"pastes the output"| CUR
-    AGT <-->|"HTTPS, priced and recorded"| API
+    subgraph H["The harness"]
+        W["The whole read"]
+        F["Filing<br/>prose into typed items"]
+        K["Checks out and back<br/>proved read-only"]
+        L["Fix list and its order"]
+        G{"The gate"}
+    end
+    E(("Engineer"))
+    R --> I
+    C --> I
+    X --> I
+    A --> I
+    I --> DB --> J --> W
+    DB --> M --> W
+    W --> F --> K
+    K -->|one script a server| A
+    A -->|output| W
+    F --> L --> G
+    G -->|approve or refuse| E
+    E -->|answers, steers| W
+    G -->|approved fix| A
+    A -->|proof| DB
+    DB -->|site audit, firewall audit| E
 ```
 
-The platform sits between the engineer and the estate, never between the estate and anything else. Data reaches it
-only through the engineer (a collector run, a configuration export), and work leaves it only through the engineer (a
-script to run). The one external network dependency is the model API, used only when the engineer has switched the
-AI on.
+**Reading the picture.** Four kinds of input land in one record through one reader each. Deterministic checks judge
+everything first, at no cost. The model then reads each server whole, with the checks' findings beside it as context
+and never as a filter. Filing turns the read's prose into typed items that code can verify. Verified checks go to the
+server and their output comes back to a second read. Findings are placed into a kept list of fixes, the list is ordered
+the way an engineer would work it, and one fix at a time is written whole and brought to a person. An approved fix runs
+through the same agent, and its proof is a measurement taken later from outside the change.
 
-### 5.2 Layers
+### 4.1 Eleven layers, imports one way
 
-```mermaid
-flowchart TB
-    L1["Collection: PowerShell collector v5.3, 47 sections"]
-    L2["Parsing: capture parser, WatchGuard parser, roster matching, device identity"]
-    L3[("Warehouse: SQLite, 19 forward-only migrations")]
-    L4["Judgment: 56 server judges, 52-check firewall engine, one finding shape"]
-    L5["Record: append-only session events, each Job a thread, issues in order, reconciliation"]
-    L6["Agents: seats, writer, updater, checker, reviewer, describer, the console; typed forms"]
-    L7["Evidence and custody: test packs, remediation packs, run tokens, courier, return leg"]
-    L8["Surface: Flask and Waitress, pages generated from the warehouse, live event channel"]
-    L9["Reports: firewall and site audit client deliverables"]
-    L1 --> L2 --> L3 --> L4 --> L5
-    L5 --> L6 --> L7 --> L5
-    L3 --> L8
-    L5 --> L8
-    L3 --> L9
-```
+The program is one Python package in eleven layers. An import may go down the list or stay inside its own layer. It may
+never go up, and never round in a cycle. A test reads the import graph on every run and refuses a violation.
 
-| Layer | Representative modules | Size in the October build |
+| Layer | Lines | What it owns |
+|---|---:|---|
+| web | 35,785 | The application server, the pages, the WebSocket hub, the agents' listener, sign-in |
+| operate | 11,085 | What drives the work: the loop, the watch, the gate inbox, the fix lists, backups, the support file |
+| audits | 7,113 | The record rendered as the site audit and the firewall audit |
+| ai | 14,604 | The one model client, the harness engine, the whole read, filing, the decision model, the reader of names |
+| remediate | 4,182 | Scripts and run tokens, the read-only proof, the gate hook, fixes and their way back |
+| judge | 29,692 | The check catalogue, the firewall engine, exposure paths, compliance, the watch's rules, the dependency map |
+| ingest | 17,354 | One reader per source: the roster, the capture, the firewall export, agent batches |
+| domain | 2,555 | The models: estate, observation, finding, Job, fix, audit. Pure data, no I/O |
+| store | 11,392 | The one connection factory, the writer, the schema, one repository per aggregate |
+| core | 1,968 | Configuration, paths, the clock, typed errors, logging, the scheduler, the certificate authority |
+| agent | 2,440 | The agent's own build. It may import only core and domain |
+
+Two layers deserve a note. **`operate`** exists because the AI layer and the remediation layer may not import each other:
+something above both has to drive a loop that reads, then acts. **`agent`** is deliberately starved of imports so that
+the program installed on a client's server shares nothing with the office application except the record contract.
+
+Structure is held by ratchets, not by intention. A test counts database connections opened outside the store, model
+SDK imports outside the one client, threads started outside the scheduler, environment reads outside configuration,
+script blobs inside Python strings, files over 1,000 lines and functions over 150. Each count may fall and may never
+rise. At v9.0.1 the largest module is 999 lines.
+
+### 4.2 The runtime
+
+| Part | Choice | Why |
 |---|---|---|
-| Collection | the PowerShell collector | 4,083 lines |
-| Parsing | capture parser, firewall engine and parser, client registry | 6,943, 12,967 and 4,245 lines |
-| Judgment | server judges, one finding shape, the role checklist | 56 judges, 7 roles |
-| Record | console session, event log, Jobs, run record, reconciliation | 13 event kinds |
-| Agents | argument, issue write-up, reading check, fix review, describe, console runner, typed forms | 5 strict tools, 3 JSON schemas |
-| Evidence and custody | target packs, script analysis, remediation packs, courier, return leg | 3 script states, 4 fix parts |
-| Surface | the Flask application, the page server, 102 console modules | 68,591 lines in `ui/` |
-| Reports | the firewall and site audit renderers | 48,286 lines |
-| Model access | one API client, model registry, call ledger, master switch | 24 modules in the AI package |
-
-At v8.3.1 the product is 213,888 lines of Python in 227 files, with 162,917 lines of tests in 678 files.
-
-### 5.3 Runtime model
-
-The executable starts a Flask application under the Waitress WSGI server, creates a `data` folder beside itself for
-the SQLite warehouse and logs, and serves the console on a local port. Pages are generated on the server from the
-warehouse and carry their own scripts and styles; there is no front-end build step and no framework.
-
-A page build is reused until the warehouse changes. The cache is keyed on the database file itself, never on a clock,
-because a clock-based cache serves stale data for its whole window and cannot say that it did. When only an agent's
-write moved the file, the last page is served at once and rebuilt behind the response. State that must be live (which
-machines owe a transcript, which runs are going) therefore travels on a shared poll of the running work, never inside
-the cached page.
-
-Long-running work (a Diagnose takes 16 to 25 minutes on a real server) runs on a background thread per session. The
-page follows it through a server-sent event stream keyed by the session's event sequence number, so a dropped
-connection resumes exactly where it stopped. A queue starts one Diagnose at a time; a Job's start is claimed in one
-locked write, so a restart can never start a queued Job twice.
-
-### 5.4 The record is the source of truth, and the Job is its thread
-
-Everything the platform does is an event in an append-only log, one session per object (a server, a client, a
-firewall). A Job is not a table. It is a thread inside that log, read back from its own events: the engineer's
-request, the agents' turns and claims, the lead engineer's decision, the issues and their order, the console's
-conversation, the scripts issued, what came back, and the decisions that closed each issue. The Job page and the
-console are two views of that one record.
-
-- **A restart cannot corrupt a Job.** Every projection is rebuilt from the log. A run that a dead process left open is
-  found at boot, marked stopped with the moment it stopped, and offered for resumption.
-- **Two Jobs on one server never share a conversation.** The history the model receives for a console turn is built
-  from that Job's events alone.
-- **Absence is not zero.** A script with no returned output is "not returned", never "returned empty". A capture that
-  could not read a section says so, and that is kept apart from "measured and found nothing". A missing setting for
-  the AI switch reads as off.
+| Application server | Quart on Hypercorn, asynchronous | Streams and WebSockets without blocking; one process serves the whole office |
+| Live updates | One WebSocket per browser, topics subscribed over it | A page is told of a change in the time the write takes, never on a timer |
+| Database | SQLite in write-ahead mode, one writer, short writes | One file to back up; no server to administer; measured adequate for fifty engineers at once |
+| Agents' listener | A separate TLS 1.3 server on its own port | It must read each connection's client certificate, and it must never be the console |
+| Local model | GLiNER 2.5 in its own process on its own Python, spoken to over standard input and output | It opens no port; it is started on first use and stopped when idle so its memory goes back to the server |
+| Packaging | One folder: the program, its libraries, the local model, the install script | "Self-contained" means the code: nothing is fetched or read from outside the folder |
+| Background work | One scheduler with four lanes (section 9.2) | An engineer's request never waits behind background work |
 
 ---
 
-## 6. Key decisions
+## 5. Data engineering: an estate in one record
 
-Each decision below is recorded the way an architecture decision record is: the situation, the options, the choice,
-and what it made easier and harder.
+Everything downstream is only as good as the record. Most of the engineering effort in this layer went into four
+things: reading messy operational inputs exactly, deciding who is who without guessing, keeping history so that "gone"
+is never mistaken for "fixed", and making concurrent use by a whole office safe on one file.
 
-### 6.1 Deterministic judgment before any model
+### 5.1 Four sources, one reader each
 
-- **Context.** An estate of hundreds of servers must be triaged before any money is spent, and the same finding must
-  read the same way every time.
-- **Options.** Ask a model about every server; or encode what a senior engineer checks as code and use models only
-  where judgment is needed.
-- **Decision.** 56 judges and a 52-check firewall engine run on every ingest, at no cost, and agents are run on the
-  machines the engineer picks.
-- **Consequences.** Triage is free and reproducible, and the agents start from a known list. Each judge's precision
-  must be measured on the real estate, because a finding raised everywhere teaches engineers to ignore it (Section
-  10.2).
+| Source | What it is | What reading it takes |
+|---|---|---|
+| **The device roster** | A spreadsheet export from the remote monitoring tool: every device, its client, its site, its type | It goes in first. A server capture saves nothing until a roster exists to place it under |
+| **The collector capture** | The text output of a 4,165-line PowerShell collector, 47 numbered sections a server, any number of servers in one file | Split by machine, then by section, then parsed section by section into typed fields |
+| **The firewall export** | A WatchGuard configuration saved as XML | Read into one firewall model (section 7); the product was built against 54 exports of 37 devices |
+| **Agent batches** | Typed records from the agent on each server, on a cadence | Checked against a shared record contract line by line; replays are harmless |
 
-### 6.2 No transport to client machines
+The application seeds nothing. A new install shows empty screens, each saying the one next step, and every figure it
+ever shows was brought in through one of these four doors.
 
-- **Context.** The platform acts on infrastructure it does not own, under contract.
-- **Options.** An agent with remote execution; or an agent that writes scripts a person runs.
-- **Decision.** No module can open a session to a host. The engineer runs every script through the team's own
-  management platform and pastes back what it printed.
-- **Consequences.** The strongest safety guarantee is structural rather than procedural. The cost is a human round trip
-  per test, which the design turns into an advantage: one read-only script can ask every open question on a client's
-  machines at once (Section 7.3).
+### 5.2 The capture: from a wall of text to a server's record
 
-### 6.3 Adversarial roles with conflicting success conditions
+A fleet run through the monitoring tool returns one paste holding every machine's console output under a header line
+of its own. The splitter recognizes that wrapper, strips it, and keeps each machine's header, site and run status for
+ingest. Each machine's block is then cut into its 47 sections and each section goes to its own parser: identity,
+hardware, storage, the operating system, roles, Active Directory, DNS, DHCP, file services, IIS, SQL Server, Exchange,
+Hyper-V, installed software, services, the network, security settings, scheduled tasks, backup, event logs,
+permissions, certificates, Group Policy, encryption, protocols, processes, and the rest.
 
-- **Context.** A model asked what is wrong commits to an answer and then defends it.
-- **Options.** One agent with self-critique; or separate roles whose goals conflict.
-- **Decision.** A first engineer reads the server; a second reviews that read with the task of breaking it; a lead
-  engineer rules on every claim and decides the work.
-- **Consequences.** Retractions that took an engineer a day happen inside the run. Each Diagnose makes three long calls,
-  which the shared prompt cache makes affordable (Section 11.6).
+Three decisions here pay off everywhere else:
 
-### 6.4 Every answer the code acts on is a typed form
+- **The raw text is kept beside the parse.** The parse serves the checks and the pages. The raw text is what the model
+  reads, exactly as it came (section 9.4).
+- **A stored parse carries the fingerprint of the parser that made it.** When the parser changes, a stored parse made
+  by older code is parsed again on first use. Nobody re-ingests, and no page ever mixes two parsers' ideas of a server.
+- **Each server is saved in its own short write as it is read.** A capture of an entire fleet appears on the pages
+  server by server while the drop is still being read, and no other engineer waits behind it. The drop is a batch with
+  a state of its own (open, grouping, done, refused, interrupted), so a process that stops mid-drop says exactly what
+  landed.
 
-- **Context.** Model text read by delimiters failed in practice: a collector that prints `Enabled: False | ...` split a
-  pipe-delimited claim in the wrong place, and an order of work written in prose was lost.
-- **Options.** Harden the text parsers further; or have the model answer through strict tools and JSON schemas.
-- **Decision.** The lead engineer's decision, the reviewer's verdict, every fix and script proposal, the writer's
-  issues, the updater's changes and the checker's readings arrive as strict structured outputs. The text parsers remain
-  as stated fallbacks.
-- **Consequences.** Order, dependencies and machines survive as data. Five strict tools in one request exceeded the
-  API's grammar limit when measured, so each surface carries at most three and the tool lists are designed per
-  surface.
+Agents and the newer collector emit **typed records** instead of text: one JSON record a line under a fixed envelope
+(schema, run, token, host, sequence number, section, kind). A run is whole only when it has a begin record, an end
+record whose count matches, and no gap in the numbering. A run that is not whole is kept and says why; it is never
+silently treated as complete. A bridge writes a typed run back out in the text collector's own layout, so every parser,
+check, page and audit works on both shapes.
 
-### 6.5 One self-contained executable
+### 5.3 Who is who
 
-- **Context.** The application runs on an office server with no development tooling and no installs.
-- **Options.** A hosted service; a Python install; or one frozen executable.
-- **Decision.** One PyInstaller executable of about 69 MB that creates its own database on first run.
-- **Consequences.** Deployment is copying a file. Every release must be proven on the built executable, because paths
-  and imports that work from source can fail when frozen.
+A server goes by several names: the roster's device name, the capture's upper-case host name, its fully qualified
+name, and its 15-character NetBIOS name. The matcher places each one under its client from evidence, rung by rung, and
+records which rung placed it and on what evidence. Where the evidence ends, or points at two clients, it places
+nothing and asks an engineer once; the answer is kept and never asked again.
 
-### 6.6 An append-only record, with the Job as its thread
+Two rules in this matcher were learned from measurements, and both are refusals:
 
-- **Context.** Agents, engineers and captures all change the state of the same work, sometimes at once.
-- **Options.** Mutable state tables; or an event log with projections.
-- **Decision.** One append-only log per object; every view is rebuilt from it.
-- **Consequences.** History is complete and restarts are safe. Deleting is an event, not an erasure, and the interface
-  says so.
+- **An address never places anything.** Private address ranges repeat across clients. Measured against the real
+  estate: joining firewalls to clients by subnet split on 32 of 37 exports and named the wrong client on 6. Joining by
+  directory domain placed 13, and all 13 were right.
+- **A firewall is never linked to a client by a guess.** An export's file name is whatever an engineer typed. A
+  firewall belongs to the client an engineer links it to, and until then its audit names no server.
 
-### 6.7 A stand-in for the model API
+### 5.4 The record
 
-- **Context.** Agent flows have many failure modes, and proving each on a paid model would cost real money every time.
-- **Options.** Mock at the function level; or imitate the API on the wire.
-- **Decision.** A local server that speaks the streaming API and returns scripted answers, tool calls, refusals,
-  cut-offs, loops and errors on request.
-- **Consequences.** Every agent flow is proven at no cost, in the built executable. Paid calls are reserved for proofs
-  only a real model can give, each with a budget set in advance. A stand-in can hide a defect a real model exposes, so
-  every build is also run for real.
+One SQLite schema, at version 79, builds every database: 100 tables and 131 indexes once the telemetry tables are in
+place. New tables are declared `STRICT`. A later change is a numbered step that is forward-only, transactional and safe
+to run twice. A data folder from an older major version is refused with a plain sentence, not migrated by hope.
 
-### 6.8 Frontier models only, with refusals routed and never reworded
+| Property | How it is held |
+|---|---|
+| **One way in** | Every connection comes from one factory. A test refuses a database connection opened anywhere else in the code |
+| **Readers cannot write** | A read-only connection is opened in SQLite's own read-only mode, so a page that only reads cannot write even by accident |
+| **Short writes** | One write is `BEGIN IMMEDIATE`, the statements, `COMMIT`. Nothing slow (a model call, a parse, the network) is ever inside one |
+| **Attribution** | Every append is stamped with the engineer acting in that request, by a trigger, so no code path can forget |
+| **No lost updates** | A single value (a note, a setting, a finding's state) is saved only if the row is still at the version the engineer's page read. Otherwise the page is told who changed it and asks which to keep |
+| **One actor per action** | Starting a diagnosis, an audit, a fix approval or a wave takes a lease. A second engineer pressing the same thing is told who started it and when, instead of starting it twice |
+| **Tell, do not poll** | Every commit says what it changed; pages showing it are told over their socket at once |
+| **An append-only work log** | Every Job's events are appended, never edited. A Job is read from its events; it has no table of its own to drift |
 
-- **Context.** Security diagnosis is the kind of work frontier models sometimes decline.
-- **Options.** A cheaper model tier; rewording requests; or routing.
-- **Decision.** Claude Opus 5.5 first and Opus 5 as the floor; a declined call is resent once on the floor and later
-  calls of that kind go there first. A request is never reworded to get past a safety classifier.
-- **Consequences.** About one call in eleven was declined in the October evaluation, costing 12% of spend. The
-  legitimate route to remove it is the provider's verification program for defensive security work.
+**Findings have identity and history.** A finding is the same finding next time by what it is about, never by its
+position in a list or by a model's wording. When a new capture is laid over the last one, each finding is opened, seen
+again, or gone, and a finding that is gone is classified by why it is gone. The word "closed" is refused for anything
+no remediation is recorded against. This one rule is what lets the product claim a fix worked: the claim rests on a
+recorded change and a later measurement, never on an absence.
+
+### 5.5 The dependency map and the seams
+
+Two derived structures turn a list of servers into an estate.
+
+**The dependency map** records what each server leans on, and each link carries its evidence: the domain controllers
+of its domain (from a captured controller's own directory), the DNS servers its adapters ask, its DHCP server, its
+Hyper-V host, the file servers it holds open connections to, its network on the client's linked firewalls, and its
+backup server. An address resolves to a server only when a captured server of the same client holds it. Where the
+records end, the link says so with the reason.
+
+**The seams** are where one client's facts disagree across its servers. Every fact several servers hold about the same
+thing is lined up: an address and who holds it, what each DNS server answers for a name, each server's time source,
+its gateways, a Group Policy's version as each controller sees it, where each virtual machine runs. Where two sides
+disagree, the seam keeps both and where each came from. No rule names a problem here. A seam is a disagreement to
+explain, and it is some of the best material the model is ever given.
+
+The instrument's own traps are checked before anything is marked: a MAC address is one value however it was written;
+a MAC that one server sees at many addresses is a router's and places nothing; a policy version the collector could
+not read is not a disagreement; a side with nothing captured is missing, never different.
+
+### 5.6 Reference knowledge as dated data
+
+Facts that go stale are data files, never code: the Windows Server, SQL Server and Exchange lifecycles with each
+Extended Security Update year, firmware release dates, the snapshot of known-exploited vulnerabilities, Microsoft's
+security baseline (361 settings, each with its expected value by server role), NIST's control catalogue and the CSF
+core. Each file carries where every fact was read, the date it was read, and a stated life in days. A file read longer
+ago than its life fails the test suite and the build, so the source is fetched again before the product can ship.
 
 ---
 
-## 7. How it works, capability by capability
+## 6. Deterministic first: the check catalogue
 
-Each capability below is described as an objective, the approach that meets it, and the outcome measured on the
-October build.
+A model should never be asked a question that code can answer exactly. Before any model call, 177 deterministic checks
+judge every server and every firewall. They cost nothing, they run in under a second a server, and they are the floor
+the product stands on with the AI switched off.
 
-### 7.1 Ingest and judge the estate
+### 6.1 One contract for every check
 
-**Objective.** Turn a roster, a fleet-wide capture and a set of firewall exports into one list of problems, worst
-first, with no model call.
+Every check, whether it reads a disk's free space or a domain's delegation settings, takes the same shape. It declares
+what it reads, when it does not apply and why, and it answers with exactly one of four outcomes:
 
-**Approach.**
+| Outcome | Meaning |
+|---|---|
+| **A fault** | Something is wrong, with the exact values it decided on |
+| **Healthy** | Checked, and fine. A legal answer, shown as one |
+| **Cannot be determined** | The capture does not hold what would decide it. Said with what would. Never scored as a pass |
+| **Not applicable** | The subject is not the kind of thing this check judges, with the reason |
 
-1. The roster goes in first; it defines which clients and machines exist.
-2. The capture is split by host, stripped of the management platform's wrapper text, matched to the roster
-   case-insensitively, and parsed into 47 sections.
-3. Each firewall export is parsed, audited by the full engine and stored against the device it came from.
-4. The judges and the firewall checks raise findings in one shared shape; findings of one type become one problem with
-   one page; a problem found at two or more clients becomes a Global.
+A fault also carries the conditions that would make it acceptable, each phrased as a question for the client. "This
+share grants Everyone full control" is a fault; "it is a scanner drop that holds nothing for more than an hour" is a
+condition that an answer can cross off. This is how an engineer teaches a junior to read a finding, and it is what
+stops a tool from crying wolf.
 
-**Outcome.** From an empty folder, 48 clients, 234 devices, 189 servers and 37 firewalls were ingested and judged in
-about one minute, with no machine unmatched. The 46 machines on the roster with no capture yet say whose they are and
-that the collector has not run on them.
+Every check ships with labelled examples and must pass a proof of its own contract before it may join the catalogue.
 
-### 7.2 Diagnose one machine
+### 6.2 The server checks
 
-**Objective.** Read a server the way a senior engineer does, with every claim tied to a line of its own output, and end
-with the work rather than a report.
+117 checks in 18 families:
 
-**Approach.**
+| Family | Checks | Examples of what it decides |
+|---|---:|---|
+| Identity | 12 | Domain administrators past a sane count, kerberoastable service accounts, unconstrained delegation beyond the controllers, LDAP signing not required, replication failing from a partner |
+| Updates | 10 | A reboot flag that survived a restart, an operating system past extended support or inside an Extended Security Update year, patching stalled |
+| Hardening | 10 | WinRM accepting Basic authentication, a wildcard trusted-hosts list, legacy protocols and their cryptography |
+| Roles | 10 | Hyper-V replicas set to start with the host, checkpoints left behind, a DHCP scope nearly out of addresses, a failover relationship out of its normal state |
+| The fault library | 9 | Signatures generalized from real engagements: a clock with no reliable source, a domain controller on its hypervisor's time |
+| Directory | 8 | The Kerberos service account without modern keys, a controller's address outside every directory subnet |
+| Engagement checks | 8 | Scheduled tasks that restart a server outside the patch policy, the task that keeps an admin account locking out |
+| Proven misses | 8 | Facts the open read and the catalogue had both missed on two real sites: a policy object linked nowhere, a privileged account whose password never expires |
+| Network and Group Policy | 7 | A controller that lists only itself for DNS, default routes to two gateways |
+| Storage | 6 | A volume under 10% free, a role that should not share a volume with the operating system, backup absent |
+| Listeners | 6 | Remote Desktop with Network Level Authentication off, the host firewall off on the profile a domain server uses |
+| Operations | 6 | One source flooding the system log, memory past 85%, a role installed and started for nothing |
+| Network | 5 | A domain machine asking a public resolver, an adapter on a link-local address |
+| Microsoft's baseline | 4 | The 361 baseline settings grouped the way the work is done: audit policy, user rights, security options, services |
+| Protection | 3 | Nothing providing real-time protection (Defender standing down for another product is not the finding) |
+| Shares | 2 | Everyone or Authenticated Users with full control after both the share and the file-system layers |
+| Exposure | 2 | What the internet actually reaches on this server, from the one exposure path (section 7.4) |
+| Event logs | 1 | A log too small to hold the week the other checks read |
 
-1. The first engineer reads the whole raw capture, with the client's other machines and firewall alongside, and writes
-   its read in prose with an index line per claim.
-2. The second engineer reviews that read: agrees where the evidence is plain, disputes with the line where it is not,
-   and adds what was missed.
-3. The lead engineer rules on every claim and records the decision through a strict tool: the pieces of work in the
-   order to do them, what each waits on, the machine each next piece of data comes from, the checks' findings that are
-   not faults here, and the next read-only test.
-4. Code checks every deciding quote against the output; a ruling whose quote is not there steps down.
-5. A role checklist (domain controller, certification authority, Hyper-V host, Remote Desktop host, file server, SQL
-   Server, Exchange server) asks the agents to answer each role's essentials or put the read in the next test.
+Three of those families are worth a second look because of where they came from. The fault library, the engagement
+checks and the proven misses are not textbook rules. They are signatures taken from real diagnostic work, generalized
+to the deciding test, the value that marks the fault and what fixes it. Each carries the signature it came from. When
+the model finds something no check raises, the product can turn that finding into a new check, confirmed by an
+engineer before it joins the floor (section 9.13). The catalogue grows from the work.
 
-**Outcome.** Eight servers scored against keys: 40 of 47 problems found in full, 4 in part, 3 missed, and none of the
-claims the keys ruled out. On an Exchange server it had never seen, the run found a 2.1 TB mailbox database with no
-copy and less free space on its drive than its own size, and mailbox logons failing about three times a minute. It
-named the endpoint agent that was running rather than calling the server unprotected, which was the key's trap.
+### 6.3 Instrument honesty
 
-### 7.3 Organize the work
+A check that counts events is only as good as the log it counts from. On the real estate, the Security log held less
+than the seven-day window the checks read on 95 of 179 servers, and less than a single day on 43, some of them only
+minutes, because a 20 MB log was being filled by object-access auditing. A count read from such a log is a floor, and
+a zero is not a quiet week. So one check names every log that is too small, and every check that counts from a log
+says how much of the window that log actually held.
 
-**Objective.** List the work in the order it must be done, so that no fix undoes another and no engineer has to rebuild
-the reasoning.
+The same discipline applies to the agent. An event a server does not audit is reported as "not audited here", never as
+zero, because the agent sends each server's effective audit policy with its counts.
 
-**Approach.** The writer builds one issue per piece of work, in the lead engineer's order, then applies a stable sort on
-what each waits on. Each issue carries its kind (a test first, a fix, a question for the client, a project), its
-machine, and its prerequisites. The next step is the first open issue whose prerequisites are done. One read-only
-script can ask every open question across a client's Jobs and machines at once.
+### 6.4 One change fixes many servers
+
+Findings are not work. Changes are. Measured on the estate: 2,116 findings on 189 servers came from 54 distinct checks,
+and 91% of them from 35 checks that each fired on 20 servers or more. A **pattern** is one client's servers carrying
+one check's finding where the change that closes it is made once for all of them: one Group Policy, one policy in the
+endpoint product's console, one script. The product groups them, diagnoses the pattern once, and confirms each server
+from its own evidence. Where every server shares one cause, code alone settles it, at no cost.
+
+### 6.5 Compliance, control by control
+
+Findings map to NIST SP 800-53 Rev 5's Moderate baseline, 287 controls, read from NIST's own machine-readable
+catalogue. Every control is in exactly one of four states:
+
+| State | Meaning |
+|---|---|
+| **Assessed** | Evidence fails it. Named with the servers or firewalls it fails on |
+| **Partly assessed** | What was checked passed. The control's procedures, and the systems outside the capture, were not checked. A pass is never stated as the whole control |
+| **Needs the client's evidence** | Nothing collected decides it. Stated with the question to ask |
+| **Not applicable** | Only where evidence shows its subject is absent |
+
+NIST CSF 2.0's 106 subcategories follow from the same controls through the references NIST itself publishes. Because
+an informative reference is a related control and not the outcome itself, a subcategory reached only through one is
+never called assessed. A scanner that reports "94% compliant" from configuration alone is overclaiming, and an auditor
+will know it. This one does not.
+
+---
+
+## 7. The firewall pillar
+
+The firewall half of the product is a network engineering tool in its own right. It reads a WatchGuard Firebox's
+configuration export and answers the questions an engineer would spend a day answering by hand in Policy Manager:
+what does this box let in, from whom, to which machine, and does anything actually answer there?
+
+### 7.1 One model, read twice
+
+The export is read into one firewall model: the device, its interfaces, address groups and aliases, services, policies
+in their order, static and dynamic NAT, IKE gateways and tunnels, Mobile VPN, users, authentication domains and
+licences. Lists keep the export's order. An absent value is absent, never a made-up default.
+
+Every later judge, page and audit reads that one model, so the screen and the client's audit cannot disagree about a
+number. Two independent readers fill it, and a standing test holds them in agreement over every export the product
+was built against. A ledger lists every element path those exports contain, so an export that carries a path nobody
+has read is named instead of silently skipped.
+
+Small things matter in this parser, and each one below was a real defect before it was a rule:
+
+- **A policy's number is Policy Manager's number.** On the real exports, 1,428 of 1,505 policies sit at a different
+  place in the file than the number Policy Manager shows, by 1 to 10, because the file also counts the Firebox's own
+  hidden policies. An engineer told to edit "policy 14" must land on the right one, so the product carries Policy
+  Manager's number and never the file position.
+- **VPN cryptography is not where it looks.** Phase 2 lives in sibling elements that name the IKE policy they serve.
+  A proposal with a self-describing name states its algorithms; a hand-named one is decoded from its numeric fields.
+- **Where an address leads is judged from the box's own interfaces, never from how the address looks.** A
+  public-looking network that sits on a trusted interface is inside. A branch tunnel is a branch, never the internet.
+
+### 7.2 The checks
+
+52 checks in the engine, in 14 families, plus eight more on the Firebox itself:
+
+| Family | Checks | What it asks |
+|---|---:|---|
+| Access | 8 | How the box is reached and administered: credentials pasted into descriptions, integration secrets stored in the export (named and fingerprinted, never printed), SNMP v1 or v2c, default community strings |
+| Services | 7 | The subscription services: intrusion prevention on and updating, gateway antivirus, sandboxing, botnet detection |
+| Traffic | 5 | What the traffic log says beside the configuration: flows after hours, one source carrying most of the bytes, volume that reads as exfiltration |
+| Device | 4 | Firmware in a range listed as exploited in the wild, a cluster whose members drift, BGP neighbors without filters |
+| Hygiene | 4 | Firmware behind its own release line, test rules left enabled, aliases no policy uses, local account sprawl |
+| Inspection | 4 | Outbound rules that reach an encrypted DNS resolver, HTTPS inspection absent, HTTP/3 allowed around an inspected TCP 443 |
+| Remote access | 3 | SSL VPN gateways with over-broad routes or no client certificate, a clientless portal publishing internal applications |
+| Exposure | 3 | Services reachable from the internet, any-service allows, dangerous ports open inbound or outbound |
+| Coverage | 3 | Whether the controls a rule should carry are on it: logging, intrusion prevention, a proxy where a packet filter passes an inspectable port |
+| Perimeter | 3 | Anti-spoofing, IPv6 left open, who can reach the firewall's own management |
+| VPN | 2 | IKEv1 tunnels, tunnels open to any peer, the weakest transform a peer may negotiate |
+| Threats | 2 | Command-and-control beaconing and lateral movement, from the logs |
+| Precedence | 2 | Rules that never fire because an earlier rule matches first |
+| NAT | 2 | Static NAT that translates into a dangerous internal service, including a forward from one port to another |
+| The Firebox's own settings | 6 | What the security services do once they are on: a threat level allowed through, a fast-scan mode |
+| Certificates | 1 | The Firebox's own certificates judged at the date the configuration was saved |
+| Reach | 1 | What an inbound allow for service "Any" actually reaches |
+
+The last line has a story. The dangerous-ports check reads a policy's named ports. An inbound policy that somebody
+later widened to service "Any" therefore dropped out of it, on 20 of the 53 exports then in hand: the widest rules
+were the ones the check could not see. The answer key found the gap, and a check now says for each such policy, by
+name, where it lets the internet in. That is what an answer key is for.
+
+### 7.3 Posture a reader can explain
+
+Every firewall check belongs to one of five domains: what answers the internet (Exposure), who gets in and how
+(Access), what the Firebox looks inside (Inspection), the tunnels (VPN), and keeping the box (Operations). A rule that
+fired costs its points in its domain. A domain scores 100 less its points. **The posture is the worst domain**, which
+tells the reader why in one word. Only faults count: an affirmed control, an undetermined answer and a not-applicable
+one cost nothing. Each finding also carries its MITRE ATT&CK technique and tactic, with revoked techniques mapped to
+the ones that replaced them.
+
+### 7.4 Exposure is a path, not a port
+
+This is the pillar's center. A port scan tells you a port is open. An engineer needs to know what the open port
+reaches.
 
 ```mermaid
-flowchart TB
-    A["1 · Prove each guest's backup<br/>check first"] --> D["4 · Collapse to one management address<br/>waits on 1"]
-    A --> E["5 · Re-enable the host firewall<br/>waits on 1, 3 and 4"]
-    C["3 · A VPN server on the hypervisor without its role<br/>ask the client"] --> E
-    D --> E
-    B["2 · Read the storage controller with the vendor's tool<br/>check first"]
-    F["6 · Fix a software-install policy loop<br/>on the domain controller, not this host"]
+flowchart LR
+    I(("Internet")) --> N["Static NAT<br/>public address and port"]
+    N --> P["The policy<br/>that carries it"]
+    P --> G{"Its gate"}
+    G -->|any address| T["Internal address<br/>and port"]
+    G -->|named addresses| T
+    G -->|authenticated users| T
+    T --> S["The server<br/>that holds the address"]
+    S --> L["What listens<br/>on that port"]
 ```
 
-**Outcome.** On a Hyper-V host whose guests include a domain controller, and whose firewall was off on every
-profile, the lead engineer placed turning the firewall back on after three things: proving the guests' backups,
-settling a VPN server running on the hypervisor without its role, and collapsing the host to one management
-address. That is the order that keeps the guests and their management reachable when the firewall comes on. The page
-shows "waits on 1, 3 and 4", the policy loop is filed on the domain controller where it can be fixed, and the guide
-points at the issue to work first.
+A path runs from the internet through a firewall's static NAT and the policy that carries it, past its gate, to an
+internal address and port, and on to the audited server that holds that address and whatever listens there. The
+firewall's half comes from the rule base. The server's half comes from the captures. The join is computed once, and
+the Paths page, the server's page, the firewall's page and both audits all read the same rows.
 
-### 7.4 Test and return the evidence
+The gate is decided by the policy's weakest source member: a policy that names a user group beside "any external
+address" admits anyone. Every path ends in one of six states:
 
-**Objective.** Settle a doubt with a read-only test, and accept only output that provably came from that test on that
-machine.
+| State | Meaning |
+|---|---|
+| **Live** | A server at that address listens on that port |
+| **Not listening** | The server is there, its capture lists its listeners, and none is on that port. The route publishes nothing that answers: an orphan to remove |
+| **Listeners not collected** | The server is there; its capture holds no listener table |
+| **Ambiguous** | More than one of the client's servers holds the address. Kept as ambiguous, never resolved to a guess |
+| **No host** | None of the client's audited servers holds the address |
+| **Elsewhere** | Only another client's server holds the address |
 
-**Approach.** Each test is issued under a run token bound to the machine, the questions and the script's hash. A paste
-from the management platform is split by its per-machine headers, each machine verified against its own token. The
-agents read the output, and a checker holds every reading to a quoted line that code confirms is really there.
+That last state exists because of a real false alarm. Matching by address alone once reported a domain controller
+published to the internet. The controller belonged to a different client that happened to use the same private range.
+The join is now constrained by client, and the near miss is kept and shown as exactly that.
 
-**Outcome.** A test written for one machine and pasted from another is refused on the spot, without a model call. A
-2.2 MB paste is refused plainly with an instruction to attach the file. One script for two machines, pasted at once,
-files each answer to its own Job.
+A second step follows each live path: what the exposed host may reach next, from the rule base's allow rules between
+zones. That is what turns "port 3389 is open" into "the internet reaches a session host that can reach the domain
+controller", which is the sentence that gets a change approved.
 
-### 7.5 Fix, review, approve, verify, close
+### 7.5 Reading a rule base the way a policy analyser does
 
-**Objective.** Carry a fix to a verified close with a backup taken first, an undo that works, and a person's approval.
+The rule base page names five kinds of anomaly, pair by pair: a **shadowed** rule (an earlier rule takes all of its
+traffic and acts differently, so it never fires), a **redundant** one (an earlier rule takes all of it and acts the
+same), a **generalization** (a later, broader rule acts differently, so the narrow one is an exception above it:
+usually meant, reported for reading), a **correlation** (two rules that act differently each take part of the other's
+traffic, so their order decides), and a **consolidation** (two rules that could be one).
 
-**Approach.** The agents write the fix through a strict tool in four parts (backup, apply, revert, verify). A reviewer
-agent reads the change against the machine's own evidence and objects only on that evidence. The script ships inert:
-nothing changes until the engineer sets the apply switch. After the run is pasted back, the issue is watched until a
-verification shows the fault gone, and the next capture confirms or reopens it.
+The comparison is made on the address space each side resolves to, the user groups that confine it, the interfaces an
+"any" is held to and the rules' schedules. It is never made on alias names, because this vendor names every policy's
+aliases after the policy, so names almost never match. A claim is made only where both rules' coverage is proved; an
+unresolved side is no claim. The analyser under-reports and never invents. One reading was tried and thrown out on
+measurement: treating two policies that differ only in service as a consolidation named 196 pairs across 37 exports,
+a fifth of some rule bases, and not one was a finding. On this platform a policy is one policy type, so that is simply
+how a rule base is written.
 
-**Outcome.** On the Exchange server, a host-hardening fix was written and passed review for $1.01. It was gated behind
-the apply switch, backed up to a folder for its Job on the server, and its revert reads that backup.
+### 7.6 Tunnels, certificates and firmware
 
-On a domain controller that is also its domain's certification authority, the fix closing four over-permissive shares
-took three rounds:
-- **Writing it, the agent corrected its own brief twice.** The ACL tool saves file permissions but not share
-  permissions, so the backup also prints the commands that restore each share. And restricting the agent-distribution
-  share to administrators would have cut off every machine that pulls from it, so that share was narrowed to read
-  access instead.
-- **The fix stops before any change** if exported key material sits in the certification authority's backup folder,
-  because a key in a share open to everyone is an incident, not a hardening ticket.
-- **The reviewer held it twice**, each time for undo commands that pointed at the wrong folder and would have restored
-  nothing. It passed the third version with notes.
+Each tunnel's cryptography is graded from the weakest Phase 1 transform and Phase 2 proposal a peer may negotiate. The
+Firebox's own certificates are judged at the date the configuration was saved, since an expired web-server certificate
+is what breaks the management page and the SSL VPN portal for users. Firmware is compared against the newest build on
+its own release line and against a bundled snapshot of vulnerabilities known to be exploited, and the finding says how
+old that snapshot is.
 
-### 7.6 The firewall track
+### 7.7 From a finding to a change made by hand
 
-**Objective.** Turn a firewall's audit into work, with fixes that the engineer makes by hand in the vendor's tools and
-evidence that comes from the device itself.
+A firewall's fixes are never pushed. An engineer makes them in Policy Manager or the Web UI, and the product's job is
+to make that safe and provable:
 
-**Approach.** A Job is written from the 52 checks' findings. Fixes are written as numbered steps in Policy Manager and in
-the web interface, with the configuration saved first, how to put it back, and what a new export will show. A log
-export from the vendor's cloud is read as evidence; a new configuration export closes an issue whose finding it no
-longer raises, and says "still there" when it does.
+- **A firewall Job** is written from the engine's findings on the stored configuration: one issue per change.
+- **Each written step names only what the firmware has.** Menu paths in a step are looked up in a vocabulary read
+  from the vendor's own documentation, so a step never sends an engineer to a menu that does not exist.
+- **The proof is the next export.** After the change, the engineer saves the configuration again and drops it in.
+  "What changed" compares the two models and shows the before and after; the finding is closed by that evidence.
+- **Complaints are worked by code first.** A site blocked, an inside service unreachable, a branch tunnel down,
+  remote users dropping: each family's first checks read what is already held (the model, the rule base, the logs)
+  before any model is asked, and a tunnel is diagnosed from both ends when both Fireboxes are in the record.
 
-**Outcome.** On a firewall with 59 findings, the Job held 21 issues for $0.24, led by nine static NAT translations
-publishing Remote Desktop to the internet. The fix by hand for its open management and SNMP policies cost $2.07. It read
-the export, corrected the issue's own description where the export disagreed, and passed review with the advice to
-keep a recovery session open while the change is made.
+### 7.8 Linking the two pillars
 
-### 7.7 The console
-
-**Objective.** Let the engineer talk to the work: ask anything about the Job, have it act within the safety model, and
-take the record away.
-
-**Approach.** The console is its own conversation whose fixed instructions are the Job's record: the capture, the
-rulings, each issue with its steps, each script with what came back. It carries six tools on a server (propose a
-script, propose a fix, review a fix, read another server of the client, list the fleet, amend an issue), at most four
-tool rounds a turn, each priced under a $3.00 ceiling.
-
-**Outcome.** Asked for a time entry for a whole Job, it wrote about 7,000 characters with no timestamps: the server's
-roles, what was read, the corrections made to the automated findings, the ruled work and the fix's review rounds,
-ready to paste. Asked about the session and how it felt about it, it answered candidly. Asked for a cupcake recipe, it
-gave one and returned to the Job's next step. A question costs $0.21 to $0.42 once the server's capture is cached;
-the first question on a server costs about $1.40 to $1.85, because it writes the cache.
-
-### 7.8 The guide
-
-**Objective.** A colleague who opens the application for the first time knows what to do next.
-
-**Approach.** Every page names one next step and draws a line to it: "Copy the script and run it on this server", "This
-fix waits on issue 1. Work that first", "Run the collector on this machine, then drop its output on Ingest". The guide
-moves aside for the console and never covers it.
-
-**Outcome.** All 457 pages the product serves were crawled in a real browser: none threw a script error or failed a
-request. The crawl found the one class of page with nothing to say: the 46 roster machines with no capture read "No
-such server". They now name the client and say to run the collector, and the guide points at Ingest.
+When an engineer links a firewall to its client, the two halves of the product join. The firewall's ways in gain the
+servers behind them. A server's page shows what the internet reaches on it. The site audit's network chapter draws
+the firewall's routes onto the servers' network. And a check on the server side reads the same exposure rows, so a
+server with Remote Desktop published to any address is a finding on the server, on the firewall, and on the path
+between them, counted once.
 
 ---
 
-## 8. Data engineering: from a PowerShell capture to one list of problems
+## 8. Agents and the standing watch
 
-### 8.1 The collector
+A capture is a photograph. An estate needs a pulse. v9 adds a small agent on each server and a standing watch in the
+office that reads what the agents send. This section is systems administration and security engineering: a program
+that runs as SYSTEM on a client's server has to be boring, careful and impossible to turn against its host.
 
-The collector is a 4,083-line PowerShell script (version 5.3), plain ASCII so that it parses under Windows PowerShell
-5.1. It is pushed across the fleet by the management platform. It captures 47 sections of configuration and state:
+### 8.1 The agent
 
-- hardware and firmware, the operating system and its servicing stack, and patches;
-- services and their accounts, listening ports and scheduled tasks;
-- local and domain accounts, group membership, and shares with their NTFS permissions;
-- all four certificate stores, the host firewall, DNS, time and event logs;
-- backup and volume shadow copy state, disk health, and BitLocker and TPM;
-- Kerberos delegation, LAPS and LSA protection;
-- SMB, TLS, RDP and WinRM posture, installed software, and more.
+The agent is its own build, with its own small code base, installed as a scheduled task under SYSTEM. Its design is a
+list of things it does not do:
 
-It is designed around one rule: **it captures what an engineer needs to reason about credential exposure, and never
-the credentials themselves.** It reads password-set timestamps, service principal names, encryption types and NTLM
-compatibility levels. It does not read passwords, hashes, LSA secrets or DPAPI keys.
+- **It starts no other process to take a reading.** Health, events, the network and the inventory are read through the
+  Windows API directly: processor time, memory, disks, services and their start types, a pending reboot, the event log
+  API, the audit policy API. There is no PowerShell child for an endpoint protection product to stop, and no command
+  line to tamper with.
+- **It never reads an event's text or a secret.** Events are counted exactly, by log, provider, event ID and level,
+  with the first and last time of each.
+- **It listens on nothing.**
+- **It never adds to a host's trouble.** When the processor was busy at the last reading, the heavier reads wait.
 
-### 8.2 Ingestion
+| Reading | Cadence | Notes |
+|---|---|---|
+| Health | Every 5 minutes | Processor, memory, fixed disks, uptime, automatic services not running, a pending reboot |
+| Events | Every 10 minutes, each log | Window after window with no gap, from where the last one ended |
+| Network | Hourly | Addresses, DNS servers, TCP listeners |
+| Inventory | Daily | Operating system and build, domain, hardware, installed software, plus 30 further reads the text collector cannot take: disk provisioning, a volume's dirty bit, adapter settings and more |
 
-Three inputs go in, in a fixed order, through the Ingest page. Each box takes a file that is picked or dropped:
+Records are held on disk until the office confirms it has them. Each batch is one file, written whole under a
+temporary name and then renamed, so a power cut never leaves half a batch. Batches go oldest first. One the office
+refuses is set aside with the reason and never blocks the ones behind it. Through a long outage the queue keeps its
+newest data up to a size limit and counts what it dropped.
 
-1. **The device roster.** It defines which clients and servers exist, and nothing else can be saved until it is in.
-2. **The collector's capture.** One text file may hold hundreds of servers. The parser splits it by host, strips the
-   management platform's wrapper text, matches each host to the roster, and stores the parsed sections.
-3. **The firewall exports.** Each WatchGuard XML export is parsed, audited by the full engine, and stored with its
-   canonical audit in one transaction, against the device it came from (Section 8.5).
-
-The parser tolerates missing sections, partial sections and version drift without dropping data, and it records what
-it could not read rather than defaulting it. Host names arrive uppercase in one source and lowercase in another; every
-join is case-insensitive, in the browser as well as on the server.
-
-### 8.3 One finding shape, one list of problems
-
-The server judges are functions over a parsed capture; the firewall engine is a set of checks over a normalized
-configuration model. An adapter maps both into one finding shape (what was found, why it is true on this machine, the
-evidence lines, what would make it wrong, the fix), and every consumer reads that shape.
-
-On top of it sits **one list of problems**. The judges find what they were written to find. The agents, reading a
-server's whole capture, find the rest. Both land in the same list, one page per problem. An issue has exactly one home.
-An issue that an older open Job already holds is shown as "already open" rather than filed twice. A problem found at two
-or more clients becomes a Global: a single brief for the team's project list rather than a ticket per client.
-
-### 8.4 Stable identity for findings
-
-A finding that is renumbered between two audits cannot be tracked, compared or reopened. Findings therefore carry a
-content-derived identity from a registry of 91 signature recipes, one per finding type. Each recipe declares which
-fields identify its finding, and the identity is the SHA-256 of the recipe and those normalized values. Recipe
-identifiers are permanent, because renaming one would orphan every record that refers to it.
-
-### 8.5 Device identity: a firewall is its configuration, not its file or its client
-
-Through v8.1, a firewall's audits were grouped by client and model, so a firewall uploaded without a client merged
-with every other firewall of its model: 37 firewalls were shown as 25. A firewall is now identified by its
-configuration's own system name and model, never by its file name. The same export under another file name is a new
-capture of the same device; a file name already held by a different system is stored as a second device. The client
-link is suggested from the roster and stored only when the engineer confirms it.
-
-### 8.6 When the collector's own verdict is an opinion
-
-The collector prints some verdicts of its own, and one of them was wrong on most of the estate. It printed "TLS
-1.0/1.1 disabled: PASS" whenever the protocols were not configured in the registry. On every Windows Server from
-2012 to 2025, a protocol that is not configured is on by the operating system's default. The parser had trusted the
-verdict, and the judge had skipped operating-system defaults, so about 136 servers in the newest capture read as
-secure when they were not.
-
-The parser now reads the per-protocol lines with the operating system's version and applies the platform default. The
-judge raises "on by the OS default", and the agents are told that the collector's verdict lines are opinions. The rule
-generalizes: data is read from the source lines, never from a script's summary of them.
-
-### 8.7 Four invariants
-
-1. **Evidence first.** A report renders the named entities behind every count.
-2. **Comprehensiveness.** A firewall audit is the whole firewall. There is no "top ten".
-3. **Granularity preserved.** Every captured field survives capture, parsing, the page and the report.
-4. **Commercial boundary.** Client-facing reports carry no pricing, cost or margin content; a test walks the rendered
-   report and fails on any currency amount outside an engineer-only container.
-
----
-
-## 9. Network engineering: the firewall audit engine
-
-### 9.1 Model and parser
-
-The firewall pillar reads WatchGuard Fireware configuration exports into a normalized model of the device:
-
-- policies in their true processing order, with aliases resolved to their members;
-- service objects, NAT translations, and interfaces and zones;
-- IKE and IPsec policies and VPN tunnels;
-- accounts, authentication servers, subscription services and management settings.
-
-XML is parsed with a hardened parser. Each upload gets its own engine instance, so two engineers auditing at once can
-never overwrite each other's device.
-
-### 9.2 The 52 checks
-
-| Area | Checks |
-|---|---|
-| Rule base | overly permissive rules, shadowed rules, duplicate rules, unused and disabled rules, unattached and sparsely used objects, policy logging, configuration hygiene |
-| Exposure | internet-facing services, dangerous ports, NAT exposure, deep NAT follow-through, remote access portal, geo-blocking posture |
-| Cryptography and VPN | VPN security, VPN algorithms, tunnel scope, L2TP, SSL VPN, mobile VPN identity, TLS profiles |
-| Management plane | management access, SNMP, logon banner, authentication posture, directory transport, credential exposure, plaintext integration credentials |
-| Inspection and threat services | HTTPS inspection, proxy coverage, IPS, antivirus, advanced threat services, WebBlocker, application control, HTTP/3 and QUIC posture, DNS egress posture, DoS prevention, anti-spoofing |
-| Resilience and routing | HA failover state, dynamic routing posture, IPv6 posture, wireless posture, missing security features |
-| Vulnerability intelligence | firmware correlation against the known-exploited vulnerabilities catalog |
-| Traffic-log analysis | traffic anomalies, denied patterns, policy hit correlation, geo-IP risks, command-and-control beaconing, lateral movement, blind spots |
-
-When the logs a check needs are not supplied, the audit states which checks did not run and why, rather than presenting
-a narrower audit as a complete one.
-
-### 9.3 The analysis that matters
-
-- **Precedence simulation.** Policies are evaluated in the order the device evaluates them, with aliases resolved, so a
-  rule that can never match because an earlier rule takes its traffic is found as shadowed.
-- **NAT follow-through.** An exposure is not the policy port. A static NAT can publish an internal RDP host on a
-  non-standard external port, and a check that looks for port 3389 will see nothing. The engine follows the
-  translation to the real internal host and names both.
-- **Attack-chain correlation.** Findings that are individually moderate can compose into a path. The engine correlates
-  them into chains and tags them with MITRE ATT&CK techniques.
-
-The firewall is also read during a server's Diagnose. On a SQL and ERP server, the agents found Remote Desktop
-published to the internet through the client's firewall NAT with Network Level Authentication off. That reading
-combined the server's capture with the firewall export sitting beside it.
-
-### 9.4 Compliance mapping
-
-Every finding maps to the controls it affects; every control's status is derived from the findings rather than
-asserted:
-
-| Framework | Controls |
-|---|---|
-| PCI DSS v4.0.1 | 11 |
-| CIS Controls v8.1 | 12 |
-| NIST CSF 2.0 | 14 |
-| CMMC 2.0 | 13 |
-
-### 9.5 At scale
-
-Over the 54 exports, the engine raised 2,173 findings in 8 seconds: 146 critical, 382 high, 552 medium, 609 low and
-484 informational, each citing the policy by the number the device's own interface shows. Since v8.2, static NAT
-translations that no enabled policy carries are low-severity clean-up items rather than critical, while NAT
-follow-through still names the host behind every translation a policy does carry. A critical finding that an
-engineer learns to discount teaches them to discount the rest.
-
----
-
-## 10. Server architecture: what the judges and the agents read
-
-### 10.1 The judges
-
-The 56 judges are deterministic functions over a parsed capture. Each raises a finding only when the capture
-establishes it, names what would make it wrong, and files it into one of nine areas: endpoint agents, network path,
-session host, identity and name, OS and resource, hardware, third-party software, policy, and outside the host.
-
-| Area of concern | Representative judges |
-|---|---|
-| Identity and Active Directory | Domain Admins sprawl, unconstrained delegation, Kerberoastable service accounts, LDAP signing not required, legacy domain functional level, stale accounts, services running as domain users |
-| Exposure and protocols | legacy SMB, TLS 1.0/1.1 on by the OS default, RDP without NLA, WinRM Basic authentication, exposed database or cleartext services, host firewall off, risky custom rules, legacy name resolution, public resolvers on domain members |
-| Endpoint protection | no real-time protection, two engines active at once, stale signatures, third-party remote access, Print Spooler on a domain controller |
-| Resilience and recovery | no backup agent, unhealthy VSS writers, disk errors, volumes critically low, memory pressure |
-| Lifecycle and servicing | end-of-life operating systems, SQL Server and software, stuck servicing stack, automatic updates disabled, certificates expiring |
-| Configuration hygiene | volume encryption absent, Secure Boot disabled, legacy PowerShell engine, broad share permissions, roles installed and never used |
-
-Eighteen judges declare a named doubt, a condition the capture cannot settle alone; those doubts are what the agents'
-tests are built to settle. Thirty-nine carry a remediation, so a finding can go straight to a Job whose issues come
-from code rather than a model.
-
-### 10.2 A judge that fires everywhere has stopped being a finding
-
-For v8.2 every judge was measured against the 200 servers of the previous capture. Six were raising findings the
-capture did not establish:
-
-| Judge | Before | After | What made the difference |
-|---|---|---|---|
-| Unrestricted PowerShell execution policy | 198 | 6 | The machine's own policy, not the scope the collector sets for itself |
-| LDAP signing not required | 196 | 52 | Domain controllers only |
-| Unconstrained delegation | 74 | 7 | Once per domain, naming only principals that are not domain controllers |
-| Stuck servicing stack | 63 | 2 | A servicing flag must predate the last boot |
-| Disk errors in the system log | 61 | 8 | The collector's own failed query is not a disk error |
-| Unhealthy VSS writers | 14 | 4 | A failed query is recorded as not measured |
-
-A finding raised on 198 of 200 servers teaches an engineer to skip it, and the habit carries over to the six servers
-where it is true.
-
-### 10.3 The role checklist
-
-Judges see what they were written for; a role's essentials are often outside any one judge. The agents therefore
-receive a checklist for each role the server's own record shows, and must answer each item from the output or put the
-read in the next test:
-
-| Role | What the agents must address |
-|---|---|
-| Domain controller | FSMO roles and replication; the PDC's time source; system-state backup age against the tombstone lifetime; krbtgt age and AES keys; DNS listing only live controllers; software with no place on a DC, by name and version |
-| Certification authority | the CA database's location, size and free space; its last backup; failed and pending requests; the CRL's next update |
-| Hyper-V host | each guest's backup and last recovery point; checkpoints left behind; free space for the guests; one address per subnet |
-| Remote Desktop host | licensing mode, server and CALs; profile errors; an endpoint agent restarting while sessions drop |
-| File server | redirected-folder ownership; VSS errors naming orphaned profiles; shares open to everyone |
-| SQL Server | each database's last full and log backup and recovery model; data and log free space |
-| Exchange server | each database's backup, copy and free space; every certificate it uses with its expiry; the update level and whether setup finished; queues and internet-facing connectors |
-
-Each item was added after a real run passed over it. The certification authority's database was missed once; the
-Exchange role was added after a run read a mail server well but passed over a public certificate with 133 days left.
-
----
-
-## 11. Agentic orchestration in depth
-
-### 11.1 Why one agent is not enough
-
-A model asked "what is wrong with this server" commits to an answer and then defends it. In a real investigation the
-most expensive fault is the one everybody agreed on, because several independent faults that can each produce the
-symptom hide behind the first plausible cause. The platform separates the roles and gives each a different success
-condition.
-
-### 11.2 The protocol
+### 8.2 The line
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    participant E as Engineer
-    participant A as Application
-    participant P as First engineer
-    participant C as Second engineer
-    participant R as Lead engineer
-    participant W as Writer
-    E->>A: Diagnose a server, an area or a fleet
-    A->>A: Price every seat against the ceiling
-    A->>P: The raw capture, the fleet beside it, the checks' findings
-    P-->>A: A read in prose, an index line per claim, streamed
-    A->>C: The capture and the first read
-    C-->>A: Agreements, disputes with lines, missed causes
-    A->>R: The capture and both reads
-    R-->>A: A ruling on every claim, and the work in order (record_work)
-    A->>A: Check every deciding quote against the output
-    A->>W: The ruled work, the findings, the case
-    W-->>A: Issues in the lead engineer's order, as JSON
-    A-->>E: The Job: issues, order, what waits on what
+    participant A as Agent on the server
+    participant L as Listener in the office
+    Note over A,L: Enrolment, once
+    A->>L: Connect over TLS 1.3
+    A->>A: Check the listener's certificate fingerprint<br/>against the one in the install code
+    A->>L: Single-use code and a certificate request<br/>(the private key never leaves the server)
+    L->>A: The agent's certificate and the office's authority
+    Note over A,L: Every report after that
+    A->>L: A batch of records, both ends proved by certificate
+    L->>A: Kept. And here are the checks waiting for you,<br/>each with its script and the script's digest
+    A->>A: Run a check only if the digest is the script's own
+    A->>L: Next batch carries the check's output
 ```
 
-- **The first engineer** reads all of the output and writes its read the way an engineer explains a server to a
-  colleague: what the machine is, what is wrong and why, what is connected and what is not, what looks wrong but is
-  not, and what is healthy. Each claim carries an index line.
-- **The second engineer** was not there when the first wrote. It asks whether the read covered everything, whether a
-  connection is real, and whether a fix would work on this OS. It agrees briefly where the evidence is plain, disputes
-  with the line where it is not, and looks hardest in the sections the first engineer did not use.
-- **The lead engineer** rules on every claim and records the decision through `record_work`: the read, each piece of
-  work in order with its kind, rulings, findings covered, first step, machine, prerequisites and urgency, the checks'
-  findings that are not faults here with the line that shows it, and the next read-only test.
-- **The writer** turns the ruled work into issues as JSON, held to the rulings: an issue that names a machine, number
-  or path the rulings do not support is dropped.
+The office application runs its own small certificate authority. The install code an engineer downloads for a client
+carries the SHA-256 fingerprint of the listener's certificate. The agent connects, checks that fingerprint before it
+says anything, and only then sends its single-use code and a certificate request made with a key generated on that
+server. From then on, both ends prove themselves on every connection. An agent is known by the fingerprint of its
+certificate, and a revoked one is refused at the next request.
 
-### 11.3 The claim and its statuses
+The listener is a separate server on its own port. It is never the console, and it answers exactly three things: an
+enrolment, a batch of records, and a ping. **Work for an agent travels on the answer to its own report.** The agent
+calls out, keeps the line open, and asks again shortly while a check is on its way. Nothing at a client's site ever
+accepts a connection, so there is nothing there to scan, and no inbound rule to ask a client's firewall for.
 
-Each claim's index line names an identifier, an area, a symptom, a status, the hypothesis, the quoted evidence and,
-optionally, the hosts. Every status has one meaning:
+The listener also defends itself: a rate limit by address, a bounded worker pool, and one short write a batch. Fifty
+agents reporting for an hour put 650 batches in and 650 readings were kept.
 
-| Status | Meaning |
-|---|---|
-| confirmed | The capture establishes that the fault is present, and the line is quoted. |
-| strong | It leads, and something still has to prove it. |
-| plausible | It fits, and nobody has tested it. The honest state of most of a real investigation. |
-| weak | Noted, minor, and would not change what anyone does. |
-| exonerated | Ruled out by a reading in this capture, which must be quoted. |
+### 8.3 Rules, alerts and Jobs
 
-A claim is always written as the fault, never as its negation, so "confirmed" always means the fault is present. Fields
-are split outside quoted text, because this collector prints pipes inside its own lines. A deciding status stands only
-on a quote that code finds in the output; otherwise it steps down.
+Only deterministic rules raise alerts. Each rule reads one server's recent readings, its event windows, how long a
+reboot has waited and when its agent last reported. It says what is wrong in the server's own figures and what an
+engineer does first. A rule that cannot be judged from what has arrived stays quiet instead of guessing. One alert is
+kept per server and condition: opened when it first holds, kept current while it holds, closed after a quiet hour.
 
-### 11.4 Typed forms and their fallbacks
+Between an alert and a Job sit layers that keep the noise out, cheapest first:
 
-Every answer the code acts on is a strict structured output:
+1. **Code, free.** An alert that fired just after its server restarted is held and read again once the server has
+   settled, because a symptom that only follows a restart is not a fault. One that keeps firing joins the Job it
+   already opened.
+2. **Grouping by evidence.** Servers that go silent together are one problem, and one Job: three branch servers
+   dropping off at the same minute is a link or a host, not three incidents. A problem joins another server's only
+   through an edge of the dependency map.
+3. **The decision model, only inside a budget.** A condition known to be harmless on a server like this one is kept
+   and said, never opened, and only when the model's answer is inside its fitted bound.
+4. **A nightly review.** A rule that fired repeatedly and was held or judged harmless every time is proposed for
+   quieting on that one server, for an engineer to confirm.
 
-| Form | Agent | What it carries |
+What is still new opens a Job in its client's work, with its issues written by code. Its diagnosis starts by itself
+only while that client has budget left for a whole run. With no budget set, the Job waits for an engineer.
+
+### 8.4 The watch: learning what "fine" looks like
+
+The hard problem in watching a fleet is that almost everything differs between two looks at the same healthy server:
+process IDs, counters, memory figures, last-run times. Read naively, every server is always changing. The usual answer
+is a hand-written list of fields to ignore. That list is never finished and is wrong on the next product a client
+installs.
+
+The watch measures instead.
+
+**Which fields move by themselves.** The product takes pairs of captures of the same server, matches each record with
+itself, and records which fields differed together. A field is called *moving* when it differed often enough to say
+anything, it takes many values across the fleet (a field with few values is a state, and a service that keeps stopping
+is a finding however often it flips), and when it differed it mostly differed alone. A field that changes together
+with the rest of its record is the record changing. A moving number whose changes are mostly small is a level, and the
+band it drifts within is kept: an event counted ten times more often than usual has left its band, and that is a
+change.
+
+**The instrument's own shifts.** A time that moved by the same amount on many records of one capture is the
+collector's doing (a daylight-saving change moves every timestamp by an hour), and is read as unmoved. A time that
+moved by anything else is a real change: someone edited a Group Policy.
+
+**Which kinds are streams.** A kind of record most of whose keys were not there at the last look (recent events,
+short-lived ports) is a stream, where a new record is the kind doing what it does.
+
+**What many servers say alike.** A record's *form* is what it says with its moving values set aside. Across the real
+fleet, only three records in ten are distinct. One look at a form can serve every server that carries it, though being
+common is never a verdict: every server of a client can carry the same fault.
+
+With those measured, every record of a new capture is given one standing:
+
+| Standing | Meaning | What happens |
 |---|---|---|
-| `record_work` (tool) | Lead engineer | The read, the pieces of work in order with prerequisites and machines, the findings that are not faults, the next test |
-| `propose_script` (tool) | Console | A read-only test: what it settles, the machines it runs on, the questions and which way each answer cuts |
-| `propose_fix` (tool) | Console | A fix: name, backup, apply, revert, verify, the machine |
-| `propose_manual_fix` (tool) | Console | A firewall fix by hand: steps in Policy Manager and the web interface, the save first, the undo, the check |
-| `record_review` (tool) | Reviewer | The verdict and each objection, blocking or not |
-| JSON schemas | Writer, updater, checker | Issues by group; the Job's changes after a paste; each reading's verdict and quote |
+| **Deviates** | It was accepted in one form and now stands in another | Read first |
+| **Changed** | Never accepted, and it differs from the last look in something that does not move by itself | Read |
+| **New** | Not there at the last look (or *flow*, when its kind is a stream) | Read, unless it is a stream doing what streams do |
+| **Unread** | The same as before, and nothing has ever looked at it | Left for the digest |
+| **Rests** | Accepted, and it still stands as accepted | Taken out of the work, while it holds |
+| **Gone** | The last look held it and this capture does not | Explained, never assumed fixed |
 
-All three seats are offered the same tool list, so their shared prefix stays one cached block; only the lead engineer
-may call `record_work`. Every form has a text fallback that is used, and said, when a model answers without it. When
-the lead engineer writes its ruling and records no decision, it is asked once more on the same cached prefix.
+Two properties of this table carry the design. **Only "rests" leaves the work, and only while it holds.** And **not
+having changed is never acceptance**: a record nobody ever looked at stays unread however long it has stood. The
+baseline never narrows what can be found. It only stops the same settled thing from being graded again every night,
+and it makes a change in a record nothing ever flagged stand out.
 
-### 11.5 Designed for truncation, cut-offs and loops
+Measured on the estate, this funnel drops 92% of records between two captures of the same server before any model
+sees them, and loses none of them: every record stays in the capture, on the map and in every whole read.
 
-- The tree is folded by **last assertion wins**, so a claim the lead engineer never reaches keeps the status the earlier
-  seats gave it.
-- Seats lead with their findings and write commentary after them, so a cut never destroys a seat's whole contribution.
-- A seat that stops at its 64,000-token limit with claims cut says so on the page.
-- **A seat that starts repeating itself is stopped.** In the October evaluation, three first engineers in twelve
-  finished their claims, announced the record only the lead engineer may write, and then repeated a markup token to
-  their limit: 71 to 73% of each reply. The stream now watches its own tail. When one piece of text repeats for 600
-  characters, that call is stopped (the run is not), the reply is read up to where the repeating began, and the page
-  says so instead of calling a complete list incomplete. The detector was checked on 257 real replies: it found the
-  three loops and raised no false alarm. The first two seats are also told plainly that the lead engineer records the
-  decision, and the next real runs ended on their own.
+### 8.5 A round of the watch
 
-### 11.6 Context engineering and caching
+For a client the watch is switched on for, inside that client's daily budget:
 
-Each seat receives the server's whole raw capture (never a digest; a digest hands the model the statistic and throws
-away the evidence), the client's other machines and firewall, the team's fault library, the checks' findings with
-what would make each wrong, and the role checklist. A seat that cannot be afforded in full is refused, not truncated.
+1. **A look at each server that moved.** What deviates, changed, is new or is gone is woven into small groups of
+   records that are provably about the same thing (a service named in an event's message; two records naming the same
+   other machine). The decision model grades every line, a dozen at a time: fault, routine or unclear. The large model
+   then reads what climbs, the server's changes whole, because changes that arrive together usually have one cause.
+   The small model earns its seat here slowly, and on purpose. Measured: asked to grade records that no reader had
+   seen, 7 of its 40 most confident "routine" answers were faults. So until an office's own labels fit a line for
+   this question, its answers are recorded and everything still climbs. It works in shadow, and the frontier model's
+   reading is its teacher.
+2. **The digest of what nothing has looked at.** After a first read, about 85 records in 100 had still been looked at
+   by nothing. The digest works through them by form, so the same words are never put to a model twice.
 
-The capture and the fault library are marked for a one-hour prompt cache. The second and third seats, the console, the
-reviewer and the checker read what the first seat wrote at a tenth of the input price, and the reviewer and checker run
-at the console's effort level so they read the console's cached output rather than writing it again. In the
-evaluation, a review round cost $0.21 to $0.26 reading the console's 126,000 cached tokens; before the effort levels
-were aligned it cost $0.95.
+A look is finished only when every part of it was settled. A look that was cut short, or whose model did not answer,
+leaves the server exactly as it was: everything that moved is still moved at the next round. A finding lands on its
+server; a line found fine is accepted on that server; a question only a person can answer is asked once and its answer
+is kept as a fact about the client.
 
-### 11.7 Agents that hold other agents to evidence
+The watch is asked for, client by client. No client is watched until an engineer turns it on, because its first round
+reads everything that client's servers hold and spends against that client's budget.
 
-- **The writer is held to the rulings.** Unknown machines, numbers, paths and identifiers are struck.
-- **The checker holds a reading to its output.** For each ruling on a pasted test, it must quote the line that shows
-  it; code keeps the ruling only if the line is really in the output.
-- **The reviewer checks a fix before it is offered**, objecting only on the machine's own evidence: a backup that saves
-  nothing the revert can use, a revert that does not restore, a verification that cannot see the fault, a dependency
-  the change would break, a script that will not run under Windows PowerShell 5.1 as SYSTEM. A blocking objection holds
-  the fix; a fix is never offered unreviewed.
-- **The describer**, on a cheaper model, only names the problem a ruling states, so the same problem on another server
-  files with it.
+### 8.6 Proof after a change, and the daily clean read
 
-### 11.8 Live orchestration
+A fix's own script checks itself just after it runs. That is not the proof. The proof comes later and from outside the
+change: the fix's fingerprint, a read-only test that is true while the problem exists, is run again on the server
+through its agent once the change has settled; and the record's watch on the findings that fix settles is compared
+against untouched servers that hold the same finding over the same window. The control group shows that the reading
+still sees the condition where nothing was changed. Both hold, and the fix is verified with its before and after kept.
+Either fails, and the fix has failed: a reversible fix has its way back sent the same way the fix went, and anything
+else asks an engineer.
 
-Claims are drawn as the agents write them: each completed index line is parsed from the stream and placed on its
-seat's lane, and the writer's issues appear as rows while it writes. In-flight claims live only in the run's memory; a
-claim counts only when its seat finishes, so a stopped seat saves nothing half-written. A finished argument can be
-replayed in time.
-
-### 11.9 Every refusal ends in a stated, usable state
-
-| Declined on both models | What the engineer sees |
-|---|---|
-| First or second engineer | The run ends short, says which seat declined, keeps what was ruled, and offers Resume |
-| Lead engineer | The checks' findings are filed as the issues, and the Job says plainly that nothing was ruled |
-| Writer | Issues are built from the lead engineer's structured groups |
-| Reviewer | The fix is held on its issue with "Ask again"; it is never offered unreviewed |
-| Checker | The reading is marked unchecked, and the Job still updates |
+Once a day, outside a client's quiet hours, each server with an agent gets one read-only sweep of the fingerprint of
+every fix applied there recently. A clean result is kept as a clean day. This is how an experienced engineer closes an
+engagement, by re-running the consolidated sweep until it reads clean, made continuous.
 
 ---
 
-## 12. From diagnosis to verified fix: the issue lifecycle
+## 9. The harness
 
-### 12.1 The lifecycle
+The harness is everything between a model and the world: what the model is shown, how it is asked, what is done with
+its answer, what it may cause, what it costs, and how the whole thing gets better with use. It is the part of this
+product I would defend line by line, and the part most worth reading if you build with frontier models.
 
-```mermaid
-stateDiagram-v2
-    [*] --> NeedsTest: an issue to settle
-    [*] --> NeedsFix: an issue to fix
-    NeedsTest --> TestIssued: agents write a read-only test
-    TestIssued --> TestReturned: engineer runs it and pastes the output
-    TestReturned --> Settled: courier verifies, checker holds the reading
-    Settled --> NeedsFix: fault confirmed, or the engineer asks for the fix
-    Settled --> Closed: checked, not a problem
-    NeedsFix --> Proposed: agents write the fix
-    Proposed --> Held: reviewer blocks it
-    Held --> Proposed: fix rewritten
-    Proposed --> Approved: engineer approves
-    Approved --> Watching: engineer runs it and pastes the output
-    Watching --> Closed: the verification shows the fault gone
-    Closed --> Reopened: next capture still raises it
-    Reopened --> NeedsFix
-```
+Its one rule: **a model's words are testimony, not instructions.** Nothing in the product executes, files, closes or
+changes anything because a model said so. Every effect passes through code that checks the claim against evidence the
+model did not write.
 
-The engineer does everything from the issue's own page: ask for a test or a fix, copy the script, paste the output
-back, approve or refuse, and close with a reason. Whether the checks are enough is the engineer's decision.
+### 9.1 The measurement that turned the design around
 
-### 12.2 Tests that settle one doubt
+The first v9 harness was a ladder I called the burn-down. Each question climbed from the cheapest rung that might
+settle it to the most expensive: code, then a local reader of names, then a calibrated decision model, then a check on
+the machine, then the frontier model, then the engineer. The frontier model saw only the residue. On a simulated
+estate it was cheap and precise.
 
-A test is built to settle one disclosed doubt; a test with no doubt to settle is a fishing trip. Every test is
-read-only and declares it, carries a manifest of the sections it attempted and returned, and is addressed by host name
-and doubt, never by a database row number. The agents may include their own read-only readings, which a gate checks
-for anything that could change the machine; redirection to `$null` or between streams is not a write, and redirection
-to any path is.
+Then I replayed real diagnostic cases through it and compared it with how I actually work a server with a model at my
+desk: one conversation, the whole output pasted in, a best guess every turn.
 
-### 12.3 Chain of custody
+| | The ladder (frontier model last) | The desk loop (frontier model first) |
+|---|---|---|
+| Named the right cause, or part of it, on 50 scored cases | 24 | 40 |
+| Policy on uncertainty | Name a cause only when sure | Give a best read every turn and say how settled it is |
+| "Settled" wrong | n/a | 1 time in 30 |
+| Cost | baseline | about half |
+
+The ladder had been muzzling the model. Asking it to speak only when certain made it silent exactly where a hypothesis
+was most useful. And filtering its input through checks meant it never saw the two unrelated-looking lines, 1,900
+records apart, that together named the root.
+
+The measurement that settled it: one read of one real server's entire raw output, 2,424 records and about 224,000
+tokens, with no form to fill and no checklist. It named a root cause and an order of work that 176 deterministic
+checks and twenty reads of the parts had not. Every one of the 18 records it quoted was real.
+
+So the design was inverted, and the ladder was kept for what it is good at. **The frontier model reads everything
+first. Code and the small models then do what they are measurably right at: verifying, placing, grading and
+remembering.** The engine that climbs rungs is still the engine. What changed is which questions are put to it.
+
+### 9.2 The engine: runs, questions and rungs
+
+Every unit of AI work is a **run**: a server's whole read, its filing, a watch round, a firewall's diagnosis, an
+audit's prose, a console turn, a fix being written. A run sets out to settle **questions**. Each question climbs
+**rungs**, cheapest first, and a rung says exactly one of three things:
+
+| Answer | Meaning |
+|---|---|
+| **Settled** | Here is the answer, its confidence and its proof |
+| **Climb** | I cannot settle it; here is what I learned; the next rung should try |
+| **Hold** | I am waiting for something outside the run: a check's output, or the engineer. Named |
 
 ```mermaid
 flowchart TB
-    ISS["Issue a script under a run token<br/>per machine: host, questions, script hash"] --> RUN["Engineer pushes it through<br/>the management platform"]
-    RUN --> PST["Engineer pastes what came back<br/>on the issue page or in the console"]
-    PST --> SPL["Split by each machine's header"]
-    SPL --> TOK{"Token known, outstanding,<br/>and for this machine?"}
-    TOK -- no --> REJ["Refused on the spot, no model call"]
-    TOK -- yes --> SHA{"Same script hash?"}
-    SHA -- no --> REJ
-    SHA -- yes --> MAN{"Manifest complete?"}
-    MAN -- "cut off" --> PART["Read as incomplete, never as complete"]
-    MAN -- yes --> REB["Rebuild the questions from the token"]
-    REB --> CHK["Agents read it; checker holds each reading to a quoted line"]
-    CHK --> EVD["Evidence on the issue; the Job updated"]
+    Q["A question the run set out to settle"] --> C["Code<br/>exact shapes, known names, the record"]
+    C -->|climb| N["The reader of names<br/>GLiNER, local"]
+    N -->|climb| D["The decision model<br/>typed question, fitted line"]
+    D -->|climb| P["Consistency probes<br/>the same question asked another way"]
+    P -->|climb| K["A read-only check on the machine"]
+    K -->|climb| O["Opus"]
+    O -->|climb| E["The engineer"]
+    C -->|settled| S(("Kept in the run's graph<br/>with its proof and its cost"))
+    N -->|settled| S
+    D -->|settled| S
+    K -->|hold: output awaited| H["The run rests in the record"]
+    H -->|output arrives| K
+    O -->|settled| S
+    E -->|settled| S
 ```
 
-The questions are always rebuilt from the token's own scope and never taken from the caller, so a return cannot be
-read against questions other than the ones issued. The script hash proves that the script that ran is the script that
-was approved. A returned test is evidence, never a remediation: a read-only test cannot mark anything as fixed.
+**Every try is kept as a node in a graph**: what it read, what it said, its proof, its confidence, what it cost and how
+long it took, and the facts it produced, linked to the question, to the try below it and to the causes its claims bear
+on. That graph is the run's audit trail. It is also what the engine page draws, and what the learning loop measures
+each rung's accuracy from.
 
-After each paste, the writer updates the Job: its story, confirmed or reworded issues, new issues the output revealed
-(on another machine when the evidence names it), and the order. Nothing is lost: closed issues stay closed, and a new
-issue the Job already holds open is not written again.
+**The engine holds nothing between calls.** A run is read back from its record every time it advances. So a run whose
+process died half way resumes where it was, with whatever was in flight marked as interrupted and tried again. A run
+waiting on a check's output simply goes on when the output is in. And no database write is ever held open while a
+rung works. This is what made "kill the process in the middle of a model call" a test that passes.
 
-### 12.4 Fixes with four parts
+**Before any rung that spends,** the engine asks the AI switches (the office, the function, the client) and the
+ceilings: $3.00 a question, $8.00 a run. A rung that is refused is recorded as skipped, with the reason, and the
+question climbs past it, ending with the engineer when nothing else may try.
 
-| Part | Behavior |
+**One door for all of it.** Every piece of AI work waits at one scheduler with four lanes:
+
+| Lane | What runs in it |
 |---|---|
-| Backup | Runs always, even in preview, to a folder for this Job on the server |
-| Apply | Runs only when the engineer changes `$Apply = $false` to `$true`. The script ships inert. |
-| Revert | The literal undo, which reads the backup, printed into the transcript and shown whole on the issue page |
-| Verify | Runs before and after the change, so the transcript carries both states |
+| **Engineer** | What a person started: a read, a console turn, an audit. Never behind background work, never counted against it |
+| **Gate** | What follows an engineer's answer: a check that came back, a fix to prove |
+| **Watch** | The standing watch over a client's fleet |
+| **Nightly** | Reviews, the fix list, the office's standard |
 
-A script analyser classifies every script into one of three states: reads only; changes, with each change listed as a
-plain sentence; or unreadable, when any token cannot be classified. It uses an allow list, which fails in the safe
-direction.
+The three background lanes share a fixed number of slots, earlier lanes first, and at most a set number run at once
+for any one client, so one busy client never starves the rest. That is the difference between an AI feature and an AI
+service several people can use at the same time.
 
-### 12.5 The builder fails closed
+### 9.3 One client for every model call
 
-In the final review before v8.2.0 shipped, a real fix walked end to end exposed that a many-line undo in a fix's header
-sat live above the apply switch, so a preview run would have changed the machine. No test had caught it, because every
-fix in the test corpus had a one-line undo. The repair removes the unsafe shape rather than the one instance: every
-header line passes through one function that makes it a comment, the builder refuses to emit a fix with anything live
-above its switch, a stored fix with that flaw is never offered again, and a verification step that would change the
-machine is refused.
+There is exactly one place in the program that calls a Claude model, and a test refuses a second. Every call through
+it:
 
-### 12.6 Closing and reconciling
+- **Is refused at once while the AI switch is off.** The switch is read on every call, and a missing or unreadable
+  setting reads as off. It fails closed.
+- **Is priced before it is sent.** Its worst case is logged as sent, and what it actually cost, cache reads and writes
+  included, is logged as done and written to a ledger row beside the log line, so the database and the log always hold
+  the same calls at the same prices. If the database is busy the row is retried in the background: an early version
+  lost 9 of 178 rows to a locked database, and a ledger that drops rows is worse than none.
+- **Streams when it is long.** A long call once sent whole was dropped and silently sent again by the SDK: 508 seconds
+  across two attempts, the first never recorded. Long calls now stream, which also lets an engineer stop one.
+- **Uses adaptive thinking**, bounded by an effort setting, which is what current models accept.
+- **Is resent once on the fallback model when the primary declines it,** with both calls billed and later calls of
+  that kind routed to the fallback first. A request is never reworded to slip past a refusal.
+- **Is cut cleanly by a Stop,** keeping what arrived, and is stopped by code if the reply starts repeating one short
+  piece to its end.
+- **Raises only typed errors,** scrubbed of any credential, each a kind and one plain sentence an engineer can read.
 
-An issue closes with one of a fixed set of reasons: fixed, the client accepts the risk, on the client's plan, not ours
-to fix, the client answered, checked and not a problem, or a duplicate. A decision holds for 90 days, or until the
-finding becomes worse. When a new capture arrives, every Job on that machine is reconciled: an open issue whose
-findings a complete capture no longer raises closes as fixed; a fixed issue whose finding is still raised reopens; an
-incomplete capture closes nothing.
+Evidence that many calls share is sent as a cached prefix. Questions about one server arrive minutes apart, which is
+the gap an hour-long cache pays for.
 
----
+### 9.4 The whole read
 
-## 13. Cybersecurity: the safety model
+The model is given a server's entire collector output, exactly as it came, in plain words, with no form to fill and
+nothing filtered or judged by code in front of it, and room to think. Beside it: what the office and the client have
+said, what the checks already raise, and what the model itself wrote last time.
 
-| Threat | Control |
-|---|---|
-| An agent changes a client system | There is no transport. No module can open a session to a host; a test asserts that the console runner imports nothing capable of execution. The engineer runs every script. |
-| A diagnostic script mutates a server | Tests are read-only by construction and refused at build time otherwise; the agents' own readings pass the same gate. |
-| A fix cannot be undone | A fix requires a backup that always runs and a literal revert. The reviewer's blocking objection holds it. |
-| A fix runs without approval | Fixes ship inert and are offered for approval on the issue page. Every decision is an event in the log. |
-| A fix script's header runs | Every header line is a single comment; the builder refuses anything live above the switch. |
-| Pasted output is forged, altered, from another script or another machine | Run tokens per machine, script hashes and manifests; the questions rebuilt from the token, never from the caller. |
-| An agent invents facts | Typed forms; deciding quotes checked against the output; the writer held to the rulings; unknown identifiers struck. |
-| A loop or a cut-off corrupts a result | A repeating tail is stopped and cut; a cut list says it may be incomplete; no partial claim is saved. |
-| One Job's conversation leaks into another's | The model's history for a turn is built from that Job's events alone. |
-| Model output injects markup into a page | Replies are HTML-escaped before any formatting; page data is never altered by the page's own comment stripping. |
-| Secrets leak | The collector captures no credentials; the API key is encrypted at rest; a scrubber redacts keys and tokens from anything headed to a page, log or response. |
-| Malicious configuration files | XML is parsed with a hardened parser that refuses entity expansion. |
-| The AI runs when it should not | One master switch, off by default; a missing or unreadable setting reads as off. |
-| Client pricing leaks into a deliverable | The commercial boundary, enforced by a test that walks the rendered document. |
-| The model is asked to produce offensive content | Every agent's instructions state that the work is defensive: describe a weakness in the terms needed to fix it, never the steps to exploit it. |
+It says what the server really is, what is wrong with it by root and symptom in order, what it would do about each,
+what it would check next (as the read-only PowerShell itself), what only a person can answer, and what is fine.
+Findings are numbered, so a later look speaks of the same finding by its number.
 
-Two principles run through it. **The human gate must be informed to be real**: a list of what a script changes tells an
-engineer what to check. **A guard must fail toward the safe state**: an unknown model is priced at the most expensive
-rate, an unreadable setting is off, an unclassifiable script is unreadable, an incomplete capture closes nothing, and a
-fix whose header would run is not built.
+Two things about how it is asked matter more than any clever prompt:
 
----
+- **It is talked to like a colleague who has just been handed the folder.** It is told where it is, whose estate this
+  is, how the data arrived and what the work is aiming for. The more a prompt reads like a form, the more the answer
+  reads like one.
+- **It is told it is in a loop.** Its checks will run and come back. A check that code can prove read-only runs by
+  itself. Every change waits for an engineer. A reader that knows it will get another look gives its best read instead
+  of hedging everything into uselessness.
 
-## 14. Model governance: routing, refusals and cost
+The same step runs one level up: the model's own write-ups of each of a client's servers are read across, for what no
+single server shows and for the order to work in.
 
-### 14.1 Which model does what
+### 9.5 Filing: the bridge from prose to the record
 
-| Model | Role |
-|---|---|
-| Claude Opus 5.5 | Every diagnostic seat, the writer and updater, the checker, the reviewer and the console |
-| Claude Opus 5 | The floor: used when Opus 5.5 declines a request |
-| Claude Sonnet 5.5 | Description only: a problem's name. It never diagnoses. |
-
-There is no small-model tier. Cost is governed by ceilings and by deciding whether a call runs at all, never by lowering
-the quality of the model that reasons.
-
-### 14.2 Refusal routing
+A whole read is free reasoning in the model's own words. There are no code words in it and no hidden markers. So how
+does a paragraph become work? By a second, deliberately dull run called filing.
 
 ```mermaid
-flowchart TD
-    Q["A call for a seat, the writer, the checker, the reviewer or the console"] --> G{"AI switch on?"}
-    G -- "no, or unreadable" --> X["Refused and recorded, no call"]
-    G -- yes --> B{"Priced within the ceiling?"}
-    B -- no --> Y["Refused with the number; the capture is never truncated"]
-    B -- yes --> H{"Opus 5.5 declined this content before,<br/>or this kind of call recently?"}
-    H -- no --> O["Send on Opus 5.5"]
-    H -- yes --> F["Send on Opus 5 first<br/>(every 10th call retries Opus 5.5)"]
-    O --> R{"Declined?"}
-    R -- yes --> F2["Resend once on Opus 5"]
-    R -- no --> L["Record the call and its price"]
-    F --> L
-    F2 --> L
+flowchart LR
+    W["The whole read<br/>free prose"] --> G["GLiNER proposes the names<br/>in the prose, with confidence"]
+    G --> O["Opus files it into a form<br/>adding nothing, judging nothing new"]
+    O --> T["Typed items"]
+    T --> F1["Finding<br/>its quotes, how sure, its root"]
+    T --> F2["Check<br/>the script, as written"]
+    T --> F3["Question<br/>the client's or the office's"]
+    T --> F4["Name<br/>does it name what it says?"]
+    F1 --> Q["Code finds each quote<br/>in the capture"]
+    F2 --> R["Code parses the script<br/>and proves it only reads"]
+    F1 --> J["The decision model<br/>is this a check's finding again?"]
+    Q --> K[("Kept with what code found")]
+    R --> K
+    J --> K
+    F3 --> K
+    F4 --> K
 ```
 
-A declined call is priced at the dearer of the model asked and the model that answered. In the October evaluation, 6
-of 69 real calls were declined and resent, costing $6.83 of $57.27 (12%). The platform never rewords a request to get
-past a safety classifier.
+1. **The local model proposes** the things the prose names: machines, accounts, services, products. It settles
+   nothing. Its proposals climb with the question.
+2. **The frontier model files** its own write-up into a form, adding nothing and judging nothing new: every finding
+   with the records it quotes, how sure it said it was, and the finding it names as its root; every check as written;
+   every question and whose it is to answer; and a verdict on each name the local model proposed. So the small model's
+   guesses reach the large one with their likelihood, and the large one's verdict becomes the small one's training
+   label.
+3. **Code checks what was filed, by reading and never by words.** Each quoted record is looked for in the capture the
+   read was made from. Each script is parsed and proved to only read, or the reasons it does not are kept beside it.
+4. **The decision model is asked one typed question per finding:** is this the same problem a deterministic check
+   already raised on this server? Its answer is used only where it clears its fitted line (section 9.9).
 
-### 14.3 Cost control
+**Nothing is dropped for failing a check.** An item is kept with what code found, so a finding whose records were not
+found is shown as exactly that, and never as proven.
 
-- **Priced before sent.** Every seat against an $8.00 ceiling for the whole argument; every console turn against its
-  own $3.00 ceiling, tool rounds included.
-- **One ledger.** Every model call writes one row: session, purpose, model, tokens, cache reads and writes, stop reason
-  and price.
-- **One source of truth for models and prices.** An unknown model is priced at the most expensive rate, because
-  over-charging produces a visible early stop and under-charging a silent overrun.
-- **Measured, never recalled.** A first diagnosis costs $3.56 to $5.81 a server, about $4.50 on average over nine. The
-  October build's evaluation cost $59.71 in paid calls; the v8 line through v8.2.0 cost $157.02; the real-model
-  checks of the v8.3.1 release cost $35.68 by the ledger, under a $47.50 stop.
+#### Finding a quote is harder than it sounds
 
-### 14.4 Testing without spending
+On four real reads, an exact text search found 191 of 376 quoted records. Yet every one of 18 quotes checked by hand
+was true. The model writes a record the way a person would in a note, not as the row stands in the file. A matcher
+that only does exact search would have thrown away half of a correct read. A matcher that is too loose would "find"
+anything. So a quote is looked for four ways, strictest first:
 
-Every agent flow was built and proven against a local stand-in for the model API that streams scripted answers at a
-chosen pace. On request it returns tool calls, JSON answers, refusals on any seat and either model, a reply cut at its
-limit, a reply that loops, a missing decision, a stream broken mid-answer, and rate-limit, overload, authentication and
-credit errors. Its costs are marked as pretend.
+1. Word for word, in a line of the capture as it came.
+2. As the row itself: the quote is a set of name and value pairs equal to a record's own.
+3. By its names and values: every name-like word of the quote sits in one record, with most of its numbers.
+4. The same, across one set of records of the same section and kind, when no single record holds them all.
+
+What comes back is the record's place, how it was found, and **on how many records it was found**, so a quote that
+fits hundreds of rows is known to pin nothing. A quote too thin to place is not found, by rule.
+
+### 9.6 Landing
+
+Landing takes each filed finding up into the record once, by code and on typed fields only:
+
+- A finding that stands on records code found becomes a finding of the record, keyed by the record it stands on. From
+  then on "its evidence still stands" is checked against the next capture like any other finding's.
+- A finding the read itself said is what a deterministic check already flags is not a second finding. Its records are
+  kept as showing that check's.
+- A finding with no record pinned is kept as said, with why. It waits for a check to show it, and opens nothing.
+
+Every item's place is recorded in both directions, so landing a read twice changes nothing. Idempotence is not a
+nicety here: reads are retried, processes restart, and a duplicated finding is a lie in a client's report.
+
+### 9.7 Checks out and back
+
+The read wrote the checks it would run next. Each must now cross three controls before it touches a server.
+
+**The read-only proof.** A script runs by itself only when code proves, by parsing it, that it reads and changes
+nothing. First an allow-list analysis of what the script does. Then PowerShell's own parser is run over the block:
+every command with its arguments, every method call with its type, every property that is set, every type named, an
+exit, a redirection, each judged against the same allow lists. A block the parser cannot be run on is not a read. The
+proof fails closed.
+
+About one check in ten that the model writes is refused, nearly always for the same few reasons: a vendor's own
+executable, a fetch from the network, a construct the proof cannot see through. A refused check is shown once more to
+the model that wrote it, with code's reasons. What it writes back is proved exactly as the first was. Proven, it takes
+the check's place. Not proven, the check waits for an engineer as it was first written, with both reasons. A check is
+rewritten once only.
+
+**One script per server.** The proven checks of a server's read are joined into one script, each between its own two
+marks, with a failure of one printed as a line and never stopping the rest. The joined script is proved again as it
+will run, and a check whose addition breaks the proof is left out.
+
+**The gate hook.** Every action the model proposes passes one hook before anything happens. It is code in the path,
+never a tool the model could decide not to call, and the model's reasoning never reaches it: the hook sees only what
+the action is and does. In order:
+
+1. **Code's hard rules, never overruled.** The script passed its checks. It touches only the machines its step asked
+   about. Every line it quotes stands in the evidence it was shown. A fix always asks a person.
+2. **The client's setting.** An office can set any client so that checks wait for one press.
+3. **A second opinion** from the decision model: is the action about the Job's step, is it grounded, does it touch
+   anything unasked. Any doubt asks the engineer. A second opinion that is set up and does not answer also asks the
+   engineer. It is never the only control and never the reason an action runs.
+
+The verdict is run (read-only only), hold (one press by an engineer), or refuse, each with why and by whom.
+
+Where an agent reports from the server, the script runs through it. Where none does, it becomes one card for that
+server: the engineer copies it, runs it through the remote monitoring tool, and pastes the output back. The product
+works the same with no agents at all.
+
+What comes back is cut at the marks and read beside each check it answers. If a script was cut short, the checks it
+never reached go out again by themselves. That last sentence is one of the four defects v9.0.1 fixed (section 14.5).
+
+### 9.8 The second look, and questions that become facts
+
+The second look is the same conversation picked back up: the output whole again, the model's own last write-up, what
+each check returned, the answers people gave, and where each finding stands now. It is the same step an engineer takes
+when a script's output comes back, and it is where hypotheses become settled or get dropped. A second look may quote
+what its checks printed, and code looks for those quotes in the checks' output and records which check printed each.
+
+A read asks two kinds of question, and the product treats them differently:
+
+- **What only the client can answer** (is this account still used, when is the maintenance window) becomes a question
+  for the client. Its answer is a fact about that client, read into every later call for that client.
+- **What is the provider's own to answer** (is this remote tool ours, how do we patch) is true for every client. It is
+  asked once, kept once, and read into every later call for any client.
+
+Nothing an engineer has said is ever asked again.
+
+### 9.9 The fix list, and a small model made honest
+
+**Work units that hold still.** Asked to group findings into work, a frontier model gives a slightly different
+grouping every time: of pairs it ever put together, it kept only 53% to 87% together across runs. That is useless for
+tracking work. So the model writes each client's catalogue of fixes once, each fix one change done once with what it
+changes and what it prevents, and every finding is then *placed* into the one fix that clears it, or none. On
+placement the same model agrees with itself 97.5% to 100% of the time. "None" grows the catalogue.
+
+**Placement is the small model's seat.** Each new finding is offered the six fixes nearest its words, and the
+calibrated decision model chooses. That is cheaper and faster than a frontier call, and it is only acceptable because
+of what stands between its answer and any use of it.
+
+The decision model ranks well and reads wrong. Measured: answers it stated as 91.4% sure were right 76.1% of the time.
+Thresholds set by eye on such numbers missed their own risk targets by 7.5 to 12.5 points. So its confidence is never
+used raw:
+
+1. **Recalibration.** Per question, on labelled answers, by isotonic regression: a monotone map from what it says to
+   how often it is right.
+2. **Acceptance within a stated error bound.** An answer is accepted only at or above the lowest calibrated
+   confidence at which a one-sided Clopper-Pearson bound on the error rate of the labelled answers above it stays
+   under the action's limit. Candidate thresholds are tested from the most confident down, stopping at the first that
+   fails, so the bound holds as stated without a correction for multiple testing. In practice: with no errors
+   observed, 59 labels are needed to bound error at 5%, and 149 to bound it at 2%. An action that touches a server
+   gets a smaller limit than a note.
+3. **Consistency probes.** A choice asked again with its options reversed, a yes asked as its negation, a question
+   asked again in other words, all in the same request. When a probe disagrees, the answer climbs whatever its
+   confidence.
+4. **A shadow week.** A new threshold decides nothing for its first seven days. Every answer in that week is recorded
+   beside what actually happened.
+5. **A pinned version.** Thresholds are fitted to one model version. A request names that version exactly, and an
+   answer from any other version is refused, not used.
+
+Anything below the line climbs to the frontier model, whose placement becomes the label that fits next week's line.
+Until an office has enough labels of its own, every placement is the frontier model's. And one rule is written on
+purpose: an engineer's own placement is never moved by a model.
+
+**What the decision model is never asked.** To count, to read a date or a time window, to read a hex code, or to make
+the decision itself. It answers narrow typed questions (18 in the catalogue, plus three batteries) as a choice among
+named options, a score on a ladder, or yes or no with a probability. The model judges; code decides.
+
+**The line.** A client's open fixes are then ordered the way an engineer would work them: the root before its
+symptoms; shared foundations before what leans on them (time, then DNS, then Kerberos and the directory, then logons,
+because Kerberos needs time and names and every logon needs Kerberos); a server others lean on before the servers that
+lean on it; read-only and reversible before risky; one change per server at a time; identical fixes grouped behind one
+gate with the first server as the canary.
+
+### 9.10 A fix, written whole
+
+A fix is written only when what it would settle is settled, and code decides that on typed fields, never on words.
+Then the frontier model writes it whole:
+
+| Part | What it is |
+|---|---|
+| **The pre-check** | A read-only test that is true while the problem exists. It is the problem's fingerprint, run first to confirm the change is still needed, and run again afterwards as proof |
+| **The change** | What to change and where, as a script with its guards: the right machine, a dry run by default |
+| **The proof** | What output shows it worked |
+| **The way back** | How to undo it |
+
+Replayed against 72 past diagnoses, the model wrote the engineer's own fix, or part of it, 86% of the time, and every
+one came with a pre-check, a proof and a way back.
+
+Two further properties are worth stating plainly.
+
+**"No change worth making" is a good answer.** The model decides first whether a change is worth making at all. If
+not, the fix is kept as left, with who it rests with and why, and nothing waits at a gate. In the worked run, the
+watch declined to write a fix that would have set DNS to secure updates before the time fault was repaired, with the
+reason that doing so in that order would cause an outage. A system that can decline is a system you can leave running.
+
+**The gate is a person.** The fix waits on a page that shows its four parts, with Approve and Not now. An office can
+require two engineers. With "changes to servers" off, which is the default, an approved fix is handed to the engineer
+with its script to run. With it on, the approved script goes to that server's agent with its digest, the agent runs it
+only if the digest matches, and a client's fixes go in waves: the canary first, each next server only after the one
+before came back healthy, one fix per client out at a time, nothing during quiet hours. A result that is not healthy
+stops that client's wave until an engineer takes it up. An engineer can grant a class of reversible fix leave to run
+alone for one client; a risky fix, or one made by hand, always waits.
+
+Then the proof of section 8.6: a measurement taken later, from outside the change, against a control.
+
+### 9.11 The reader of names
+
+Free text is full of things worth extracting: a host nobody has recorded, an account, a service, a product. The
+approach is code first and a small local model second.
+
+Code reads everything that has an exact shape, exactly: IP addresses, Windows error codes, security identifiers, UNC
+and registry paths, URLs, accounts. It also reads every name the record already knows wherever it stands as a whole
+token. Measured on 61 real engineering texts, hosts and services read this way came back at 100% precision with every
+known one found. A known name that is also a common word (a machine called DNS) is held, because code cannot tell it
+from the word.
+
+GLiNER 2.5 reads what has no shape. It runs in its own process, below normal priority, with no window and no port, on
+the server's own processor, so nothing leaves the building. Its raw spans are weak: host precision was 6% to 7%
+zero-shot on those same texts. So a span from it is never acted on. It proposes; the frontier model confirms during
+filing; and each confirmation is a label. On one real filing it proposed 60 names and the frontier model held 8 of
+them as right, which is exactly why it proposes and does not decide. Every week the trust given to it, per kind of name, is fitted again from
+those labels.
+
+Using a weak model honestly is a design skill. The wrong conclusion from "7% precision" is to remove it. The right one
+is to give it a seat where a wrong answer costs nothing and a right one saves a frontier call.
+
+### 9.12 Talking to the work
+
+The console is how an engineer talks to a Job. A question is routed by code before any model sees it:
+
+1. **A fact the record holds** (a server's last boot, its roles, a client's open Jobs, a firewall's firmware) is
+   answered from the database, dated, with no model call. Facts from the record are exact.
+2. **A concept** is described by the cheaper model, which is held to describing: no machine's evidence, no cause, no
+   script. A cheaper model may describe and never diagnose.
+3. **Anything else** is a turn of the frontier model on that Job, with the Job's history, the server's capture and a
+   small set of tools.
+
+Every line an answer quotes is checked, word for word, against what the turn was shown. An attached log is read by
+code first: kept whole when it fits, otherwise each repeated line kept once and counted, with the lines that matter
+first. A steer typed while a check is out reaches the next look. Web search is off for every question until the
+engineer turns it on for that one, and then it is its own call that sees only the question's words with every client,
+machine and domain name replaced by a stand-in: no capture, no history, so no query can carry a name.
+
+A Job's time entry, the client email and a remediation report are written from the Job's own record of facts, in the
+office's own shapes, and nothing is sent from the application.
+
+### 9.13 Checks the model writes
+
+When a read finds something no deterministic check raises, the product can turn the finding into one. The model writes
+it as a rule: one kind of record, conditions on its fields, the kind of machine it applies to, and a sentence to say.
+The rule is **interpreted, never executed**: code evaluates the conditions against each server's parsed record. It is
+kept only if it fires on the finding's own server. A silent rule is shown that server's rows once and repaired; one
+still silent is dropped with the reason and never asked again. A rule that fires waits for an engineer to confirm it,
+with every server it fires on listed, before it joins the floor. Absence is not a value: only "exists" may speak of a
+field that is not there.
+
+### 9.14 The audits' words
+
+The site audit and the firewall audit are written by the model and are still safe to hand a client, because of one
+arrangement: **the model is given the audit's facts and nothing else, and it never supplies a fact.**
+
+Code lays out the whole audit first: every finding, table, figure and count. The model writes the prose that walks a
+reader through it: the dominant risk, why each first action comes where it does, each chapter's takeaway, each
+finding's claim. Then code reads every field before it is used. Each number, whether written in figures or in words,
+each IP address and each quoted name must be in the facts. Nothing may name this application, an AI, or a framework
+the audit does not judge. A field that fails is asked for once more with what was wrong. One that fails again is
+dropped and the audit prints its own deterministic sentence in that place.
+
+On the release candidate, with the real model: a firewall picked at random, 13 of 13 areas and 182 of 182 fields kept;
+a 23-server fleet, 11 of 11 areas and 136 of 136 fields kept. On the way there, three numbers the model wrote that
+were not in the facts were refused by code and rewritten on the second asking.
+
+With the AI off, both audits still render complete, in code's own words. The model improves the reading; it is never
+load-bearing.
+
+### 9.15 Learning from the work
+
+Nothing asks an engineer to grade anything. Labels come from what the work already leaves behind, read by code:
+
+- A cause the loop confirmed is **right** when its fix proved: the issue closed as fixed, and every symptom that
+  waited on it stayed quiet for the watch's period or was absent from a capture taken after the fix. It is **wrong**
+  when an engineer closed the issue as "checked, not a problem", or the symptom came back.
+- The frontier model's placement of a finding labels the decision model's placement of the same finding.
+- The frontier model's verdict on a proposed name labels the local model's proposal.
+
+Once a week, in code only, with no model call:
+
+- Each decision-model question with enough two-sided labels has its threshold refitted, and only when the new fit
+  rests on at least as many labels as the one in force, so a handful of labels never replaces a well-founded line.
+- Each kind of run is measured from its graphs: which rung settled what, every answer whose outcome is known, with an
+  error bound.
+- Alarms are raised with their reasons: accepted answers wrong more often than the bound allows, the share accepted
+  drifting, a new model version answering with no fit, settled causes wrong more often than the loop's own bar.
+- A cause proved on three or more servers is proposed as a new check.
+
+One figure should rise week on week: the share of questions settled below the frontier model. That is what "learning"
+means here, with a number on it.
+
+Accuracy is always three numbers, never one: **precision** (of the answers asserted and graded, the share right, with
+an exact one-sided bound on the error rate so a high figure is never claimed from a handful), **coverage**, and
+**cost**.
+
+### 9.16 Privacy and untrusted input
+
+- **A capture is untrusted input.** Share descriptions, account names and event text can carry instructions aimed at
+  a model. The defense is structural: nothing acts on model prose, the gate hook never sees model reasoning, and every
+  claim is checked against evidence the model did not write.
+- **The name map.** For any hosted model outside the primary provider, code replaces every client, host, domain and
+  user name with a typed, stable stand-in. The map is built from the office's own records, never discovered by a
+  model, and nothing goes out while a leak check finds a known name in the text.
+- **No person is named.** Product text and prompts say "the engineer". A capture's only trace of a person is an
+  account, and the one shape that turns an account into a person is rewritten before the model sees it.
+- **Credentials are scrubbed** from any string bound for a log, a page or a stored record. Keys are encrypted at rest
+  and never returned once saved.
+- **The local model stays local.** It opens no port and reads nothing but what it is handed.
+
+### 9.17 What it costs
+
+Measured on real runs, counts and money only:
+
+| What | Measured cost |
+|---|---|
+| The deterministic checks, the exposure paths, compliance, the funnel | $0 |
+| One whole read of a large server (224,423 tokens in, 56,536 out), live | $2.03 |
+| The same kind of read sent as a half-price batch (three servers, 643,585 tokens in) | $0.97 a server |
+| Those three servers' write-ups read across, for the fleet's causes and order | $1.45 |
+| Filing one read into typed items | $0.39 on average |
+| A client's fix catalogue written the first time (42 fixes, 312 findings placed) | $0.55 |
+| A second look at a small server once its checks returned | $1.24 |
+| One fix written whole | $0.04 to $0.12 |
+| The decision model, 974 typed gradings | $0.04 in all |
+| A full firewall audit's words and a 23-server site audit's words, together | $2.28 |
+| Ceilings enforced in code | $3.00 a question, $8.00 a run |
+
+A watch round that nobody is waiting on is sent as one batch at half price and answered within hours. Its parts are
+recorded exactly as sent, so the answers are read against the lines that were asked and never against a later plan.
+
+Every AI path was first proved against a local stand-in that speaks the provider's protocol and costs nothing. Real
+spend came only after, in fifteen measured runs, each with its question and its scoring written down before it ran.
+A run with no question it could change the answer to is not a run worth paying for.
 
 ---
 
-## 15. Evaluation: accuracy, failure modes and stress
+## 10. One loop, end to end: a worked run
 
-### 15.1 Accuracy against answer keys
+Everything in this section happened, on the released program, on the invented estate, and every figure is read from
+that run's own record. Two records are used, and each step says which:
 
-**Method.** For each server, a key was written from its own capture before its run, and for three servers from the
-team's hand-run engagement: what a correct diagnosis must find (each item tied to a line of the capture), what it must
-not claim, and what the team had already fixed. Each run was scored item by item: found, partial or missed; any claim
-the key ruled out was counted against it.
+- **The clean run**, on the v9.0.1 build, over a fresh data folder.
+- **The rehearsal**, earlier the same evening on v9.0.0, over the same estate. Its later steps (the second look and a
+  fix through the gate) are shown from it because the clean run stopped at an honest boundary, described at step 6.
 
-| Server (by role) | Found | Notes |
+### Step 1. An estate lands (clean run)
+
+An empty install. The office is named, an engineer picks a name, and three drops bring in the estate: a roster of 374
+devices under five clients, one capture of 31 servers, and seven firewall exports. Twenty-two of the servers belong to
+three clients that have agents; each enrolls with its own key and certificate and starts reporting.
+
+Before any model is involved, the watch reads the agents' first readings and opens **eight Jobs on its own**: two
+servers at the branch whose clocks are seven minutes off the application's, a file server at 2.9% free on C: and 4.7%
+on D: with its shadow copies failing, and three servers that have waited eight days for a reboot. Nobody pressed
+anything.
+
+### Step 2. What code knows (clean run)
+
+The 117 server checks and the firewall engine have already judged everything. On BR-DC01, the branch domain controller,
+code raises seven findings: kerberoastable service accounts, LDAP signing not required, a DNS zone that accepts
+unauthenticated updates, stale computer accounts, LLMNR still answering, TLS 1.0 and 1.1 on by the operating system's
+default, and the operating system and directory sharing one volume. None of that is wrong. None of it explains why
+Kerberos is failing at the branch.
+
+### Step 3. The whole read (clean run)
+
+The engineer opens the server's read view and presses "Read this server whole". The model receives the entire capture,
+59,404 characters, with what the office has said and what the checks raise beside it.
+
+It writes sixteen numbered findings, root first:
+
+> **F1.** The clock of this DC is set wrong: it takes time from an outside source instead of the domain, and Kerberos
+> is failing on skew.
+
+followed by the replication and Netlogon failures that follow from it, a dead domain controller still registered in the
+directory and in DNS, the unauthenticated zone, and twelve more. The read cost **$1.23**.
+
+### Step 4. Filing (clean run)
+
+The read is filed into typed items, for **$0.48**: 16 findings, 18 read-only checks, 15 questions and 60 names the
+local model proposed. Code looks for every quoted record in the capture, parses each check and proves it reads and
+changes nothing. The proven checks are joined into one script of 17,008 characters, eighteen checks each between its own
+marks.
+
+### Step 5. The gate holds, and a person presses (clean run)
+
+The decision model, set up on this run, gives its second opinion on the joined script and reads part of it as not
+grounded in the evidence. By the gate's table, any doubt asks the engineer. The script waits on Today as one card.
+
+The engineer presses "Run it". The script is handed to BR-DC01's own agent in the answer to its next report.
+
+On v9.0.0 that press failed. It was defect one of v9.0.1.
+
+### Step 6. An honest boundary (clean run)
+
+At this point I paused the work for an hour, and stopped the simulated fleet with it. When the fleet came back, the
+server's answer arrived after its check had expired: a check not back within fifteen minutes expires, and the listener
+refused the late answer, exactly as it should.
+
+The engineer's next move would be to read the server whole again. That press was refused too, by the model provider:
+the account's usage limit had been reached. The program said so in plain words and spent nothing.
+
+Both refusals are the product doing its job. They are also why the next two steps come from the rehearsal.
+
+### Step 7. The second look (rehearsal)
+
+In the rehearsal, the same server's checks came back in time, and the engineer pressed "Look at it again". The model was
+given the output whole again, its own last write-up, and what every check printed. That second look cost **$1.83** and
+moved the cause one link up the chain:
+
+> **F18.** The PDC has no time reference (settled).
+
+The branch controller had been taking time from an outside source, which is wrong for a domain controller. But the
+measurement the checks returned showed the bigger problem: the domain's primary controller, which every other machine
+ultimately follows, took its time from its Hyper-V host rather than from any real reference. The engineer's question had
+started as "why is this branch server seven minutes off?" and ended as "the whole domain's time is unanchored." That is
+the kind of answer a part-by-part checklist does not reach, and it is the reason the design reads whole.
+
+### Step 8. The fix list and its order (rehearsal)
+
+The client's fix catalogue was written once, seventeen fixes, and 48 findings were placed into it. The decision model
+was not yet fitted to this office, so every placement was the frontier model's. The planner put them in working order:
+name resolution and time first, because Kerberos needs both and every logon needs Kerberos.
+
+### Step 9. A fix, written whole, through the gate (rehearsal)
+
+The standing watch, with a small daily budget, wrote the first fix on the line, for **$0.12**: on BR-FS01, remove the
+public resolver 8.8.8.8 from the adapter's DNS servers and keep the domain controllers.
+
+It came to the gate in four parts. Its test is true while the problem exists. Its change refuses to guess: before
+touching anything it checks whether the setting comes from Group Policy or from DHCP, and if so it stops and says where
+the real fix belongs. It backs up the exact current state for its way back. Its proof is the test run again.
+
+An engineer approved it. With changes to servers allowed in Office, it went to BR-FS01's agent within a minute, ran, and
+printed its proof. The fix is recorded as applied, with who approved it, and it stays "proving" on the fix list until
+its fingerprint, run again later through the agent and compared with untouched servers, holds.
+
+Then the watch's next round declined to write the next fix on the line, setting the DNS zone to secure-only updates,
+and said why: doing that before the time fault is repaired would cause an outage. A system that can decline is a
+system that can be left running.
+
+### Step 10. The firewall (clean run)
+
+VPC-HQ-FBX, the client's main Firebox: 22 findings, posture 41 of 100, weakest in Operations, Fireware one release
+behind. Four ways in from the internet, all open to any address.
+
+An engineer links the firewall to its client. Two of the four routes now reach a server that answers: port 443 on the
+public address lands on the ERP web server, and port 33890 lands on Remote Desktop on the session host, open to anyone.
+A firewall Job opens with one issue per change; code settles 22 of its 44 questions at once and the rest wait for
+their proof, because firewall fixes are made by hand.
+
+The fix is made in Policy Manager: the vendor's Remote Desktop rule and its NAT are removed, and that access moves
+behind the SSL VPN. The new export is brought in. The firewall Job settles the fix from the export itself, and What
+changed lays the two audits side by side: five findings gone, each classified by its cause, and four new.
+
+### Step 11. The deliverables (clean run)
+
+The site audit and the firewall audit are rendered from the same record. With the model unavailable, both still
+render complete, in code's own words: the site audit's posture is 56 of 100, set by Network.
+
+### What it cost
+
+| Record | Calls | Spent |
+|---|---:|---:|
+| The clean run: one whole read, its filing, the fix list | 4 | $1.76 |
+| The rehearsal: two whole reads, their filing, a second look, the fix list, two fixes written, small repairs | 12 | $6.27 |
+
+Every call is in each run's own ledger. Every deterministic step, every proof, every page and both audits cost nothing.
+
+---
+
+## 11. The operator's surface
+
+The best harness in the world fails if the engineer does not trust the screen. The console was designed against one
+acceptance test, in an engineer's own words: could a colleague turn it on and know how to start working on servers
+tomorrow, without being taught?
+
+### 11.1 The pages
+
+| Page | The one question it answers |
+|---|---|
+| **Today** | What needs me now? Decisions waiting, in the order the planner would work them, each with the evidence it rests on |
+| **Work** | What is in motion? Every Job, and where it stands |
+| **Estate** | How is everything? Every client and server, live from an agent or from a snapshot with its age |
+| **A client** | A dashboard: its servers, findings and posture, its line of work, its watch |
+| **A server** | What is wrong, the network, posture, identity, security, infrastructure, software, every captured field, and the whole read |
+| **Firewalls, and a firewall** | Every Firebox by posture; one whole: its ways in, its rule base, its tunnels, its audit |
+| **Paths** | Every route from the internet to something inside, worst first, each saying what closes it |
+| **Fix lists** | Every finding placed in one fix; the fixes in working order |
+| **Globals** | Problems with one origin across many clients, proposed by code and confirmed by an engineer |
+| **Audits** | Both audits, each as a full audit and a Brief; what changed since the last |
+| **The engine** | Every layer of the harness at work today: what each settled and what it cost |
+| **Office** | Every setting in one place: the AI's switches, people, agents, keys, budgets, backups |
+
+### 11.2 Design law
+
+The console follows a written style law that a lint enforces, and the law is mostly a list of refusals:
+
+- **No containers.** A section is one hairline, not a box. Decisions, issues, Jobs and fixes are rows, not cards.
+- **State rides one edge.** A thin rule at the left: gold for a decision, a live color for an answer, the severity
+  ramp for a finding. Never a fill.
+- **One framed button per surface.** Everything else is a label. If every button is primary, none is.
+- **Figures are written, not dialed.** "11 being worked and 23 proved this week", not a row of gauges.
+- **Names, evidence and figures in a monospaced face; every other word in one sans-serif.** Nothing under 11 pixels.
+- **Absence is said.** "Not determined", with the reason, never a zero and never a blank.
+- **Never explain the platform to its operator.** A sentence that would still be true on a different product is cut.
+  Every finding is the named entity, why it is true from its own evidence, and something to approve or open.
+
+### 11.3 The machinery, drawn
+
+Work pages stay calm. The machinery shows only in a small set of hand-drawn canvas visuals, and they obey one rule
+that separates an instrument from decoration: **a visual moves only on a recorded event.** Nothing is animated for
+show. Every moving mark is something that happened, and every fact in a picture is also in words beside it.
+
+| Visual | Where | What it draws |
 |---|---|---|
-| Domain controller that is also a file server | 14 of 19, 4 partial, 1 missed | The miss (old archiver and SSH client versions) became a checklist item |
-| Domain controller that is its domain's certification authority | 7 of 7 | The CA database, missed by the previous build, went into the next test |
-| Terminal servers (three) | 4 of 4; 1 of 2; none open | Every item the team had fixed by hand read as fixed; the one miss was a disk start timeout passed over |
-| SQL and ERP server on Server 2012 R2 | 6 of 6 | It read folder permissions the key wrongly assumed the capture lacked, and was right |
-| Exchange 2019 server | 4 of 5 | Missed a certificate with 133 days left; an Exchange role was added |
-| Sole domain controller with many roles, Server 2012 R2 | 4 of 4 | Also: six shares writable by everyone at both layers, one of them a folder every workstation runs software from |
+| **The loom** | Today | The last hour, from every client through code, the reader of names, the decision model and Opus to the engineer. Gold knots are decisions |
+| **The wheel** | Estate | Clients round a ring, each server a column of rings by state, from noticed at the rim to proved at the center |
+| **The rope** | A Job | Its evidence taken apart into lines by source, braided into one rope per issue; each pass of the loop pulls it tighter |
+| **The engine** | The engine | The harness's layers stacked, questions climbing, the share each layer settled and its cost |
+| **The seams** | A client | What leans on what: time, DNS, hosts, replication, policy, ways in. A disagreement burns |
+| **Every way in** | A firewall | Internet, NAT, policy, gate, server, listener. A path with no gate burns until the next export closes it |
+| **The Braid** | A fleet Job | Servers as rows on one clock: waves, health gates, the way back |
 
-**Result.** 40 of 47 open items found in full, 4 in part, 3 missed. **None** of the claims the keys ruled out was made,
-including the traps: a server whose antivirus was a third-party agent rather than missing, and a lone domain
-controller whose empty replication status meant no partner rather than a failure.
+Color encodes where evidence came from (a snapshot, telemetry, a live check, another machine, a firewall export, an
+engineer's words), and shape encodes who acted (code a square, the reader of names a hollow bead, the decision model a
+diamond, Opus a ring, the engineer a gold knot), so identity never rests on color alone.
 
-### 15.2 Evidence
+### 11.4 Fast, for many people at once
 
-Every deciding quote is checked against the output by code. Across all the real Jobs, 380 quoted spans read as output;
-2 were paraphrases presented as quotes, a rate of about half a percent, recorded as the next thing to hold in code.
+- A page's document holds no estate data. It is drawn once per page for the life of the process, kept compressed, and
+  served from memory; fifty engineers opening the same page draw it once. Data arrives over the page's own socket.
+- A database that cannot answer is an error with its reason. A page never quietly shows yesterday's data.
+- Every list has the same keyboard: a command palette, jumps, filter, and a help sheet generated from the same table
+  as the bindings, so a shortcut cannot be documented without working.
+- Speed is a test, not a hope. In the built program: list pages 36 ms first and 27 ms on repeat; a click's feedback in
+  31 ms; a server's first view 54 ms at the 95th percentile.
 
-### 15.3 Failure modes
+---
 
-Every failure mode was produced on the stand-in in the built executable from an empty folder:
+## 12. The audits: client deliverables from the same record
 
-| Failure | Outcome |
+Two documents leave the building: the **Comprehensive Site Audit** of one client's servers and the **Comprehensive
+Firewall Audit** of one Firebox. Each has a client's copy, an engineer's copy and a short Brief.
+
+**One model, three copies.** An audit is a model of pure data made from the checks' answers. The copies render from
+that model and read nothing else, so every number any copy prints is one the model holds, and a test fails on any
+rendered number it does not. The screen that shows a firewall and the audit a client receives read the same views, so
+they cannot disagree.
+
+**Self-contained and designed for print.** Each copy is one HTML page with its styles, typefaces and drawings inline.
+There is no script, so nothing on the page runs. Every figure is a drawing built from rows of facts: bars, heat
+matrices, a support timeline, the network and its ways in, the dependency graph, the tunnel map.
+
+**The site audit** runs eleven chapters and three appendices: an executive summary; the fleet and its dependencies;
+directory and identity; security configuration; the network; continuity and backup; lifecycle and software;
+compliance, control by control; modernization and AI readiness; patterns across the servers; and a roadmap in phases.
+Appendix A is the register of every finding. Appendix B gives every server its own profile in nineteen parts, with the
+capture's own rows whole: every certificate, every update, every share's grants. Appendix C says what the audit read
+and did not, and how each number is counted.
+
+**The firewall audit** runs thirteen chapters: an executive summary; scope and methodology; the network at a glance;
+every way in; attack paths; who may reach whom; remote access and identity; the rule base; inspection and services;
+the Firebox itself; what the traffic shows; compliance; and a roadmap. Its centerpiece is the pathways: every route
+from the internet to the host that answers, and the two-step paths from an exposed host to what it can reach next.
+
+Three rules keep them honest:
+
+- **Every section is on a ledger.** When the audits were rebuilt in v9's engine, each section of the earlier reports
+  became a ledger row, and a test holds the rendered audit to every one of them. Nothing was quietly dropped in a
+  rewrite.
+- **What a model found and no check holds is "probable".** It prints in the engineer's copy only. When an engineer
+  has looked and agrees, they confirm it once, by the finding's identity, and from then on the client's copy carries
+  it. A model never puts a finding in front of a client on its own word.
+- **No commercial content.** No price, cost or return figure appears in any client-facing copy.
+
+A second audit of the same device knows the first. Each finding carries an identity that survives between runs, so it
+is matched to itself and not to its place in a list, and one that disappeared is classified by why.
+
+---
+
+## 13. Operating it
+
+A tool an office depends on has to be installed, signed in to, backed up, monitored and supported by people who did
+not write it. This section is the systems administration around the software.
+
+### 13.1 Install
+
+The release is one zip: the program's folder, its libraries, the local model and an install script. On a server:
+
+1. Unzip it.
+2. Run the install script as an administrator, or as SYSTEM from the remote monitoring tool. A `-Plan` switch prints
+   what it would do and changes nothing.
+3. The script puts the data folder under the machine's program-data directory, readable by SYSTEM and Administrators
+   only; registers a task that runs the program as SYSTEM after every boot and restarts it if it stops; opens the
+   host firewall for the console's port and the agents' port from private addresses only; starts the program; and says
+   whether both ports answer. Everything it says is kept in a log beside the program.
+
+Upgrading is: remove the task, replace the folder, run the script again. The data stays where it is.
+
+**A start that fails still says why.** The application's log lives in its data folder. If that folder cannot be used,
+the process would end before any log exists, and as a SYSTEM task it has no window to say so. So the entry point hands
+a failed start to one file beside the program. Once software runs on someone else's server, the logs they can send you
+are the only way you will ever read it.
+
+### 13.2 People and access
+
+- **Sign-in by name.** Each engineer has their own password, kept only as a PBKDF2 hash. A wrong name costs the same
+  work as a wrong password. An account rests for five minutes after five wrong tries, and one address may try twenty
+  times in five minutes.
+- **Attribution everywhere.** Every write is stamped with the engineer who made it. Every approval is recorded with
+  who gave it.
+- **Two-person approval** where an office asks for it.
+- **The AI's switches.** One master switch; under it, each AI function and each client. An engineer can hold one
+  client's checks for a press, or turn the AI off for one client entirely. A setting that cannot be read is off.
+
+### 13.3 Backup and recovery
+
+Every client, capture, firewall, Job and its history live in one database file. A checked copy is made every night
+with SQLite's online backup, each copy is opened and verified, and the newest ten are kept. Office can name a second
+folder, on another disk or another machine, and proves it by copying the newest backup there at once. Restoring is
+stopping the program, replacing one file and starting it again.
+
+### 13.4 Support
+
+When something goes wrong, an engineer saves a **support file** from Office: one zip with the log's last 5 MB, the
+trail of screens that browser visited, the version and the machine, the agents' side of things, a failed start if
+there was one, and the records of any Jobs the engineer ticks. Every secret the application holds is scrubbed from all
+of it. The log, the screen trail and the model calls carry the same action ID, so the three line up into one story.
+
+### 13.5 Measured under load
+
+| Test | Result |
 |---|---|
-| A seat declined on both models | Ends short, stated, resumable; ruled work kept |
-| The lead engineer declined on both models | The checks' findings filed; the Job says nothing was ruled |
-| The writer declined | Issues built from the structured groups |
-| No decision recorded | Asked once more on the same cached prefix |
-| A seat cut off at its limit | Its claims kept; the page says the list may be incomplete |
-| A seat that loops | Stopped where the repeating began; its claims read; the run goes on |
-| The reviewer declined | The fix held; never offered unreviewed |
-| The application killed mid-run | The run reads stopped with its moment; Resume offered; the queued Job started exactly once |
+| Soak: one process, 2 hours 40 minutes | 80,161 requests, no error. 17 ms median, 193 ms at the 95th percentile. Memory 547 MB at the start, 643 MB at its highest, 617 MB at the end |
+| Fifty agents reporting every five minutes for an hour | 650 batches accepted, none refused, 650 readings kept |
+| 25 engineers at once | First visit 31 ms and repeat 7 ms at the 95th percentile |
+| 50 engineers at once | First visit 29 ms and repeat 8 ms at the 95th percentile |
+| The process killed mid-ingest, as a power cut would | The database's own integrity check passed; the batch said "interrupted"; warm again within 34 seconds |
+| The process killed in the middle of a model call | The same; the read is shown as interrupted, and nothing is sent to the model again by itself |
+| Nineteen pages at phone, tablet, laptop and desktop widths | No sideways scroll |
+| First run from an empty folder | Answers two seconds after start; a first site audit open seven actions later |
 
-### 15.4 Stress and coverage
-
-- **Four Diagnoses pressed at once** queued, started one at a time, and each ran once.
-- **Eight console questions in a row** were recorded in order, none lost or doubled.
-- **A 2.2 MB paste** was refused plainly; the box takes 400,000 characters and points larger output to an attachment.
-- **The capture ingested a second time** duplicated nothing: 189 servers and every Job intact.
-- **Every page the product serves (457)** was fetched and every inline script parsed, then loaded in a real browser: no
-  script errors, no failed requests.
-- **The suite**: 13,409 tests passed in three processes, with none failing.
+These were measured on v9.0.0's release candidate. v9.0.1 changed four code paths, each walked in its own build.
 
 ---
 
-## 16. What real data broke, and how each is now held
+## 14. How it was proved
 
-Each defect below was found by running the built executable on real data: the walk, the crawl or a real run on a
-server the platform had never seen. Each was fixed with a test and walked again.
+### 14.1 Five kinds of evidence
 
-- **A page's data was cut as if it were a comment.** At serve time the platform strips developer comments (`/* ... */`)
-  from its pages, and it was also stripping the page's data. One server's web binding held `http/*:80:`, an agent's
-  ruling elsewhere on the page held `**/23**`, and everything between was removed, so the page drew nothing. 49 of the
-  189 servers' data carried the opening marker. Data is now its own script, which the pass leaves alone, and data
-  embedded in code escapes the character.
-- **Seats looped at their limit.** Section 11.5. The fix was not a larger limit, which would have let them loop longer.
-- **A fix's form filled a field with script.** The fix tool's `read` field had no description, and one real answer put
-  the fix's pre-flight script there; the Job's summary became PowerShell. The summary now reads only the agents' read of
-  the server, both fix tools say what the field is, and a value that is plainly script is dropped.
-- **A cached page carried live state.** A page served while it rebuilt still said a machine owed a transcript after its
-  Job had closed. Live state now rides the shared poll.
-- **A missing capture read as a missing server.** The 46 roster machines with no capture said "No such server". They
-  now say whose machine it is and to run the collector.
-- **A silent decline.** When the lead engineer was declined on both models, the Job read "your turn" as if the agents had
-  ruled. It now says nothing was ruled.
-- **A verdict that was an opinion.** Section 8.6: about 136 servers read as having legacy TLS off.
-- **Passed over by every seat.** A certification authority's database growth and a mail server's certificate expiry
-  were missed until the role checklist named them.
+| Evidence | What it is | At v9.0.1 |
+|---|---|---|
+| **The suite** | Tests by behavior, run in batches | 6,096 passed, 39 skipped, 0 failed, in 671 files |
+| **Standing harnesses** | Scripts that prove specific past defects stay closed and that rendered output matches its evidence | 17 of 17 |
+| **The release gate** | Five sub-gates that must all pass before a release may be cut | 5 of 5 |
+| **Rendered invariants** | Properties of the built product's actual output | 16 of 16 |
+| **The walk** | The built program, from an empty folder, with real mouse input, pictured and read | Done at v9.0.0; v9.0.1's fixes walked in its own build |
 
-The pattern behind them is the reason the evaluation exists. None of these failed a test before it was found, and each
-appeared only when real data met the built product.
+The harnesses exist because a green test suite has, in this project's own history, coexisted with wrong output. A
+test asserts what its author thought to assert. A harness opens the rendered artifact and compares it with the
+evidence. Both run; neither is trusted alone; and a person still looks at the screen.
 
----
+### 14.2 Structure held by ratchets
 
-## 17. The engineer's surface
+Tests count things that should never grow: imports that go up the layers, database connections opened outside the
+store, model calls outside the one client, threads outside the scheduler, scripts inside Python strings, files past
+their ceiling, tests that read source text instead of exercising behavior. A count may fall. It may never rise. When
+one falls, its baseline is lowered in the same commit. This is how a 138,000-line code base written quickly stays one
+that can be changed.
 
-### 17.1 Pages
+A separate ledger lists 140 abilities, every capability of the previous major version and every layer of the harness
+study, each with where it lives now and how it was proved. A test fails if a row's home disappears. The rebuild could
+not lose a feature by accident.
 
-| Page | What it does |
-|---|---|
-| Home | What is waiting on the engineer, agents at work, and the worst problems first |
-| Findings | One list of problems by area, worst first, one page per problem |
-| Clients, and a client's page | The client's network plan, what one change fixes on every server, its servers and firewalls; the site report |
-| A server's page | Everything wrong on that machine, its capture section by section, and Diagnose |
-| Firewalls, and a firewall's page | The device under the engineer's name for it, its findings and policies, its logs, its audit and report; every route from the internet inward; what changed since its last audit |
-| Jobs, a Job's page, an issue's page | The board of seats, the argument drawn live, the issues in order with what each waits on, and each issue's steps to a close |
-| Ingest | The roster, the captures and the exports, each with what it contributed and what it could not read |
-| Settings, and the record | The AI switch and key, spend from the ledger, and the record of every act the platform took |
+### 14.3 An answer key written first
 
-### 17.2 The console and the drawing
+Accuracy claims rest on keys written before the thing being measured existed: labelled findings on real servers, and a
+firewall key that found the "service Any" gap described in section 7.2. A path is scored as precision, coverage and
+cost, with an exact bound on the error rate. Scoring patterns are written from the engineer's own words before a run,
+and every hit and every miss is read by hand afterwards, because a pattern match is not a correct answer.
 
-The console floats over the page it was opened on and is bound to a Job. A second question sent while the first is
-being answered waits in a queue; the engineer can steer the next agent, pause or stop a run, and see within seconds a
-run started from another page. The argument is drawn as it happens: one lane per seat, each claim placed at the moment
-it was written, its shape and color carrying its status.
+Failures are kept. The study that shaped the harness records five ideas that were tried and refuted, with their
+numbers. A document that shows only its successes has hidden its method.
 
-### 17.3 The design system
+### 14.4 Real runs, each with its question
 
-The console follows a written design system checked by a lint that runs with the release gates: a near-black ground
-with bone-colored ink, a serif face for narrative text, a sans-serif for labels and a monospaced face for figures, and
-one perceptually uniform color ramp reserved for severity, so color always means an exception. Every count opens to the
-named entities behind it.
+No model call was ever made "to see what happens". Each of the fifteen measured runs in the last phase had a written
+question whose answer would change a decision, a spending cap, and its scoring written before it ran. Spend is read
+from the ledger, never recalled. The runs that mattered most:
 
----
+- **The whole read** (section 9.1), which inverted the design.
+- **The loop, for real, through an agent on a real machine:** read, file, checks out through the agent, output back,
+  second look, a fix at the gate.
+- **The site audit's words on the real model.** It passed its scoring and still exposed two defects no stand-in run
+  could have: a second asking that rewrote a cache, and checks placed in the wrong chapter. The model's own prose is
+  what read wrong.
+- **Both audits on the release candidate:** 318 of 318 fields kept.
 
-## 18. DevOps and release engineering
+### 14.5 v9.0.1: the release found its own defects
 
-### 18.1 One file
+v9.0.0 was released on 18 November. That evening I ran the released build, end to end, with the real model, on the
+invented estate built for the film: five clients, 31 servers, agents reporting. That run, and filming the fixed build
+the next night, found four defects:
 
-The platform is built with PyInstaller into one executable of about 69 MB. The console's modules are bundled as data,
-so a guard derives the list of hidden imports from the source, and a second check fails if anything opens a path
-outside the bundle and the data folder.
+| Defect | Cause | Fix |
+|---|---|---|
+| A held check from a whole read could not be released. Pressing "Run it" on its card answered that the Job did not exist | Such a check hangs on a client's standing Job, and the route that takes the press only knew the other kind of Job. It only showed when a check was held: a client set to "checks wait for a press", or a decision model configured and not answering | The press is taken on the check itself. Pressed twice, or under the wrong Job, it is refused in words |
+| When a script was cut short, the checks it never reached were never sent again | One call to a name that did not exist. The error was caught and logged, so the output that did return was kept and the rest silently never asked for | It opens the record through the connection's own file. The existing test had reached the behavior only through a different layer |
+| The card for such a check said "The best read so far: True" | A flag was printed where a sentence was expected | The card says only what it knows |
+| In Office, pressing any tab (AI, People, Agents, Data) did nothing, so an installer could not reach sign-in, the AI switch, the agents or the backups | A name declared for one switch inside the page's click handler hid the page's own function for opening a view, for every press | The switch's callback has its own name. A test runs the page's script and presses all nine views |
 
-### 18.2 The release pipeline
+Each fix has a test that fails on v9.0.0. The suite, the harnesses and the gate ran again on the final commit, the
+program was rebuilt from a clean export, and the fixes were walked in the built program: every Office tab pressed
+with the mouse and drawn; a held check's press answered, the listener handed the check to that server's agent 0.3 seconds later, the card left Today, and a script
+answered short had its missing check re-sent by itself with no error in the log.
 
-```mermaid
-flowchart TB
-    subgraph PROVE["From source"]
-        direction LR
-        B["Each piece on<br/>the stand-in"] --> S["Full suite<br/>three processes"]
-        S --> G["Release gate<br/>6 sub-gates"]
-        G --> H["19 standing<br/>harnesses"]
-    end
-    subgraph SHIP["On the executable"]
-        direction LR
-        X["Build"] --> W["Walk from an<br/>empty folder"]
-        W --> C["Crawl every page<br/>and stress it"]
-        C --> D["Real runs on<br/>unseen servers"]
-    end
-    PROVE --> SHIP
-    SHIP --> M["Merge, tag, push<br/>on the owner's approval"]
-```
+One thing in the original plan was taken back before the build. I had listed a fourth item, a fault in splitting a
+multi-server capture. It was not a product defect. The remote monitoring tool writes each machine's header in
+capitals, the splitter correctly expects that, and my invented capture had written them in lower case. The generator
+was wrong, the product was right, and saying so is part of the job.
 
-- **The suite** runs in three sequential processes so peak memory stays at a third of a single run: 13,709 passed,
-  0 failed, at the v8.3.1 release.
-- **The release gate** has six sub-gates (generated-prose voice, rendered report review, prompt-library coverage,
-  compliance-gap inventory, a dependency vulnerability audit, template syntax). It stopped the v8.2.0 release on
-  advisories published that morning until two libraries were upgraded.
-- **The walk** starts the built executable from an empty folder and drives it the way its buttons drive it.
-- **The crawl** loads every page the product serves and fails on any script error.
-- **Real runs** use the real model on servers the platform has never seen, against keys written in advance.
-- **Every release is tagged** and reversible; a pre-push hook refuses pushes to the release branch except at an
-  approved release, by the owner.
-
-### 18.3 Schema evolution
-
-The warehouse is SQLite with 19 migrations, each forward-only, transactional and idempotent. The newest keeps a
-firewall's logs. A failed migration rolls back to its pre-migration state.
+The lesson is the one this whole document argues: tests, harnesses and a stand-in are necessary and not sufficient.
+The defects lived in a path that only a real model, a real hold and a real agent exercise together.
 
 ---
 
-## 19. Results
-
-### The 8.3 releases
-
-- **v8.3.0 (October 13, 2026): the Job carries the work in order.** Every pasted output moves the Job: a console
-  paste is split by its machine headers, each machine's output goes to the script whose run token it carries, and a
-  writer agent updates the whole Job from it (the story, each issue, what is new). The lead engineer orders the issues
-  with reasons and says what each one waits on; when the next data must come from another server, the issue names that
-  machine and its test runs there. A firewall has a Job of its own, fixed by hand and verified by a new export.
-- **v8.3.1 (October 17, 2026): every defect found, fixed, and the release certified.** v8.3.0 was read line by line
-  against its own inputs (189 servers, 54 firewall exports, the roster), and every defect went into one ledger of 123
-  rows, each fixed in the finished output and checked on several clients, not only by its test. Among them: service
-  and listener lines lost in the parse, a timed-out update check read as fully patched, firewall port ranges and phase 1
-  VPN crypto missed, an older export able to replace a newer one, a licence assumed rather than read, and compliance
-  frameworks switched on by a word in the client's name. The release candidate was then walked in eight layers, each
-  from an empty folder with real drag-and-drop, and the 91 defects those walks found were fixed and walked again before
-  release.
-- **Certified on one build:** the whole walk, a two-hour soak (1,152 ms per page at p95), the console under load, the
-  upgrade over a v8.3.0 database (37 firewalls re-judged in 12.8 seconds, open Jobs kept), the suite and every gate.
-- **Verified independently:** 117 parsed fields on 189 servers and 198 of 198 firewall routes agree with an independent
-  reader; every dashboard figure agrees with an independent read of the inputs (12 of 12); the Job chain on a simulated
-  fleet took 105 of 105 pastes on 10 machines, a 14-machine sweep and 21 of 21 firewall Jobs.
-
-| Measure | Result |
-|---|---|
-| Accuracy (October build) | Eight servers scored against keys written in advance: 40 of 47 found in full, 4 partly, 3 missed, no ruled-out claim made |
-| A first diagnosis (October build) | $3.56 to $5.81 a server, about $4.50 on average over nine; 16 to 25 minutes, median about 20 |
-| Time to first value | 48 clients, 189 servers and 54 firewall exports ingested and judged in about one minute |
-| The console | A question $0.21 to $0.42 with the capture cached; a reviewed fix about $1.00; a 7,000-character time entry for a whole Job |
-| The firewall track | 21 issues from 59 findings for $0.24; a reviewed fix by hand for $2.07 |
-| Firewall findings | 2,173 across 54 exports in 8 seconds, each with its evidence and policy number |
-| Judge precision (v8.2.0) | Six judges re-measured on 200 servers: 198 to 6, 196 to 52, 74 to 7, 63 to 2, 61 to 8, 14 to 4 |
-| Reliability (October build) | 457 pages crawled twice without a script error; 13,409 tests passed; every failure mode stated |
-| Refusals | 6 of 69 real calls declined and resent, 12% of evaluation spend |
-| Release certification (v8.3.1) | Eight layered walks of the built executable; 91 defects found and fixed before release; 13,709 tests passed, 0 failed; release gate 6 of 6; 19 of 19 standing harnesses; 72 of 72 rendered-product invariants |
-| Delivery | 5,001 commits and 59 tagged releases between March 6 and October 17, 2026; every release reversible |
-
-The team's baseline for a major audit was 60 to 80 hours of stitching vendor output. Judging the whole estate now takes
-a minute, and a machine's full diagnosis about twenty minutes and five dollars. The engineer's time goes to the part
-that needs an engineer: deciding what to test, what to fix and what to tell the client.
-
----
-
-## 20. How I build
+## 15. How it was built
 
 I built NinjaToolKit with Claude as an engineering partner, and the way that partnership is run is as much a part of
-the work as the code.
+the work as the code. It is the same problem the product solves, pointed at software instead of servers: get a
+frontier model to do a large volume of reliable work, and keep a person in control of everything that cannot be
+undone.
 
 **What I own.** The architecture, the domain judgment, the safety model and the invariants, and every decision that
-cannot be undone: a merge, a tag, a release, a change to a prompt, a paid call. The model writes and revises code at a
-volume no single engineer could, and I hold it to a process I designed.
+cannot be reversed: a merge, a tag, a release, a change to a prompt, a paid call.
 
 **The process.**
 
-- **A plan before building.** Every phase starts as a written plan that I approve, with the user-facing effects named
-  before anything is built and the audits that will judge it listed in advance.
-- **A durable project record.** The position, my standing rulings and the design system live in the repository, not in
-  a conversation, so decisions survive context limits and model changes.
-- **Predictions before edits.** The expected measurements are written before a defect is fixed, and never adjusted
-  afterwards.
-- **Proof at five altitudes.** Targeted tests for each piece; a live run against the stand-in for every agent flow; a
-  walk of the built executable from an empty folder; a crawl of every page; and real runs on servers the platform has
-  never seen, scored against keys written before the run.
-- **Human gates on irreversible actions.** Pushes to the release branch, tags and releases wait for my explicit approval
-  at that moment, and the repository enforces it.
+- **A plan before building.** Every phase starts as a written plan that I approve, with the effects an engineer will
+  see named in advance. Work outside an approved plan does not happen.
+- **A durable project record.** The position, my standing rulings and the design law live in the repository, not in a
+  conversation, so decisions survive context limits and model changes. 111 numbered decisions; 38 research files.
+- **Every outside fact is fetched again before it enters code.** A version, an API's shape, a limit or a price is
+  read from its source on the day it is used, pinned, and the read is named in the commit.
+- **Ledgers move in the same commit as the code.** A finding is marked fixed in the commit that fixes it. There is
+  never a follow-up commit "for the record".
+- **Done means walked.** A green test is not done. Done is the built program, from an empty folder, with real input,
+  pictured, and the picture read.
+- **Zero-cost AI testing first.** Every AI path is proved against a local stand-in before a real call is made, and no
+  spend gate is ever proved by spending.
+- **Human gates on irreversible actions.** A push to the release branch is refused by the repository itself; at a
+  release I run that one command by hand.
 - **Measured, never recalled.** Every number in a status report, a release note or this document is the output of a
   command run at the time.
 
 **Why it matters for the work I do.** A forward deployed engineer's job is to take frontier models into a real
 operating environment and make them produce reliable work there. This platform is that problem at small scale: an
-environment with real constraints, real clients and real cost, where the model's output has to be held to evidence by
-code and the human has to stay in control of everything that touches production.
+environment with real constraints, real clients and real cost, where a model's output has to be held to evidence by
+code, and a person has to stay in control of everything that touches production.
 
 ---
 
-## 21. Lessons
+## 16. What is not proved yet
 
-1. **Separate the roles, and give each a success condition the others cannot satisfy.** Asking one model to be both
-   author and critic produces agreement.
-2. **Type every answer the code acts on.** Delimited text failed exactly where real data was messiest. Strict forms
-   carry order, dependencies and machines as data; text parsing is a stated fallback, never the plan.
-3. **Design for truncation, and watch for loops.** A cut reply should become a true, smaller result. A reply that
-   loops is not a reason to raise a limit; measure the tail before changing the budget.
-4. **Check the quote, not the claim.** A deciding status that cannot point to a real line of output does not stand.
-5. **Keep the human gate informed.** A gate is only real if the person at it sees what a script changes, the reviewer's
-   objections and the undo.
-6. **Fail toward the safe state.** Every guard has a default, and the default is the one that stops or refuses.
-7. **Absence is not zero.** Not returned is not empty; not measured is not clean; a missing capture is not a missing
-   server.
-8. **A script's verdict is an opinion.** Read the source lines, never a tool's summary of them.
-9. **Refusals are a routing problem.** Detect, route openly, re-test the primary model, and never disguise a request.
-10. **Precision is part of safety.** A finding raised on 198 of 200 servers trains the engineer to skip it.
-11. **The artifact is the test.** Each defect in Section 16 passed every test until real data met the built product.
+Stated here so nobody meets it as a surprise.
 
----
-
-## 22. What comes next
-
-- **A fix run for real, end to end.** Real fixes have been written and reviewed; running them on real servers with the
-  output pasted back is the next evidence, and the team will produce it.
-- **The provider's verification program.** Declines were 12% of evaluation spend and add minutes to each; the
-  verification program for defensive security work is the legitimate way to remove them.
-- **The collector's next version** (collector v6, now built for v9 and proven across ten runs on the estate): typed
-  records instead of text, a status for every section, exact event counts in place of a 200-record cap, and reads for
-  Exchange, SQL Server, Hyper-V, Group Policy and the domain's logon scripts that the agents had to ask for in a test.
-- **v9, in build, with its own case study.** The next version keeps this release's accuracy and moves the work down
-  a ladder: code settles what can be computed; GLiNER 2.5 turns free text into typed fields on the server's own CPU; a
-  calibrated decision model (TypeSafe's Jev or a local equivalent) answers batteries of typed questions, accepted only
-  with a conformal guarantee at each action's error bound; the frontier model reasons only about what remains; the
-  engineer gates what touches a server. Underneath it: a typed collector, an observation store with provenance, a
-  dependency map with evidence on every link, live telemetry from an in-house agent, and many engineers at once. The
-  ground and the data foundation are built and measured; the rest is designed in full, with an answer key of 7,247
-  items (544 gold) built before the intelligence layer it will score.
-- **Findings the agents confirm, turned into free checks.** A problem the agents confirm on several servers becomes a
-  candidate judge, so the deterministic layer grows from what the agents learn (part of v9's learning loop).
-- **Sign-in.** Every engineer's name on every action (in v9 from its first phase) and single sign-on with MFA before
-  the application is opened beyond one office network.
-- **A third pillar for Microsoft 365 and Entra ID tenants**, built to the same finding shape, inheriting stable
-  identity, the agents and the issue lifecycle.
+- **Agents over the internet.** They are built for it and proved on a local network with real and simulated agents.
+  They are not yet proved from outside an office's network.
+- **The standing watch on its own timer with real spend.** It has run on its own timer against the stand-in, and for
+  real when pressed. It spends nothing until an office sets a background budget.
+- **A client's first view** measures 142 to 203 ms at the 95th percentile against a 100 ms budget that was set before
+  that page became a dashboard. The budget or the page will move; it is an open decision.
+- **Partial abilities.** Of the 140 abilities on the ledger, 81 are recorded as running and 45 as partial, most of
+  those waiting on a real export, a credential or a first real use.
+- **Not in this version:** certificate renewal and re-keying from inside the product; single sign-on with multi-factor
+  authentication; the firewall vendor's cloud API (its reader is built and has never run against a live account);
+  a code-signed agent; VMware hosts.
+- **Found while filming v9.0.1, not yet fixed:** after a second firewall audit, the What changed page kept showing its
+  earlier state until the program was restarted. The comparison itself is right (it showed at once after a restart);
+  the page's cache did not see the new audit. It is logged for the next release.
+- **Firewall fixes are by hand, by design.** The product writes the steps and proves the result from the next export.
+  It does not edit a firewall.
 
 ---
 
-## 23. Appendix A: glossary
+## 17. Five disciplines, one system
 
-| Term | Meaning |
+| Discipline | Where it shows in this system |
 |---|---|
-| Capture | The output of the PowerShell collector for one or more servers |
-| Judge | A deterministic function that raises a finding from a capture |
-| Finding | One thing wrong on one server or firewall, with its evidence, in the shared finding shape |
-| Problem | A finding type as it appears across servers and clients; one page per problem |
-| Global | A problem found at two or more clients, handled as one project |
-| Job | One piece of work on one object: a thread in that object's event log |
-| Seat | One agent role in the argument: first engineer, second engineer or lead engineer |
-| Claim | One stated cause with a status, from a seat's index line |
-| Ruling | The lead engineer's final status for a claim, with the evidence that decided it |
-| Piece of work | A group of rulings that one test settles or one change closes, in the lead engineer's order |
-| Issue | A unit of work on the Job: a test first, a fix, a question for the client, or a project |
-| Waits on | The issues that must be done before this one, because doing it first would break or undo them |
-| Role checklist | The essentials of a server role the agents must address from the output or in the next test |
-| Console | The Job's conversation, with tools to propose a script or a fix, review a fix, read another server, list the fleet and amend an issue |
-| Doubt | A condition a judge names but cannot settle from the capture alone |
-| Run token | The identifier a script is issued under for one machine and returned under |
-| Courier | The part of the platform that issues and accepts scripts under run tokens |
-| Stand-in | A local imitation of the model API used to test every agent flow at no cost |
-| Walk | Driving the built executable end to end from an empty folder |
-| Answer key | What a correct diagnosis of a server must say and must not say, written from its capture before the run |
+| **Data engineering** | Four source readers that emit one model. A text parser for 47 sections with a fingerprint that forces a re-parse when it changes. A typed record contract with completeness rules. Identity resolution by evidence with measured refusals. One strict schema with numbered forward-only steps. Findings with identity and history, where gone is never fixed. An append-only work log. Host-by-host short writes under concurrency. Reference data with provenance and a shelf life. |
+| **Data analysis** | A measured funnel: which fields move by themselves, fitted from pairs of captures, not listed by hand. Forms counted across a fleet. Isotonic recalibration and exact binomial bounds for a small model's confidence. Precision, coverage and cost as three numbers with error bounds. Answer keys written first, scoring written before each run, and refuted ideas kept with their numbers. |
+| **Forward deployed engineering** | A frontier model placed in a production loop with a harness around it: one client, priced calls, ceilings, a ledger, refusal handling, a scheduler with lanes, prose filed into typed items, quotes pinned to evidence, scripts proved read-only, a gate that is code. Built by sitting with the work as it is actually done, and inverted when a measurement said the first design was wrong. |
+| **Network engineering** | A full firewall model from a configuration export. Exposure computed as a path from the internet through NAT and policy to a listening process, in six states. Zones judged from interfaces, never from names. Rule-base anomaly analysis on resolved address space. VPN cryptography graded. An agent protocol with a private certificate authority, mutual TLS 1.3, fingerprint pinning and outbound-only connections. |
+| **Systems administration** | 117 server checks drawn from real diagnostic work across Active Directory, DNS, DHCP, Hyper-V, file services, patching, hardening and backup. A 4,165-line PowerShell collector. An agent that runs as SYSTEM, reads through the Windows API and starts no process. An install script with a dry run, a locked-down data folder, a boot task and scoped firewall rules. Nightly verified backups, a support bundle, and soak, load and kill tests. |
 
 ---
 
-## 24. Appendix B: how the figures were measured
+## 18. Lessons
 
-| Figure | Source |
+1. **Let the strongest model see everything, and trust nothing it says.** Filtering a frontier model's input to save
+   money made it worse at exactly the thing it is best at. The savings belong after the read, in verification and
+   placement, where small models and code are measurably right.
+2. **Free prose and typed records need a bridge, and the bridge should be boring.** Filing adds nothing and judges
+   nothing. That is what makes everything after it checkable.
+3. **A model that may only speak when certain goes quiet where a hypothesis is most valuable.** Ask for a best read
+   every turn and a statement of how settled it is. Then let "settled" open a gate and "likely" produce the next check.
+4. **A safety control must be in the path, not in the prompt.** The gate is a table in code. The model's reasoning
+   never reaches it. Whether a person is asked is never a question put to a model.
+5. **A small model's confidence is a ranking, not a probability.** Recalibrate it on labels, accept it only inside a
+   stated error bound, run it in shadow first, pin its version, and let it climb when in doubt.
+6. **Measure the instrument before you trust the reading.** An event log that holds four hours cannot tell you about
+   a week. A field that always moves is not a change. A firewall address that looks public may be inside.
+7. **Absence is not zero, and gone is not fixed.** Most false reassurance in operations tooling comes from breaking
+   one of those two rules.
+8. **Prove a fix from outside the fix.** A script that checks its own work proves that the script ran. The proof is a
+   later measurement, by a different path, against servers nobody touched.
+9. **Run the real thing, for real, before anyone else does.** Four defects survived 6,092 tests and were found in two
+   evenings of using the product the way it is meant to be used.
+10. **Make structure a ratchet.** Rules that live in a document decay. Rules that live in a test that may only count
+    down do not.
+
+---
+
+## 19. Glossary
+
+| Term | Meaning here |
 |---|---|
-| Code size and history | Git plumbing over the v8.3.1 tag's tree (line counts per file); the same script reproduces earlier releases' figures exactly |
-| Release certification and checks | The v8.3.1 release notes and the certification log: each walk's defects, the suite, the gate, the harnesses |
-| Judges, checks, recipes, controls, firewall findings | The product's own registries and engine, imported and run over every export on the build machine |
-| Ingest timing | The application's request log for an empty-folder ingest in the built executable |
-| Accuracy | Keys written from each server's capture (and the team's engagement records) before each run, scored item by item |
-| Cost and time | The model-call ledger, one row per call, and the session events of each run |
-| Refusal rate | The same ledger's stop reasons |
-| Crawl, stress, failure modes | Scripted drives of the built executable from an empty folder against the stand-in, with their logs |
-| Tests | The suite run in three processes on the build's commit |
+| **Capture** | The text output of the PowerShell collector for one server: 47 sections |
+| **Export** | A firewall's configuration saved as XML |
+| **Record** | The product's database: everything brought in and everything decided, with history |
+| **Check** | A deterministic rule with one contract and four possible outcomes |
+| **Finding** | Something wrong, named, with its evidence and an identity that survives between captures |
+| **Whole read** | A frontier model's reading of one server's entire capture |
+| **Filing** | Turning a whole read's prose into typed items that code can verify |
+| **Landing** | Taking verified items up into the record, once |
+| **Read-only proof** | Code's demonstration, by parsing, that a script reads and changes nothing |
+| **Gate** | A point where a named engineer must approve, answer or refuse |
+| **Gate hook** | The code every proposed action passes before anything happens |
+| **Fix** | One change, written whole: pre-check, change, proof, way back |
+| **Fingerprint** | A fix's read-only pre-check: true while the problem exists |
+| **The line** | A client's fixes in the order an engineer would work them |
+| **Job** | The story of one stretch of work for one client |
+| **Run** | One unit of AI work, kept as a graph of questions and the rungs that tried them |
+| **Rung** | One way of settling a question, from code up to the engineer |
+| **The watch** | The standing look at a client's fleet for what deviates from what was accepted |
+| **Rests** | A record that was accepted and still stands as accepted |
+| **Form** | What a record says with its moving values set aside |
+| **Seam** | A fact that disagrees across a client's servers |
+| **Path** | A route from the internet through NAT and a policy to a server and a listener |
+| **Global** | A problem with one origin across many clients, confirmed by an engineer |
+| **Stand-in** | A local service that speaks a model provider's protocol and costs nothing, used to prove AI paths |

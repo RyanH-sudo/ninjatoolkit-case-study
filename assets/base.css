@@ -1,0 +1,24 @@
+/* Geist and Geist Mono: Copyright 2026 The Geist Project Authors, SIL Open Font License 1.1 (assets/fonts/OFL.txt) */
+@font-face { font-family: "Geist"; src: url("fonts/geist-latin.woff2") format("woff2"); font-weight: 300 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("fonts/geistmono-latin.woff2") format("woff2"); font-weight: 300 700; font-style: normal; font-display: swap; }
+
+:root {
+  --bg: #08080A; --bg2: #0A0A0D; --panel: #0B0B0D; --panel2: #111116;
+  --line: #1B1B1F; --line2: #292930; --line3: #3A3A42;
+  --ink: #EAE6DE; --ink2: #BEBAB1; --ink3: #938E85; --ink4: #757068;
+  --gate: #EDBE7F; --live: #5CCBD9;
+  /* where evidence came from */
+  --snap: #D8D1C2; --tele: #4FE3C1; --check: #7EA6FF; --other: #B49CFF; --fw: #E8A06E; --words: #EDBE7F;
+  /* who acted */
+  --code: #A9B1BB; --gliner: #9BE7FF; --jev: #FF5C83; --opus: #EAFBF4;
+  --sans: "Geist", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--ink); -webkit-text-size-adjust: 100%; }
+body { margin: 0; font: 400 16px/1.55 var(--sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+a { color: inherit; }
+.label { font: 500 11px/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink3); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+::selection { background: #EDBE7F33; }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

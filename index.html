@@ -3,299 +3,108 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ryan Haig · NinjaToolKit case studies</title>
-<meta name="description" content="Case studies of NinjaToolKit, an agentic audit and remediation platform for managed infrastructure: the shipped v8.3.1 and the v9 architecture in build, with GLiNER 2.5, a calibrated decision model and Claude Opus 5.5.">
-<meta name="author" content="Ryan Haig">
-<meta property="og:type" content="article">
-<meta property="og:title" content="Ryan Haig · NinjaToolKit case studies">
-<meta property="og:description" content="Case studies of NinjaToolKit, an agentic audit and remediation platform for managed infrastructure: the shipped v8.3.1 and the v9 architecture in build, with GLiNER 2.5, a calibrated decision model and Claude Opus 5.5.">
-<meta property="og:url" content="https://ryanh-sudo.github.io/ninjatoolkit-case-study/">
-<meta name="twitter:card" content="summary">
-<link rel="canonical" href="https://ryanh-sudo.github.io/ninjatoolkit-case-study/">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2308080A'/%3E%3Cpath d='M16 5l3 8-3 3-3-3zM27 16l-8 3-3-3 3-3zM16 27l-3-8 3-3 3 3zM5 16l8-3 3 3-3 3z' fill='%23E9E4D8'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+<title>NinjaToolKit v9: a case study by Ryan Haig</title>
+<meta name="description" content="A technical case study of NinjaToolKit v9.0.1: an AI harness that reads a whole server, holds every claim to the evidence in code, and brings each fix to an engineer's gate.">
+<link rel="stylesheet" href="assets/base.css">
 <style>
-:root{--ground:#08080A;--surface:#0F1013;--raise:#15161A;--ink:#E9E4D8;--ink-2:#ABA597;--ink-3:#716C62;
---rule:#23252A;--rule-2:#30333A;--link:#C9D6E6;--mark:oklch(0.70 0.105 162);color-scheme:dark}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--ground:#F6F4EF;--surface:#FFFFFF;--raise:#FBFAF7;--ink:#17181B;
---ink-2:#4A4C51;--ink-3:#7A7C80;--rule:#E1DDD3;--rule-2:#D3CEC2;--link:#28527D;--mark:oklch(0.52 0.105 162);
-color-scheme:light}}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:72px}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-body{margin:0;background:var(--ground);color:var(--ink);font:18px/1.66 "Newsreader",Georgia,"Times New Roman",serif;
--webkit-font-smoothing:antialiased;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
-a{color:var(--link);text-decoration:underline;text-decoration-color:var(--rule-2);text-underline-offset:3px}
-a:hover,a:focus-visible{text-decoration-color:var(--link)}
-:focus-visible{outline:2px solid var(--link);outline-offset:2px}
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;margin-inline:-20px;padding:14px 20px;background:var(--ground);
-border-bottom:1px solid var(--rule)}
-.top-in{max-width:1180px;margin:0 auto;display:flex;gap:16px;align-items:baseline;justify-content:space-between;
-font:500 13px/1.2 "Geist",system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
-.top-in a{color:var(--ink-2);text-decoration:none}
-.top-in a:hover{color:var(--ink)}
-.top-in .who{display:flex;gap:18px}
-.hero{max-width:1180px;margin:0 auto;padding:72px 0 40px;border-bottom:1px solid var(--rule)}
-.eyebrow{font:500 12px/1 "Geist",system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
-margin:0 0 22px}
-.hero h1{font:400 clamp(36px,5.6vw,64px)/1.06 "Newsreader",Georgia,serif;letter-spacing:-.015em;margin:0;
-max-width:17ch;text-wrap:balance}
-.lede{font-size:21px;line-height:1.55;color:var(--ink-2);max-width:62ch;margin:28px 0 0}
-.byline{font:14px/1.5 "Geist",system-ui,sans-serif;color:var(--ink-3);margin:26px 0 0}
-.byline strong{color:var(--ink);font-weight:500}
-.figures{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-border-bottom:1px solid var(--rule)}
-.fig{padding:26px 20px;border-right:1px solid var(--rule)}
-.fig:first-child{padding-left:0}
-.fig:last-child{border-right:0}
-.fig b{display:block;font:400 30px/1.1 "JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
-color:var(--ink);letter-spacing:-.02em}
-.fig span{display:block;margin-top:8px;font:13px/1.4 "Geist",system-ui,sans-serif;color:var(--ink-3)}
-.layout{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:64px;padding-top:48px}
-nav.toc{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;
-font:13.5px/1.35 "Geist",system-ui,sans-serif}
-nav.toc p{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
-nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
-nav.toc a{display:grid;grid-template-columns:26px 1fr;gap:6px;padding:5px 8px;border-radius:4px;color:var(--ink-2);
-text-decoration:none;border-left:2px solid transparent}
-nav.toc a:hover{color:var(--ink);background:var(--surface)}
-nav.toc a.on{color:var(--ink);border-left-color:var(--mark);background:var(--surface)}
-nav.toc a i{font:normal 12px "JetBrains Mono",ui-monospace,monospace;color:var(--ink-3);padding-top:1px}
-details.toc-m{display:none}
-article{min-width:0;max-width:760px}
-article h2{font:400 32px/1.2 "Newsreader",Georgia,serif;letter-spacing:-.01em;margin:72px 0 18px;padding-top:28px;
-border-top:1px solid var(--rule);text-wrap:balance}
-article h2:first-child{margin-top:0;border-top:0;padding-top:0}
-article h3{font:600 17px/1.35 "Geist",system-ui,sans-serif;letter-spacing:.01em;margin:40px 0 10px}
-article p,article li{max-width:68ch}
-article ul,article ol{padding-left:1.3em}
-article li{margin:6px 0}
-article strong{font-weight:600}
-article hr{display:none}
-article code{font:.84em "JetBrains Mono",ui-monospace,monospace;background:var(--surface);border:1px solid var(--rule);
-padding:.08em .38em;border-radius:3px}
-article pre{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px;overflow-x:auto;
-font-size:14px;line-height:1.55}
-article pre code{background:none;border:0;padding:0;font-size:inherit}
-.table{overflow-x:auto;margin:22px 0;border:1px solid var(--rule);border-radius:6px}
-table{border-collapse:collapse;width:100%;font:14.5px/1.5 "Geist",system-ui,sans-serif;font-variant-numeric:tabular-nums}
-th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--rule)}
-tr:last-child td{border-bottom:0}
-th{font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
-background:var(--raise)}
-td:first-child{color:var(--ink);font-weight:500}
-figure.diagram{margin:28px 0;padding:22px 16px;background:var(--surface);border:1px solid var(--rule);border-radius:6px;
-overflow-x:auto}
-figure.diagram pre.mermaid{margin:0;background:none;border:0;padding:0;text-align:center;font:14px "Geist",sans-serif;
-color:var(--ink-3)}
-footer{max-width:1180px;margin:96px auto 0;padding:36px 0 72px;border-top:1px solid var(--rule);display:grid;
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:28px;font:14.5px/1.6 "Geist",system-ui,sans-serif;
-color:var(--ink-2)}
-footer h4{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;font-weight:500}
-footer p{margin:0}
-@media (max-width:960px){.layout{grid-template-columns:minmax(0,1fr);gap:0;padding-top:28px}nav.toc{display:none}
-details.toc-m{display:block;margin:0 0 8px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);
-font:15px/1.4 "Geist",system-ui,sans-serif}
-details.toc-m summary{cursor:pointer;padding:12px 14px;color:var(--ink-2)}
-details.toc-m ol{margin:0;padding:0 14px 12px 34px}
-details.toc-m a{color:var(--ink-2);text-decoration:none;display:block;padding:4px 0}
-.fig{border-right:0;border-bottom:1px solid var(--rule);padding:18px 0}.hero{padding-top:44px}}
-@media (max-width:520px){body{font-size:17px}.lede{font-size:19px}.top-in .who a:not(:first-child){display:none}}
-:root[data-theme="light"]{--ground:#F6F4EF;--surface:#FFFFFF;--raise:#FBFAF7;--ink:#17181B;
---ink-2:#4A4C51;--ink-3:#7A7C80;--rule:#E1DDD3;--rule-2:#D3CEC2;--link:#28527D;--mark:oklch(0.52 0.105 162);
-color-scheme:light}
-.top-in nav{display:flex;gap:18px;flex-wrap:wrap}
-.top-in nav a.on{color:var(--ink)}
-.chip{display:inline-block;font:500 11px/1 "Geist",system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;
-padding:6px 9px;border-radius:999px;border:1px solid var(--rule-2);color:var(--ink-2);vertical-align:middle}
-.chip.built{border-color:oklch(0.62 0.10 162);color:oklch(0.78 0.11 162)}
-.chip.build{border-color:oklch(0.62 0.12 85);color:oklch(0.82 0.12 85)}
-.chip.design{border-color:oklch(0.60 0.10 250);color:oklch(0.78 0.10 250)}
-@media (prefers-color-scheme:light){.chip.built{color:oklch(0.45 0.11 162)}.chip.build{color:oklch(0.48 0.12 70)}
-.chip.design{color:oklch(0.45 0.11 250)}}
-.hero .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
-.fig b{white-space:nowrap;font-size:clamp(20px,2.1vw,28px)}
-.viz{margin:30px 0;padding:18px 18px 14px;background:var(--surface);border:1px solid var(--rule);border-radius:8px}
-.viz-stage{position:relative;min-height:40px}
-.viz-canvas{display:block;width:100%}
-.viz-cap{margin:12px 0 0;font:13.5px/1.5 "Geist",system-ui,sans-serif;color:var(--ink-3);max-width:none}
-.viz-legend{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:10px;font:13px/1.4 "Geist",system-ui,sans-serif;color:var(--ink-3)}
-.viz-legend b{font:400 15px "JetBrains Mono",ui-monospace,monospace;color:var(--ink);font-variant-numeric:tabular-nums}
-.viz-tag{margin-left:auto;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
-.viz-svg{width:100%;height:auto;display:block}
-.viz-axis{font:11px "Geist",system-ui,sans-serif;fill:var(--ink-3)}
-.viz-big{font:400 18px "JetBrains Mono",ui-monospace,monospace;fill:var(--ink)}
-.gl-lines{display:grid;gap:14px}
-.gl-src{font:500 11px/1.3 "Geist",system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
-.gl-text{font:13.5px/2.3 "JetBrains Mono",ui-monospace,monospace;color:var(--ink-2);word-break:break-all}
-.gl-span{border-radius:3px;transition:background .5s ease,box-shadow .5s ease;padding:1px 0}
-.gl-span.on{background:oklch(0.70 0.13 300 / .16);box-shadow:inset 0 -2px 0 oklch(0.70 0.13 300)}
-.gl-span[data-st=held].on{background:oklch(0.70 0.15 52 / .16);box-shadow:inset 0 -2px 0 oklch(0.70 0.15 52)}
-.gl-tag{display:inline-block;margin:0 6px 0 4px;padding:2px 6px;border-radius:4px;font:600 9.5px/1.3 "Geist",system-ui,sans-serif;
-letter-spacing:.08em;text-transform:uppercase;vertical-align:2px;color:oklch(0.82 0.11 300);background:oklch(0.70 0.13 300 / .14);
-opacity:0;transform:translateY(3px);transition:opacity .45s ease,transform .45s ease}
-.gl-tag[data-st=held]{color:oklch(0.82 0.13 60);background:oklch(0.70 0.15 52 / .16)}
-.gl-tag.on{opacity:1;transform:none}
-@media (prefers-color-scheme:light){.gl-tag{color:oklch(0.45 0.13 300)}.gl-tag[data-st=held]{color:oklch(0.48 0.14 52)}}
-.gl-rel{margin-top:16px;display:grid;gap:10px}
-.gl-graph{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font:13px/1.4 "Geist",system-ui,sans-serif;opacity:0;
-transform:translateY(6px);transition:opacity .6s ease,transform .6s ease}
-.gl-graph.on{opacity:1;transform:none}
-.gl-graph i{font-style:normal;color:var(--ink-3);font-size:12px}
-.gl-node{font:12.5px "JetBrains Mono",ui-monospace,monospace;padding:5px 9px;border:1px solid var(--rule-2);border-radius:5px;color:var(--ink)}
-.gl-node.ok{border-color:oklch(0.62 0.10 162)}.gl-node.held{border-color:oklch(0.62 0.13 52)}
-.cf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-.cf-card{border:1px solid var(--rule);border-radius:6px;padding:14px;background:var(--raise)}
-.cf-q{font:14px/1.45 "Geist",system-ui,sans-serif;margin-bottom:12px}
-.cf-q span{font:11px "JetBrains Mono",monospace;color:var(--ink-3);margin-right:6px}
-.cf-row{display:grid;grid-template-columns:96px 1fr 44px;gap:10px;align-items:center;margin:7px 0;
-font:13px "Geist",system-ui,sans-serif;color:var(--ink-3);transition:color .3s}
-.cf-row.in{color:var(--ink)}
-.cf-track{height:8px;border-radius:4px;background:var(--rule);overflow:hidden}
-.cf-fill{display:block;height:100%;width:0;background:oklch(0.70 0.12 250);border-radius:4px}
-.cf-row.in .cf-fill{background:oklch(0.74 0.12 162)}
-.cf-val{font:12.5px "JetBrains Mono",monospace;text-align:right;font-variant-numeric:tabular-nums}
-.cf-thr{font:11.5px/1.4 "Geist",system-ui,sans-serif;color:var(--ink-3);margin-top:10px}
-.cf-out{min-height:1.4em;margin-top:8px;font:500 13px/1.4 "Geist",system-ui,sans-serif}
-.cf-out.ok{color:oklch(0.78 0.11 162)}.cf-out.up{color:oklch(0.82 0.12 85)}
-.jb-ev{font:14px/1.5 "Geist",system-ui,sans-serif;min-height:3em;margin-bottom:12px}
-.jb-ev span{font:11px "JetBrains Mono",monospace;color:var(--ink-3);margin-right:8px}
-.jb-row{display:grid;grid-template-columns:minmax(150px,240px) 1fr 44px;gap:10px;align-items:center;margin:8px 0;
-font:13px "Geist",system-ui,sans-serif;color:var(--ink-2)}
-.jb-row.top{color:var(--ink)}
-.jb-track{height:10px;border-radius:5px;background:var(--rule);overflow:hidden}
-.jb-fill{display:block;height:100%;width:0;background:oklch(0.70 0.12 250);transition:width 1.1s cubic-bezier(.2,.7,.2,1)}
-.jb-row.top .jb-fill{background:oklch(0.74 0.12 162)}
-.jb-val{font:12.5px "JetBrains Mono",monospace;text-align:right}
-.jb-next{font:13px/1.5 "Geist",system-ui,sans-serif;color:var(--ink-3);margin-top:12px}
-.jb-next b{color:var(--ink);font-weight:500}.jb-next i{font:normal 12px "JetBrains Mono",monospace;margin-left:6px}
-.jb-gate{min-height:1.5em;margin-top:8px;font:500 13px/1.5 "Geist",system-ui,sans-serif;color:oklch(0.78 0.11 162);
-opacity:0;transition:opacity .6s}
-.jb-gate.on{opacity:1}
-/* the landing page */
-.land{max-width:1180px;margin:0 auto}
-.land .hero{border-bottom:0;padding-bottom:12px}
-.land h1{max-width:20ch}
-.hero2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(330px,.8fr);gap:56px;align-items:center}
-@media (max-width:1020px){.hero2{grid-template-columns:1fr;gap:34px}}
-.trace{border:1px solid var(--rule);border-radius:12px;background:var(--surface);padding:20px 20px 16px;min-width:0}
-.tr-eye{font:500 11px/1 "Geist",system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px}
-.tr-q{font:400 17px/1.45 "Newsreader",Georgia,serif;color:var(--ink);margin:0 0 14px}
-.tr-q b{font:500 13px "JetBrains Mono",monospace;margin-right:4px}
-.trace ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule);margin-left:15px}
-.trace li{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:start;padding:7px 0 7px 0;margin-left:-16px;
-opacity:.12;transform:translateY(4px);transition:opacity .5s ease,transform .5s ease}
-.trace li.on{opacity:1;transform:none}
-.tr-r{display:grid;place-items:center;width:30px;height:22px;border-radius:5px;font:500 11px "JetBrains Mono",monospace;
-color:var(--ground);background:var(--c)}
-.trace li b{display:block;font:500 12.5px/1.3 "Geist",system-ui,sans-serif;color:var(--c)}
-.trace li p{margin:2px 0 0;font:13px/1.45 "Geist",system-ui,sans-serif;color:var(--ink-2)}
-.trace li i{font:normal 12px "JetBrains Mono",monospace;color:var(--ink)}
-.trace li em{font:normal 11px/22px "JetBrains Mono",monospace;color:var(--ink-3);white-space:nowrap}
-.tr-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding-top:10px;
-border-top:1px solid var(--rule);font:500 12.5px "Geist",system-ui,sans-serif;color:oklch(0.78 0.11 162);opacity:0;
-transition:opacity .6s}
-.tr-foot.on{opacity:1}.tr-foot span+span{font:12px "JetBrains Mono",monospace;color:var(--ink-2)}
-.tr-note{margin:8px 0 0;font:11.5px "Geist",system-ui,sans-serif;color:var(--ink-3)}
-@media (max-width:620px){.trace li{grid-template-columns:30px 1fr}.trace li em{grid-column:2;line-height:1.2}}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px;margin:40px 0 0}
-.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--rule);border-radius:10px;padding:26px 26px 22px;
-background:var(--surface);transition:border-color .25s ease,transform .25s ease}
-.card:hover{border-color:var(--rule-2);transform:translateY(-2px)}
-.card h2{font:400 28px/1.15 "Newsreader",Georgia,serif;margin:14px 0 10px;letter-spacing:-.01em}
-.card p{font-size:16.5px;line-height:1.55;color:var(--ink-2);margin:0 0 16px}
-.card ul{margin:0 0 18px;padding-left:1.1em;font:14px/1.55 "Geist",system-ui,sans-serif;color:var(--ink-2)}
-.card .go{font:500 13px "Geist",system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:0 10px;border-top:1px solid var(--rule);margin:0 0 16px}
-.kpis b{white-space:nowrap}
-@media (max-width:620px){.top-in{flex-direction:column;gap:8px;align-items:flex-start}.top-in nav{gap:12px;font-size:11.5px}.kpis b{font-size:18px}.card{padding:20px}.card h2{font-size:25px}}
-.kpis div{padding:12px 10px 0 0}
-.kpis b{display:block;font:400 21px/1.1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
-.kpis span{display:block;font:12px/1.35 "Geist",system-ui,sans-serif;color:var(--ink-3);margin-top:5px}
-.sect{margin:88px 0 0;padding-top:30px;border-top:1px solid var(--rule)}
-.sect>h3{font:500 12px/1 "Geist",system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 22px}
-.demo-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
-.demo{border:1px solid var(--rule);border-radius:10px;padding:20px;background:var(--surface);display:flex;flex-direction:column}
-.demo h4{font:400 22px/1.2 "Newsreader",Georgia,serif;margin:0 0 8px}
-.demo p{font:14.5px/1.55 "Geist",system-ui,sans-serif;color:var(--ink-2);margin:0 0 12px;flex:1}
-.demo small{font:12px "Geist",system-ui,sans-serif;color:var(--ink-3)}
-.demo a.btn{margin-top:14px;align-self:flex-start;font:500 13px "Geist",system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;
-text-decoration:none;color:var(--ground);background:var(--ink);padding:10px 14px;border-radius:6px}
-.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px 34px}
-.how div b{display:block;font:500 15px/1.4 "Geist",system-ui,sans-serif;margin-bottom:6px}
-.how div p{font:14.5px/1.6 "Geist",system-ui,sans-serif;color:var(--ink-2);margin:0}
-.land .viz{margin-top:44px}
-.award{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
-.award .mark{font:400 44px/1 "Newsreader",Georgia,serif;color:var(--ink-3)}
-.award p{margin:0;font-size:17px;line-height:1.6;color:var(--ink-2);max-width:70ch}
+  .top { position: fixed; inset: 0 0 auto 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: 22px 40px; }
+  .top a { text-decoration: none; }
+  .top nav a { margin-left: 28px; }
+  .top nav a:hover, .lnk:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 5px; }
+  .brand { font: 500 13px var(--sans); letter-spacing: .2em; color: var(--ink2); }
+  .brand b { font-weight: 500; color: var(--ink4); }
+  .hero { position: relative; min-height: 100vh; display: grid; align-items: center; overflow: hidden; }
+  .hero canvas { position: absolute; inset: 0 0 0 auto; width: 74%; height: 100%; opacity: .92; }
+  .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(90deg, var(--bg) 0, var(--bg) 26%, rgba(8,8,10,.72) 44%, rgba(8,8,10,0) 68%); }
+  .say { position: relative; z-index: 2; max-width: 660px; padding: 96px 40px 64px; }
+  h1 { font: 300 clamp(32px, 3.9vw, 52px)/1.08 var(--sans); letter-spacing: -.025em; margin: 16px 0 22px; }
+  h1 span { display: block; }
+  h1 span + span { color: var(--ink2); }
+  h1 span:last-child { color: var(--gate); }
+  .lede { font: 400 17px/1.6 var(--sans); color: var(--ink2); max-width: 560px; margin: 0 0 14px; }
+  .lede b { font-weight: 500; color: var(--ink); }
+  .proof { font: 400 14px/1.6 var(--sans); color: var(--ink3); max-width: 560px; margin: 0 0 34px; }
+  .proof .mono { color: var(--ink2); font-size: 13px; }
+  .acts { display: flex; align-items: center; gap: 30px; }
+  .pri { display: inline-block; font: 400 15px var(--sans); color: var(--ink); text-decoration: none; padding: 12px 22px; border: 1px solid var(--ink3); border-radius: 2px; transition: border-color .2s, background .2s; }
+  .pri:hover { border-color: var(--ink); background: var(--panel2); }
+  .pri i { font-style: normal; color: var(--ink3); margin-left: 10px; font-family: var(--mono); font-size: 12px; }
+  .lnk { text-decoration: none; }
+  .by { margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--line2); max-width: 560px; display: flex; gap: 14px; align-items: baseline; }
+  .by b { font: 500 15px var(--sans); color: var(--ink); letter-spacing: .01em; }
+  .key { position: absolute; z-index: 2; right: 40px; bottom: 30px; max-width: 380px; text-align: right; font: 400 12px/1.5 var(--sans); color: var(--ink4); }
+  section.film { border-top: 1px solid var(--line); padding: 72px 40px 96px; max-width: 1320px; margin: 0 auto; }
+  .film h2 { font: 300 34px/1.15 var(--sans); letter-spacing: -.02em; margin: 14px 0 12px; max-width: 760px; }
+  .film p { color: var(--ink2); max-width: 640px; margin: 0 0 30px; }
+  .reel { position: relative; display: block; border-top: 1px solid var(--line2); background: #050506; text-decoration: none; }
+  .reel video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; opacity: .86; transition: opacity .25s; }
+  .reel:hover video { opacity: 1; }
+  .reel .go { position: absolute; left: 28px; bottom: 24px; display: flex; align-items: center; gap: 14px; font: 400 15px var(--sans); color: var(--ink); }
+  .reel .go::before { content: ""; width: 0; height: 0; border: 7px solid transparent; border-left: 11px solid var(--gate); margin-right: -4px; }
+  .reel .note { position: absolute; right: 28px; bottom: 26px; }
+  footer { border-top: 1px solid var(--line); padding: 26px 40px 40px; color: var(--ink4); font-size: 13px; display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  @media (max-width: 860px) {
+    .top { padding: 16px 20px; } .top nav a:first-child { display: none; }
+    .hero canvas { width: 100%; opacity: .38; } .hero::after { background: linear-gradient(180deg, rgba(8,8,10,.55), rgba(8,8,10,.86)); }
+    .say { padding: 96px 20px 72px; } .key { display: none; }
+    section.film { padding: 48px 20px 64px; } footer { padding: 22px 20px 32px; }
+  }
 </style>
 </head>
 <body>
-<header class="top"><div class="top-in"><span><a href="index.html">Ryan Haig</a> &middot; NinjaToolKit case studies</span><nav><a href="index.html" class="on">Home</a><a href="v8/index.html">v8.3.1 · shipped</a><a href="v9/index.html">v9 · in build</a><a href="#demos">Demos</a><a href="https://github.com/RyanH-sudo/ninjatoolkit-case-study">GitHub</a></nav></div></header>
-<main class="land">
-<section class="hero hero2"><div class="hero-l">
-<p class="eyebrow">Forward Deployed Engineer &middot; AI Automation Engineer</p>
-<h1>Frontier AI, held to evidence, doing real engineering work.</h1>
-<p class="lede">I design and build agentic systems for managed infrastructure. NinjaToolKit, the platform these studies
-describe, judges a whole estate of Windows servers and firewalls in about a minute, diagnoses a server with AI agents
-that argue over its raw evidence, and carries each problem to a verified fix with an engineer approving every change.
-Version 8.3.1 is shipped and in daily use. Version 9 is in build: an evidence-first AI architecture that settles each
-question at the cheapest layer that can prove its answer within a stated error bound.</p>
-<p class="byline"><strong>Ryan Haig</strong> &middot; designed and built end to end: architecture, AI orchestration,
-data engineering, the safety model and every release.</p>
-</div><aside class="trace" id="trace" aria-label="One question climbing the v9 ladder"><p class="tr-eye">v9 &middot; one question, climbing</p><p class="tr-q"><b>BR-FS01</b> 212 Kerberos errors in 7 days, from one branch only. What is the cause?</p><ol><li style="--c:oklch(0.72 0.12 162)"><span class="tr-r">R0</span><div><b>Code</b><p>Security-Kerberos + KRB_AP_ERR_SKEW: three candidate causes from the signature index; no benign rule applies.</p></div><em>passes up</em></li><li style="--c:oklch(0.70 0.13 300)"><span class="tr-r">R1</span><div><b>GLiNER 2.5</b><p><i>hq-dc01$</i> account &middot; <i>VANTORRE\HQ-DC01</i> host &middot; <i>KRB_AP_ERR_SKEW</i> error.</p></div><em>typed, $0</em></li><li style="--c:oklch(0.70 0.12 250)"><span class="tr-r">R2</span><div><b>Decision model</b><p>Is clock skew the cause? 0.93 after calibration; the conformal set is {skew} alone.</p></div><em>accepted</em></li><li style="--c:oklch(0.74 0.10 210)"><span class="tr-r">R3</span><div><b>Probes</b><p>Options reversed, the question negated and paraphrased: the same answer each time.</p></div><em>agrees</em></li><li style="--c:oklch(0.62 0.02 80)"><span class="tr-r">&rarr;</span><div><b>Next check</b><p>w32tm on both DCs: HQ-DC01, the PDC emulator, runs 5 m 40 s fast.</p></div><em>measured</em></li><li style="--c:oklch(0.78 0.12 85)"><span class="tr-r">R4</span><div><b>Opus 5.5, low</b><p>Why is the PDC fast? It takes time from its Hyper-V host HQ-HV01, which has no NTP source. Every quote checked in code.</p></div><em>verified</em></li><li style="--c:oklch(0.90 0.02 80)"><span class="tr-r">R6</span><div><b>The engineer</b><p>The fix through the gate: HQ-DC01 to an external NTP source, its revert recorded.</p></div><em>approve</em></li></ol><p class="tr-foot"><span>One Opus call; v8.3.1 makes about eight</span><span>target under $0.04</span></p><p class="tr-note">Design prototype on an invented estate; the rungs are v9&rsquo;s.</p></aside><script>(function(){var b=document.getElementById('trace');if(!b)return;var L=[].slice.call(b.querySelectorAll('li')),
-f=b.querySelector('.tr-foot');var R=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-function all(){L.forEach(function(l){l.classList.add('on')});f.classList.add('on')}
-if(R){all();return}function run(){L.forEach(function(l){l.classList.remove('on')});f.classList.remove('on');
-L.forEach(function(l,k){setTimeout(function(){l.classList.add('on')},500+k*1150)});
-setTimeout(function(){f.classList.add('on')},500+L.length*1150);setTimeout(run,500+L.length*1150+6500)}run()})();</script></section>
-<div class="cards">
-<a class="card" href="v8/index.html"><span class="chip built">Shipped &middot; October 17, 2026</span>
-<h2>NinjaToolKit 8.3.1</h2>
-<p>An agentic audit and remediation platform shipped as one self-contained executable: 56 deterministic server judges, a
-52-check firewall engine, a three-seat AI diagnosis, and a Job chain that carries every problem to a verified close.</p>
-<div class="kpis"><div><b>40 / 47</b><span>problems found on unseen servers, no ruled-out claim</span></div>
-<div><b>~1 min</b><span>to judge 189 servers and 54 firewall exports</span></div>
-<div><b>8 walks</b><span>of the built product certified the release</span></div></div>
-<span class="go">Read the study &rarr;</span></a>
-<a class="card" href="v9/index.html"><span class="chip build">In build &middot; P0&ndash;P5 built, P6 engine built</span>
-<h2>NinjaToolKit v9</h2>
-<p>The burn-down: code, GLiNER 2.5, a calibrated decision model with conformal acceptance, consistency probes and Claude
-Opus 5.5, each settling only what it can prove, for servers and firewalls alike. On a typed collector, an observation store, one firewall model and live telemetry.</p>
-<div class="kpis"><div><b>0.958</b><span>precision of the engine, measured on a simulated estate</span></div>
-<div><b>$1.11</b><span>a Job, measured, against $4.69 for v8.3.1</span></div>
-<div><b>$0.10&ndash;0.40</b><span>target first diagnosis, from $3.56&ndash;5.81 measured</span></div></div>
-<span class="go">Read the study &rarr;</span></a>
-</div>
-<div class="viz" id="viz-ladder" data-caption="The v9 burn-down, live: decisions enter at the bottom; each rung settles what it can prove within its error bound and passes the rest up. Illustrative counts from the design's estimates."></div>
-<section class="sect" id="demos"><h3>Demos</h3><div class="demo-list"><div class="demo"><h4>v9: the operating picture</h4><p>v9 at work on an invented company, in five acts: the decision layer as a spinning wheel of servers and Fireboxes; the shipped v8.3.1 application and its firewall audit, real screens; the firewall pillar from one model to a diagnosis across both ends of a tunnel and a fix by hand; GLiNER 2.5, the calibrated decision model and Opus 5.5 at work; then what was built since 20 October: the engine as one graph per Job, the answer key, the integrations and the progression.</p><small>31 chapters, about 20 minutes, self-playing; one offline file</small><a class="btn" href="demos/ntk-v9-operating-picture.html">Open the demo</a></div><div class="demo"><h4>v8.3.1: the guided tour</h4><p>The real v8.3.1 application, run from an empty folder on an invented company&#x27;s servers and firewalls: ingest, the judges, a three-seat diagnosis, the Job chain, a fix through the gate, and both audits as the app renders them.</p><small>15 chapters, about 20 minutes; one offline file</small><a class="btn" href="demos/ntk-8.3.1-tour.html">Open the demo</a></div><div class="demo"><h4>Where it started: the IMPACT demo</h4><p>The first demo, built for a live audience: one cross-site incident on the same invented estate, diagnosed across a domain controller, a Hyper-V host and a firewall.</p><small>self-playing; one offline file</small><a class="btn" href="demos/ntk-impact-demo.html">Open the demo</a></div></div></section>
-<section class="sect"><h3>How I work</h3><div class="how">
-<div><b>Measure, never recall</b><p>Every number I report is the output of a command run at the time, labelled as measured,
-published or a target.</p></div>
-<div><b>Hold AI output to evidence in code</b><p>A model proposes; code verifies every quote against the raw output; a person
-approves anything irreversible.</p></div>
-<div><b>Score AI against answers written in advance</b><p>Answer keys come first, built from real cases, with "no fault"
-cases so the system cannot win by agreeing.</p></div>
-<div><b>Calibrate, then guarantee</b><p>Confidence is recalibrated on labelled data and accepted only with a stated error
-bound; uncertainty spends money, never accuracy.</p></div>
-<div><b>Production is the test bench</b><p>Every build is walked from an empty folder; the collector was hardened by ten real
-estate runs in three days.</p></div>
-<div><b>Plans and gates</b><p>Every phase opens with a written plan approved before code, and every release waits at a human
-gate.</p></div>
-</div></section>
-<section class="sect"><h3>Recognition</h3><div class="award"><span class="mark">&#9670;</span>
-<p><strong>Winner, WatchGuard's 2026 AI Innovation Challenge</strong>, one of five winners selected worldwide from
-hundreds of submissions across 19 countries, recognized at WatchGuard IMPACT North America in Nashville, October 2026.
-The winning submission is a separate project from NinjaToolKit.</p></div></section>
+<header class="top">
+  <a class="brand" href="index.html">NINJA<b>TOOLKIT</b></a>
+  <nav><a class="label" href="case-study/index.html">The case study</a><a class="label" href="film/index.html">The film</a></nav>
+</header>
+
+<main>
+<section class="hero">
+  <canvas id="loom" aria-hidden="true"></canvas>
+  <div class="say">
+    <div class="label">Case study, NinjaToolKit v9.0.1, November 2026</div>
+    <h1><span>A model reads the whole server.</span><span>Code holds it to the evidence.</span><span>An engineer decides every change.</span></h1>
+    <p class="lede"><b>NinjaToolKit</b> is an audit and remediation platform for managed Windows Server estates and WatchGuard firewalls. I designed it, built it and released it: one self-contained program for a whole engineering team, its own agents on the servers, and a harness that takes one server from a first read to a fix that proves itself.</p>
+    <p class="proof">At the release: <span class="mono">138,202</span> lines of Python in eleven layers, <span class="mono">6,096</span> tests passing, <span class="mono">80,161</span> requests through a soak of two hours forty with no error, and <span class="mono">318 of 318</span> audit fields kept by code's own check of what the model wrote.</p>
+    <div class="acts">
+      <a class="pri" href="film/index.html">Watch the film<i>eleven acts</i></a>
+      <a class="label lnk" href="case-study/index.html">Read the case study</a>
+    </div>
+    <div class="by"><b>Ryan Haig</b><span class="label">Forward Deployed Engineer</span></div>
+  </div>
+  <div class="key">The drawing is the method, not a measurement: every question a run sets out to settle stops at the cheapest station that can prove its answer.</div>
+</section>
+
+<section class="film">
+  <div class="label">The film</div>
+  <h2>The release itself, working an estate that does not exist.</h2>
+  <p>Five invented clients, thirty-one invented servers, seven invented firewalls. Every screen is the real v9.0.1 program, every word the model says is what it wrote, and every dollar it spent is in its ledger.</p>
+  <a class="reel" href="film/index.html" aria-label="Play the film">
+    <video id="reel" muted playsinline loop preload="metadata" src="film/clips/f2-estate.mp4#t=13"></video>
+    <span class="go">Play the film</span>
+    <span class="note label">Every client, every server, as it is right now</span>
+  </a>
+</section>
 </main>
+
 <footer>
-<div><h4>About the author</h4><p>Ryan Haig is a Forward Deployed Engineer and AI automation engineer with a background in
-network engineering, Windows Server architecture and security operations at a managed service provider. He designs and
-builds agentic systems that do reliable engineering work in real operating environments.</p></div>
-<div><h4>Contact</h4><p><a href="https://github.com/RyanH-sudo">github.com/RyanH-sudo</a><br>rytuality@gmail.com<br>
-<a href="https://linkedin.com/in/rytuality">linkedin.com/in/rytuality</a><br>A live walkthrough is available on request.</p></div>
-<div><h4>These documents</h4><p>The platform is private company software; these studies describe its design and
-behavior without its source. They contain no company names, client names, machine names or client data; every demo
-uses an invented company. Source text: <a href="https://github.com/RyanH-sudo/ninjatoolkit-case-study/blob/main/CASE_STUDY.md">CASE_STUDY.md</a> and
-<a href="https://github.com/RyanH-sudo/ninjatoolkit-case-study/blob/main/CASE_STUDY_V9.md">CASE_STUDY_V9.md</a>.</p></div>
-</footer><script src="v9/viz.js"></script></body></html>
+  <span>Designed and built by Ryan Haig. The product is private company software; this case study shows its architecture and method, and no client's data.</span>
+  <span>Set in Geist, under the SIL Open Font License.</span>
+</footer>
+
+<script src="assets/loom.js"></script>
+<script>
+(function () {
+  var c = document.getElementById('loom'), loom = Loom(c, {density: 110, from: 0.36, to: 0.94});
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function go() { loom.resize(); if (still) loom.draw(5200); else loom.start(); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else go();
+  document.addEventListener('visibilitychange', function () { if (document.hidden) loom.stop(); else if (!still) loom.start(); });
+  /* the teaser: the wheel alive, a few seconds on a loop */
+  var v = document.getElementById('reel');
+  if (!still) { v.addEventListener('loadedmetadata', function () { v.currentTime = 13; v.play().catch(function () {}); });
+    v.addEventListener('timeupdate', function () { if (v.currentTime > 27.5) v.currentTime = 13; }); }
+})();
+</script>
+</body>
+</html>

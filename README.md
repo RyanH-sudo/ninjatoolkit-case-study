@@ -1,33 +1,46 @@
-# NinjaToolKit: technical case studies
+# NinjaToolKit v9: technical case study
 
-**Ryan Haig** · Forward Deployed Engineer and AI Automation Engineer
+**A model reads the whole server. Code holds it to the evidence. An engineer decides every change.**
 
-**Read online: [ryanh-sudo.github.io/ninjatoolkit-case-study](https://ryanh-sudo.github.io/ninjatoolkit-case-study/)**
+**Ryan Haig**, Forward Deployed Engineer and AI Automation Engineer
 
-NinjaToolKit is an agentic audit and remediation platform for managed Windows Server estates and WatchGuard
-firewalls, which I designed and built end to end. It judges a whole estate in about a minute, diagnoses a server with
-AI agents that argue over its raw evidence, and carries each problem to a verified fix with an engineer approving every
-change. It is private company software, so these studies describe its design and behavior without its source, and they
-contain no company names, client names, machine names or client data. Every demo runs on an invented company.
+[The case study](https://ryanh-sudo.github.io/ninjatoolkit-case-study/case-study/) ·
+[The film](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/) ·
+[Source text](CASE_STUDY.md)
 
-| | | |
-|---|---|---|
-| **[NinjaToolKit 8.3.1](https://ryanh-sudo.github.io/ninjatoolkit-case-study/v8/)** | Shipped October 17, 2026 | One self-contained executable; 56 deterministic server judges; a 52-check firewall engine mapped to 50 compliance controls; a three-seat AI diagnosis (proposer, challenger, lead engineer) held to evidence in code; a Job chain that carries every problem to a verified close. Measured on unseen servers against keys written in advance: 40 of 47 problems found, no ruled-out claim made. Certified by eight layered walks of the built product. ([source text](CASE_STUDY.md)) |
-| **[NinjaToolKit v9](https://ryanh-sudo.github.io/ninjatoolkit-case-study/v9/)** | In build: P0 to P5 built and recertified; P6's engine built and measured | The burn-down: every question settled by the cheapest layer that can prove its answer within a stated error bound, from deterministic code through **GLiNER 2.5** and a **calibrated decision model (TypeSafe's Jev) with conformal acceptance** to **Claude Opus 5.5** on the residue, and the engineer as the gate. On a typed collector proven across ten estate runs, an observation store with provenance, a dependency map with evidence on every link, one firewall model that two independent readers agree on across 53 real exports, and live telemetry; the designed firewall chain carries a complaint from the exposure path to a diagnosis across both ends of a tunnel and a fix by hand. Scored against an answer key of 7,247 items built before the AI layer. Measured at no cost on a simulated estate built from the engineer's own cases: precision 0.958, coverage 0.930, $1.11 a Job against $4.69. ([source text](CASE_STUDY_V9.md)) |
+NinjaToolKit is an audit and remediation platform for managed Windows Server estates and WatchGuard firewalls. It ships
+as one self-contained Windows program that runs on a server for a whole engineering team, with its own agents on the
+servers it looks after. I designed it, built it and released it. The current release is **v9.0.1, November 2026**.
 
-## Demos
+It is private company software, so this repository describes its architecture, method and measured behavior without
+its source. It contains no client names, machine names, addresses or client data: every example and every frame of the
+film runs on an estate invented for the purpose and checked by script against the real one.
 
-| Demo | What it is |
+## What is here
+
+| | |
 |---|---|
-| [v9: the operating picture](https://ryanh-sudo.github.io/ninjatoolkit-case-study/demos/ntk-v9-operating-picture.html) | v9 at work on an invented company, about 20 minutes in five acts, self-playing with chapters. The decision layer as a spinning wheel of servers and Fireboxes; the shipped v8.3.1 application and its firewall audit, real screens; the firewall pillar from one model to an exposure path, a diagnosis across both ends of a tunnel and a fix by hand; then GLiNER 2.5, the calibrated decision model, Opus 5.5, the name map, fixes in waves, many engineers at once and compliance per control; then what was built since 20 October: the engine as one graph per Job (measured), the answer key, the integrations and the progression |
-| [v8.3.1: the guided tour](https://ryanh-sudo.github.io/ninjatoolkit-case-study/demos/ntk-8.3.1-tour.html) | The real v8.3.1 application run from an empty folder on an invented company's servers and firewalls, 15 chapters, one offline file |
-| [Where it started: the IMPACT demo](https://ryanh-sudo.github.io/ninjatoolkit-case-study/demos/ntk-impact-demo.html) | The first demo, built for a live audience: one cross-site incident diagnosed across a domain controller, a Hyper-V host and a firewall |
+| **[The case study](https://ryanh-sudo.github.io/ninjatoolkit-case-study/case-study/)** | About 22,000 words in 19 sections, with 13 hand-drawn figures: the problem and its constraints, the data engineering, the 177 deterministic checks, the firewall pillar, agents and the standing watch, the AI harness in full technical depth, a worked run end to end, the operator's surface, the audits, operations, how it was proved, how it was built, and what is not proved yet. ([source text](CASE_STUDY.md)) |
+| **[The film](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/)** | The released program working the invented estate, recorded as it happened: eleven acts, about sixteen minutes, silent with captions. Every screen is the real v9.0.1 program; every word the model says is what it wrote. |
+| **[Earlier versions](https://ryanh-sudo.github.io/ninjatoolkit-case-study/earlier/)** | The v8.3.1 study and its demos, and the v9 design study written while v9 was in build. Kept for the record. |
+
+## The system in figures
+
+| | |
+|---|---|
+| Code | 138,202 lines of Python in eleven layers whose imports go one way; 32,284 lines of JavaScript; a 4,165-line PowerShell collector |
+| Tests | 6,096 passing in 671 files, 17 standing verification harnesses, a five-part release gate |
+| Deterministic checks | 177: 117 for servers in 18 families, 52 in the firewall engine, 8 on a Firebox's own settings; mapped to the 287 controls of NIST SP 800-53 Rev 5 Moderate and to CSF 2.0 |
+| Models | Claude Opus 5.5, with Opus 5 as fallback; GLiNER 2.5 running locally; a hosted calibrated decision model |
+| Operations | 80,161 requests through a 2 hour 40 minute soak with no error; fifty agents for an hour with no batch lost; killed mid-write twice and recovered both times |
+| AI output held to facts | 318 of 318 audit fields kept by code's check of what the model wrote |
+| History | 6,526 commits since March 2026; 62 version tags; 111 numbered design decisions |
 
 ## How the figures are labelled
 
-Every figure is **measured** (the output of a command or a run, with its date), **published** (from the research
-literature or vendor documentation, named), or a **target** the design commits to measuring. Nothing in the v9 design
-phases is presented as a result.
+Every figure is measured: the output of a command or a run, taken at the v9.0.1 tag unless the sentence says
+otherwise. Where a figure comes from the real estate the product was built against, it is a count only. What is built
+and not yet proved in production is listed in section 16 of the study.
 
 ## Contact
 
