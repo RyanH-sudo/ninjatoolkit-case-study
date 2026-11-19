@@ -21,7 +21,7 @@ film runs on an estate invented for the purpose and checked by script against th
 | | |
 |---|---|
 | **[The case study](https://ryanh-sudo.github.io/ninjatoolkit-case-study/case-study/)** | About 22,000 words in 19 sections, with 13 hand-drawn figures: the problem and its constraints, the data engineering, the 177 deterministic checks, the firewall pillar, agents and the standing watch, the AI harness in full technical depth, a worked run end to end, the operator's surface, the audits, operations, how it was proved, how it was built, and what is not proved yet. ([source text](CASE_STUDY.md)) |
-| **[The film](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/)** | The released program working the invented estate, recorded as it happened: eleven acts, about sixteen minutes, silent with captions. Every screen is the real v9.0.1 program; every word the model says is what it wrote. |
+| **[The film](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/)** | Twelve acts, about twenty-two minutes, silent with captions. Ten drawn scenes show the harness at work inside, every figure in them measured; between them the real v9.0.1 program works the invented estate, recorded as it happened or replayed from its own record. Every word the model says is what it wrote. |
 | **[Earlier versions](https://ryanh-sudo.github.io/ninjatoolkit-case-study/earlier/)** | The v8.3.1 study and its demos, and the v9 design study written while v9 was in build. Kept for the record. |
 
 ## The system in figures

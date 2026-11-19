@@ -17,7 +17,8 @@ checked by script against the real estate's names so that nothing invented colli
 unless the sentence says otherwise. Where a figure comes from the estate the product was built against, it is a count
 only. Where something is built and not yet proved in production, section 16 says so.
 
-**The film.** The companion film is the released program itself working the invented estate, recorded as it happened:
+**The film.** The companion film draws the harness at work in ten scenes, each figure measured, and shows the released
+program itself working the invented estate, recorded as it happened or replayed from its own record:
 [watch it online](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/).
 
 ---
@@ -1700,9 +1701,11 @@ Stated here so nobody meets it as a surprise.
 - **Not in this version:** certificate renewal and re-keying from inside the product; single sign-on with multi-factor
   authentication; the firewall vendor's cloud API (its reader is built and has never run against a live account);
   a code-signed agent; VMware hosts.
-- **Found while filming v9.0.1, not yet fixed:** after a second firewall audit, the What changed page kept showing its
-  earlier state until the program was restarted. The comparison itself is right (it showed at once after a restart);
-  the page's cache did not see the new audit. It is logged for the next release.
+- **Found while filming v9.0.1, not yet fixed:** after a new firewall export, a running program kept part of its
+  earlier picture until it was restarted. The What changed page kept showing its earlier state, and a site audit made
+  right after the export still named a route the export had removed (posture 31 where it should have been 56). Each
+  was right at once after a restart: the program's caches did not see the new export. Both are logged for the next
+  release.
 - **Firewall fixes are by hand, by design.** The product writes the steps and proves the result from the next export.
   It does not edit a firewall.
 
