@@ -2,7 +2,7 @@
 
 **A model reads the whole server. Code holds it to the evidence. An engineer decides every change.**
 
-**Ryan Haig**, Forward Deployed Engineer and AI Automation Engineer
+**Ryan Haig**, Forward Deployed Engineer
 
 [The case study](https://ryanh-sudo.github.io/ninjatoolkit-case-study/case-study/) ·
 [The film](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/) ·

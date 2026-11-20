@@ -82,6 +82,23 @@ footer { border-top: 1px solid var(--line); padding: 26px 40px 40px; color: var(
   <p>It is private company software, so this study describes its architecture and method without its source. Every example, and every screen in <a href="../film/index.html">the film</a>, runs on an estate that does not exist.</p>
   <div class="meta"><span><b>Ryan Haig</b> Forward Deployed Engineer</span><span>About 22,000 words, 19 sections, 13 figures</span><span>Every figure measured at the v9.0.1 tag</span></div>
 </header>
+<section class="minute" aria-label="In one minute">
+<div class="label">In one minute</div>
+<p><strong>The problem.</strong> An MSP's engineers diagnose and fix Windows servers and WatchGuard firewalls by hand, one script
+and one paste at a time, and the judgment lives in their heads.</p>
+<p><strong>What I did.</strong> I designed, built and shipped NinjaToolKit v9.0.1, working with Claude as an engineering partner
+since March 2026: an audit and remediation platform that puts a frontier model on production infrastructure without
+trusting a word it says.</p>
+<p><strong>The key decision.</strong> I measured my first design against the way I actually work. It named the right cause, or
+part of it, in 24 of 50 cases; working the way I do at my desk, frontier model first, named it in 40. I rebuilt the
+system around that result.</p>
+<p><strong>The safety model.</strong> A model's words are testimony, not instructions. Code checks every quote against the evidence
+and proves every script read-only, and every change waits for a named engineer.</p>
+<p><strong>The proof.</strong> 6,096 tests passing. A 2 hour 40 minute soak with 80,161 requests and no error. 318 of 318 audit
+fields held to the facts. Four defects found by my own end to end run and the filming that followed, fixed and shipped
+as v9.0.1 the next morning.</p>
+<p><strong>The cost.</strong> A whole read of a large server costs $2.03, or $0.97 by batch.</p>
+</section>
 <h2 id="1-at-a-glance"><span class="n">1</span>At a glance</h2>
 <div class="tw"><table>
 <thead>
@@ -2044,6 +2061,11 @@ of it. The log, the screen trail and the model calls carry the same action ID, s
 </tr>
 </tbody>
 </table></div>
+<p><strong>Why fewer tests than v8.</strong> The v8 line carried 13,669 tests at v8.3.2, its last release. v9 carries 6,096
+because it is a different build: one schema, eleven layers with imports one way, and one reader per source, so each
+test exercises a real path through more of the system. Tests that only read source text were retired by the ratchet in
+section 14.2. The proof that the rebuild lost nothing is the 140-ability ledger, not the test count: every v8 capability
+has a named home in v9, and a test fails if that home disappears.</p>
 <p>The harnesses exist because a green test suite has, in this project's own history, coexisted with wrong output. A
 test asserts what its author thought to assert. A harness opens the rendered artifact and compares it with the
 evidence. Both run; neither is trusted alone; and a person still looks at the screen.</p>
@@ -2156,6 +2178,10 @@ code, and a person has to stay in control of everything that touches production.
 <h2 id="16-what-is-not-proved-yet"><span class="n">16</span>What is not proved yet</h2>
 <p>Stated here so nobody meets it as a surprise.</p>
 <ul>
+<li><strong>Not yet proved on a live client server.</strong> Every fix in this document ran on the invented estate, through its
+  simulated agents, or on a real machine I control, through a real agent. No fix has yet been carried end to end, from
+  a whole read through the gate to its proof, on a client's production server. That is the next thing I will prove, on
+  a low-stakes server with the client's consent.</li>
 <li><strong>Agents over the internet.</strong> They are built for it and proved on a local network with real and simulated agents.
   They are not yet proved from outside an office's network.</li>
 <li><strong>The standing watch on its own timer with real spend.</strong> It has run on its own timer against the stand-in, and for
@@ -2227,8 +2253,8 @@ code, and a person has to stay in control of everything that touches production.
    one of those two rules.</li>
 <li><strong>Prove a fix from outside the fix.</strong> A script that checks its own work proves that the script ran. The proof is a
    later measurement, by a different path, against servers nobody touched.</li>
-<li><strong>Run the real thing, for real, before anyone else does.</strong> Four defects survived 6,092 tests and were found in two
-   evenings of using the product the way it is meant to be used.</li>
+<li><strong>Run the real thing, for real, before anyone else does.</strong> Four defects survived the 6,092 tests of v9.0.0 and were found
+   in two evenings of using the product the way it is meant to be used.</li>
 <li><strong>Make structure a ratchet.</strong> Rules that live in a document decay. Rules that live in a test that may only count
     down do not.</li>
 </ol>
