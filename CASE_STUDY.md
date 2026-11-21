@@ -2,7 +2,7 @@
 
 **A model reads the whole server. Code holds it to the evidence. An engineer decides every change.**
 
-A technical case study of NinjaToolKit v9.0.1, released 19 November 2026.
+A technical case study of NinjaToolKit v9.0.2, released 20 November 2026.
 
 **Author:** Ryan Haig, Forward Deployed Engineer and AI Automation Engineer. I designed the platform, built it and
 released it.
@@ -13,13 +13,45 @@ names, machine names, addresses or client data. Every worked example and every s
 does not exist: five invented clients, 31 invented servers and seven invented firewalls, generated for this purpose and
 checked by script against the real estate's names so that nothing invented collides with anything real.
 
-**How to read the figures.** Every figure is **measured**: the output of a command or a run, taken at the v9.0.1 tag
+**How to read the figures.** Every figure is **measured**: the output of a command or a run, taken at the v9.0.2 tag
 unless the sentence says otherwise. Where a figure comes from the estate the product was built against, it is a count
 only. Where something is built and not yet proved in production, section 16 says so.
 
 **The film.** The companion film draws the harness at work in ten scenes, each figure measured, and shows the released
-program itself working the invented estate, recorded as it happened or replayed from its own record:
+v9.0.1 program working the invented estate, recorded as it happened or replayed from its own record:
 [watch it online](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/).
+
+---
+
+## In one minute
+
+**The problem.** An MSP's engineers diagnose and fix Windows servers and WatchGuard firewalls by hand, one script
+and one paste at a time, and the judgment lives in their heads.
+
+**What I built.** NinjaToolKit v9, which I designed, built and shipped, working with Claude as an engineering partner
+since March 2026: an audit and remediation platform that puts a frontier model on production infrastructure without
+trusting a word it says. v9.0.2 is the current release.
+
+**What it does.** It reads a PowerShell collector's capture of every server, every firewall's configuration export and
+live telemetry from its own agents into one record, and 179 deterministic checks judge all of it at no cost. Claude
+Opus then reads each server's entire output in one call. A second pass files that prose into typed items, and code
+verifies every quote against the capture and proves every script read-only before it reaches a server. Causes are
+weighed with Bayes' rule in code, the fixes are put in the order an engineer would work them, and each fix is written
+whole, with its proof and its way back, for a named engineer to approve. Two client audits render from the same record.
+
+**The key decision.** I measured my first design against the way I actually work. It named the right cause, or
+part of it, in 24 of 50 cases; working the way I do at my desk, frontier model first, named it in 40. I rebuilt the
+system around that result.
+
+**The safety model.** A model's words are testimony, not instructions. Code checks every quote against the evidence
+and proves every script read-only, and every change waits for a named engineer.
+
+**The proof.** 6,145 tests passing at v9.0.2, 17 standing harnesses and a five-part release gate. A 2 hour 40 minute
+soak with 80,161 requests and no error. 318 of 318 audit fields held to the facts on the real model. Every element path
+that carries a value in 54 firewall exports, 1,923 of them, traced through the code and accounted for. Three releases in
+three days: every defect my own runs of the shipped build turned up was fixed with a test that fails without the fix.
+
+**The cost.** A whole read of a large server costs $2.03, or $0.97 by batch. Every deterministic step costs nothing.
 
 ---
 
@@ -53,16 +85,114 @@ program itself working the invented estate, recorded as it happened or replayed 
 |---|---|
 | **What it is** | An audit and remediation platform for managed Windows Server estates and WatchGuard firewalls, used by a managed service provider's engineers. One self-contained Windows program on a server, used by the whole office, with its own agents on the servers it looks after. |
 | **What it does** | Takes in a PowerShell collector's capture, firewall configuration exports and live telemetry. Judges all of it with deterministic checks. Lets a frontier model read each server whole, then holds everything the model said to the evidence in code. Carries each problem through read-only checks to a fix that waits at an engineer's gate and proves itself afterwards. Renders two client audits from the same record. |
-| **Release** | v9.0.1, 19 November 2026, on v9.0.0 of the day before. v9 is a rebuild: nothing of the v8 code is left in the tree. |
-| **Size** | 138,202 lines of Python in 606 files across eleven layers; 32,284 lines of JavaScript and 10,227 of CSS as files; a 4,165-line PowerShell collector. |
-| **Tests** | 6,096 passing in 671 test files (117,381 lines), 17 standing verification harnesses, a five-part release gate, 16 invariants on the rendered product. |
-| **Deterministic checks** | 177: 117 for servers in 18 families, 52 in the firewall engine in 14 families, 8 more on a Firebox's own settings, certificates and reach. Mapped to the 287 controls of NIST SP 800-53 Rev 5's Moderate baseline and, through NIST's own references, to the 106 subcategories of CSF 2.0. |
+| **Release** | v9.0.2, 20 November 2026, on v9.0.1 and v9.0.0 of the two days before. v9 is a rebuild: nothing of the v8 code is left in the tree. |
+| **Size** | 139,481 lines of Python in 609 files across eleven layers; 32,354 lines of JavaScript and 10,251 of CSS as files; a 4,165-line PowerShell collector. |
+| **Tests** | 6,145 passing, 39 skipped, none failed, in 670 files (118,265 lines of tests); 17 standing verification harnesses, a five-part release gate, 16 invariants on the rendered product. |
+| **Deterministic checks** | 179: 117 for servers in 18 families, 52 in the firewall engine in 14 families, 10 more on a Firebox's own settings, certificates and reach. Mapped to the 287 controls of NIST SP 800-53 Rev 5's Moderate baseline and, through NIST's own references, to the 106 subcategories of CSF 2.0. |
 | **Models** | Claude Opus 5.5 for reasoning, with Opus 5 as the fallback when a request is declined. Claude Sonnet 5.5 only to describe, never to diagnose. GLiNER 2.5, a small local model, to read names out of free text on the server's own processor. A hosted calibrated decision model (TypeSafe's Jev) for typed questions with probabilities. |
-| **Data** | One SQLite schema at version 79: 100 tables and 131 indexes in a built database. |
+| **Data** | One SQLite schema at version 80: 101 tables and 131 indexes in a built database. |
 | **Operations proof** | Two hours forty minutes of load on one process: 80,161 requests, no error, 193 ms at the 95th percentile, memory flat. Fifty agents reporting for an hour: 650 batches in, 650 kept. The process killed in the middle of an ingest and of a model call: the record's own integrity check passed both times. |
 | **AI proof** | On the release candidate, with the real model: a firewall audit and a 23-server site audit written whole, 318 of 318 fields kept by code's check of the model's words against the facts. Three numbers the model wrote that were not in the facts were refused by code and rewritten on a second asking. |
-| **History** | 6,526 commits since 6 March 2026; 62 version tags; 111 numbered design decisions; 38 research files. |
+| **Firewall coverage** | Every element path in the 54 exports that carries a value, 1,923 in all, traced through the program's own code: 1,531 read and stated in the audit and on the firewall's page, 23 secrets said as set or not set and never shown, 369 outside an audit, each with its reason. |
+| **Abilities** | 140 on a ledger a test holds: every capability of the v8 line and every layer of the harness study, each with its home in v9 and its proof. 81 running, 45 partial, 14 idle, unverified, deferred or not yet built. |
+| **History** | 6,546 commits since 6 March 2026; 63 version tags; 111 numbered design decisions; 38 research files. |
 | **Built against** | A real estate of 234 rostered servers under 48 client organizations, 189 of them captured, and 54 configuration exports from 37 firewalls. Counts only appear here. |
+
+### 1.1 The capability map
+
+Everything the release does, area by area, with the section that explains it. Every row is a check in the catalogue or
+an ability on the product's own ledger (section 14.2).
+
+**Intake and the record**
+
+| Capability | What it does | Section |
+|---|---|---|
+| The device roster | Read first: every device, its client, its site, its type. A capture saves nothing until a roster places it | 5.1 |
+| The collector capture | A 4,165-line PowerShell collector, 47 sections a server. A fleet's paste is split by machine, each section parsed into typed fields, the raw text kept beside the parse, and a parse made by older code parsed again on first use | 5.2 |
+| Typed records | One JSON record a line under a fixed envelope with sequence numbers. A run is whole only with a begin, a matching end and no gap; a bridge writes it back in the text collector's layout | 5.2 |
+| Firewall exports | WatchGuard configuration XML read by two independent readers into one firewall model, held in agreement over every export by a standing test | 7.1 |
+| Agent batches | Typed readings checked line by line against a shared record contract; a replay changes nothing | 8.1 |
+| Identity by evidence | A server's four names placed under its client rung by rung, the evidence kept. An address never places anything; what the evidence cannot settle is asked once | 5.3 |
+| One strict schema | SQLite in write-ahead mode at schema version 80, 101 tables. Forward-only numbered steps, read-only connections in SQLite's own read-only mode, short writes, a lease on anything that runs, no silent overwrite, every append stamped with its engineer by a trigger | 5.4 |
+| Findings with history | A finding's identity is what it is about. Each capture opens it, sees it again or loses it, and "closed" is refused without a recorded remediation | 5.4 |
+| The dependency map and the seams | What each server leans on, every edge with its evidence; every fact a client's servers disagree on, both sides kept | 5.5 |
+| Dated reference knowledge | Lifecycles, firmware dates, known-exploited vulnerabilities, Microsoft's 361-setting baseline, NIST's catalogues and 166 of Microsoft's articles on documented causes, each fact with its source, its read date and a shelf life the build enforces | 5.6 |
+
+**Deterministic judgment**
+
+| Capability | What it does | Section |
+|---|---|---|
+| 179 checks, one contract | 117 server checks in 18 families and 62 firewall checks. Four outcomes (a fault, healthy, cannot be determined, not applicable); the conditions that would make a fault acceptable, phrased as questions for the client; labelled examples and a contract proof for every check | 6 |
+| Instrument honesty | Every count from an event log says how much of its window the log held. An event a server does not audit is said so, never counted as zero | 6.3 |
+| Patterns | One client's servers carrying one finding that one change closes, diagnosed once and confirmed server by server | 6.4 |
+| Compliance | NIST SP 800-53 Rev 5 Moderate, 287 controls in four states; CSF 2.0's 106 subcategories through NIST's own references; MITRE ATT&CK on every firewall finding | 6.5, 7.3 |
+
+**The firewall pillar**
+
+| Capability | What it does | Section |
+|---|---|---|
+| The export read in full | Every element path that carries a value, 1,923 of them, traced through the code: read and stated, a secret said as set, or out of scope with its reason | 7.1 |
+| Policy Manager's numbers | Every policy carries the number the vendor's own tool shows, never its place in the file (1,428 of 1,505 differ) | 7.1 |
+| 62 checks and a posture | Access, services, traffic, device, hygiene, inspection, remote access, exposure, coverage, perimeter, VPN, threats, precedence, NAT and the Firebox's own settings; a posture that is the worst of five domains | 7.2, 7.3 |
+| Exposure as a path | Internet, static NAT, policy, gate, internal address, server, listener; six end states; joined within the client; what an exposed host can reach next | 7.4 |
+| Attack chains | Every step a rule in the export, each chain ending on the change that breaks it | 7.4 |
+| Rule-base analysis | Shadowed, redundant, generalized, correlated and consolidatable rules, pair by pair, on resolved address space, with zones read as the networks they hold | 7.5 |
+| First-match simulator | For every service a policy names, the first enabled policy that really takes it | 7.5 |
+| Tunnels, certificates, firmware | Each tunnel's proposals graded part by part against named standards; certificates judged at the export's date; firmware against its release line and the exploited list | 7.6 |
+| NAT, inspection, objects, users | Static and dynamic NAT with their networks; proxy inspection policy by policy; services and aliases nothing uses; user groups, and users authorised one by one | 7.9 |
+| What changed | Two exports compared, each finding opened, held or gone by its cause; the next export is a fix's proof | 7.7 |
+| Every count opens its list | A firewall's page carries every finding, and all 24 figures on its opening open their rows; an Ask on any policy, finding or section | 7.9 |
+
+**Agents and the standing watch**
+
+| Capability | What it does | Section |
+|---|---|---|
+| The agent | Health, events, the network and the inventory read through the Windows API. It starts no process, never reads an event's text or a secret, and listens on nothing; batches are written whole and kept until the office confirms them | 8.1 |
+| The line | A private certificate authority, mutual TLS 1.3, the listener's fingerprint pinned in the install code, single-use enrolment, outbound connections only, work carried on the answer to the agent's own report, a script run only on a matching digest | 8.2 |
+| Rules, alerts and Jobs | Deterministic rules raise alerts. Symptoms of a restart are held, servers that go silent together become one Job, and a condition known to be harmless is kept by the decision model only inside its bound | 8.3 |
+| The watch | Which fields move by themselves measured from pairs of captures, the instrument's own shifts recognized, streams and forms counted; six standings for every record; 92% of records dropped before any model, and none lost | 8.4 |
+| Rounds and the digest | Related records graded by the decision model in shadow, what climbs read by Opus, and everything nothing has looked at read once by form, at half price by batch | 8.5 |
+| Proof after a change | A fix's fingerprint run again through the agent once the change has settled, compared with untouched servers; a clean read every day | 8.6 |
+
+**The harness**
+
+| Capability | What it does | Section |
+|---|---|---|
+| One client for every call | Fails closed, priced before it is sent, written to a ledger, streamed, adaptive thinking, one resend on the fallback model after a refusal, a clean stop, typed errors, cached prefixes | 9.3 |
+| The engine | Runs, questions and rungs, kept as a graph of every try with its proof and its cost; resumable after a crash; four lanes with fairness between clients | 9.2 |
+| The whole read | A server's entire output read in one call, in plain words, with what the office knows beside it; a fleet's write-ups read across for what no single server shows | 9.4 |
+| Filing and landing | GLiNER proposes names, Opus files the prose into typed items, code finds every quote four ways and proves every script; landing twice changes nothing | 9.5, 9.6 |
+| Checks out and back | PowerShell's own parser proves each script read-only; one script a server; a gate hook in the path; through the agent, or as one card to copy and paste | 9.7 |
+| The second look | The same conversation picked up with everything that came back; a question answered once and kept as a fact | 9.8 |
+| Causes weighed in code | Bayes' rule over each family's causes and "other"; the next check chosen by expected information per unit of cost; a root-cause gate that demands a real proof | 9.8 |
+| The fix catalogue | Each client's fixes written once and every finding placed in one; the decision model placing at a recalibrated, error-bounded line, with probes, a shadow week and a pinned version | 9.9 |
+| The line of work | The root before its symptoms; time, then DNS, then Kerberos, then logons; the first server a canary | 9.9 |
+| A fix, written whole | Pre-check, change, proof and way back; "no change worth making" is a legal answer; two-person approval; waves | 9.10 |
+| The reader of names | Code reads every exact shape; GLiNER, running locally, proposes the rest for Opus to confirm | 9.11 |
+| Talking to the work | A console routed by code: facts from the record, concepts by the cheaper model, everything else an Opus turn on the Job; every quote checked; web search off unless asked for, and name-mapped | 9.12 |
+| Documents held to their facts | A Job's time entry, client email and remediation report, every number, address, quote and machine checked against the Job's own record | 9.12 |
+| Checks the model writes | A finding turned into an interpreted rule that must fire on its own server and waits for an engineer | 9.13 |
+| The audits' words | The model writes prose over code's facts; every number, address and name is checked; a field that fails twice is replaced by a deterministic sentence | 9.14 |
+| Learning from the work | Labels from what the work leaves behind; weekly refits in code; alarms; accuracy as precision, coverage and cost | 9.15 |
+| Privacy | A name map with a leak check before any other hosted model, no person named, credentials scrubbed, the local model kept local | 9.16 |
+
+**Deliverables**
+
+| Capability | What it does | Section |
+|---|---|---|
+| The Comprehensive Site Audit | Eleven chapters and three appendices, every server profiled in nineteen parts, compliance control by control | 12 |
+| The Comprehensive Firewall Audit | Thirteen chapters with the pathways at their center, and a scope chapter that says what it read of the export | 12 |
+| Three copies of each | A client's copy, an engineer's copy and a Brief: self-contained HTML with no script, every number one the audit's model holds | 12 |
+| The Job's documents | A time entry in the office's shape, a client email of questions and approvals, a remediation report, a report of a client's run of Jobs | 9.12 |
+
+**Operating it**
+
+| Capability | What it does | Section |
+|---|---|---|
+| Install | One zip, a dry run, a SYSTEM task at boot, host firewall rules scoped to private addresses; a failed start is still logged | 13.1 |
+| People and access | Sign-in by name with PBKDF2 hashes and lockouts; engineer, lead and admin roles; a break-glass account; two-person approval; a trail of every sign-in, refusal and page; presence on a Job | 13.2 |
+| Backup and support | Nightly verified backups with a second location; a support file with every secret scrubbed and one action ID through the log, the screens and the model calls | 13.3, 13.4 |
+| Speed and load | Data pushed over one socket and each page drawn once per process; 80,161 requests through a soak with no error; fifty agents reporting for an hour | 11.4, 13.5 |
 
 ---
 
@@ -92,6 +222,13 @@ code never narrows it.**
   the fixes, write one fix whole, gate it, run it, prove it, watch it. The same loop serves one server and a fleet.
 - **Both audits written by the model and checked by code.** The model is given an audit's facts and nothing else, and
   every name and number in its prose is checked against those facts before a client sees it.
+- **A firewall audit that reads the whole export.** Every element path of the exports that carries a value is accounted
+  for by a trace of the program's own code. Zones are read as the networks they hold, a first-match simulator says
+  which rule really answers each service, and a firewall's page carries every finding and opens every count.
+- **Causes weighed in code.** Inside a diagnosis, a belief over the possible causes is updated by Bayes' rule, the next
+  check is the one worth the most information for its cost, and a cause is confirmed only on a real proof.
+- **Documents held to their facts.** A Job's time entry, client email and report are checked by code against the Job's
+  own record before an engineer copies them.
 - **A real operating envelope.** Sign-in by name, roles, two-person approval where an office wants it, nightly backups
   with a second location, a support file an engineer can send, and every model call priced before it is sent and written
   to a ledger.
@@ -100,8 +237,9 @@ code never narrows it.**
 green on the release commit; the program was soaked, loaded, killed mid-write and walked from an empty folder at four
 screen widths; and the evening v9.0.0 was released I ran it end to end with the real model on the invented estate.
 That run, and the filming that followed it, found four defects no test had caught. They were fixed, each with a test
-that fails on v9.0.0, and shipped as v9.0.1 the next morning. A release process that finds its own defects within
-hours is the point of having one.
+that fails on v9.0.0, and shipped as v9.0.1 the next morning. Filming v9.0.1 found one more, and checking the Job's
+documents two more; all three were fixed in v9.0.2 the day after, with the firewall pillar completed and 6,145 tests
+green. A release process that finds its own defects within hours is the point of having one.
 
 ---
 
@@ -166,8 +304,8 @@ flowchart LR
     end
     subgraph REC["The record"]
         I["Ingest<br/>one reader per source"]
-        DB[("One schema<br/>100 tables")]
-        J["177 deterministic checks"]
+        DB[("One schema<br/>101 tables")]
+        J["179 deterministic checks"]
         M["Dependency map<br/>and exposure paths"]
     end
     subgraph H["The harness"]
@@ -209,15 +347,15 @@ never go up, and never round in a cycle. A test reads the import graph on every 
 
 | Layer | Lines | What it owns |
 |---|---:|---|
-| web | 35,785 | The application server, the pages, the WebSocket hub, the agents' listener, sign-in |
+| web | 35,989 | The application server, the pages, the WebSocket hub, the agents' listener, sign-in |
 | operate | 11,085 | What drives the work: the loop, the watch, the gate inbox, the fix lists, backups, the support file |
-| audits | 7,113 | The record rendered as the site audit and the firewall audit |
-| ai | 14,604 | The one model client, the harness engine, the whole read, filing, the decision model, the reader of names |
+| audits | 7,472 | The record rendered as the site audit and the firewall audit |
+| ai | 14,669 | The one model client, the harness engine, the whole read, filing, the decision model, the reader of names |
 | remediate | 4,182 | Scripts and run tokens, the read-only proof, the gate hook, fixes and their way back |
-| judge | 29,692 | The check catalogue, the firewall engine, exposure paths, compliance, the watch's rules, the dependency map |
-| ingest | 17,354 | One reader per source: the roster, the capture, the firewall export, agent batches |
-| domain | 2,555 | The models: estate, observation, finding, Job, fix, audit. Pure data, no I/O |
-| store | 11,392 | The one connection factory, the writer, the schema, one repository per aggregate |
+| judge | 29,911 | The check catalogue, the firewall engine, exposure paths, compliance, the watch's rules, the dependency map |
+| ingest | 17,653 | One reader per source: the roster, the capture, the firewall export, agent batches |
+| domain | 2,658 | The models: estate, observation, finding, Job, fix, audit. Pure data, no I/O |
+| store | 11,422 | The one connection factory, the writer, the schema, one repository per aggregate |
 | core | 1,968 | Configuration, paths, the clock, typed errors, logging, the scheduler, the certificate authority |
 | agent | 2,440 | The agent's own build. It may import only core and domain |
 
@@ -228,7 +366,7 @@ the program installed on a client's server shares nothing with the office applic
 Structure is held by ratchets, not by intention. A test counts database connections opened outside the store, model
 SDK imports outside the one client, threads started outside the scheduler, environment reads outside configuration,
 script blobs inside Python strings, files over 1,000 lines and functions over 150. Each count may fall and may never
-rise. At v9.0.1 the largest module is 999 lines.
+rise. At v9.0.2 the largest module is 999 lines.
 
 ### 4.2 The runtime
 
@@ -305,8 +443,8 @@ Two rules in this matcher were learned from measurements, and both are refusals:
 
 ### 5.4 The record
 
-One SQLite schema, at version 79, builds every database: 100 tables and 131 indexes once the telemetry tables are in
-place. New tables are declared `STRICT`. A later change is a numbered step that is forward-only, transactional and safe
+One SQLite schema, at version 80, builds every database: 101 tables and 131 indexes in a database the program
+builds. New tables are declared `STRICT`. A later change is a numbered step that is forward-only, transactional and safe
 to run twice. A data folder from an older major version is refused with a plain sentence, not migrated by hope.
 
 | Property | How it is held |
@@ -358,7 +496,7 @@ ago than its life fails the test suite and the build, so the source is fetched a
 
 ## 6. Deterministic first: the check catalogue
 
-A model should never be asked a question that code can answer exactly. Before any model call, 177 deterministic checks
+A model should never be asked a question that code can answer exactly. Before any model call, 179 deterministic checks
 judge every server and every firewall. They cost nothing, they run in under a second a server, and they are the floor
 the product stands on with the AI switched off.
 
@@ -464,8 +602,17 @@ licences. Lists keep the export's order. An absent value is absent, never a made
 
 Every later judge, page and audit reads that one model, so the screen and the client's audit cannot disagree about a
 number. Two independent readers fill it, and a standing test holds them in agreement over every export the product
-was built against. A ledger lists every element path those exports contain, so an export that carries a path nobody
-has read is named instead of silently skipped.
+was built against.
+
+**The export is read in full, and that is measured, not believed.** A ledger lists every element path the 54 exports
+contain. A tool traces the program's own code, as the firewall's page and audit run it, to find which of those paths it
+actually reads, and writes the answer into the ledger. When it first ran, 341 of the 1,923 paths that carry a value
+were read. The next day every one was accounted for: 1,531 read and stated in the audit's chapters and on the
+firewall's page; 23 secrets, said as set or not set and never shown; and 369 that are not part of an audit, each with
+its reason (radio tuning, display settings, the text of a proxy's deny page). Tests hold it as a measurement: every
+status carries its reason, what is left to read may only fall, what the code reads is what the ledger says it reads,
+and no secret reaches any copy of an audit or what a page is sent. An export that carries a path nobody has read is
+named instead of silently skipped, and the audit's scope chapter says what it read of the export in front of it.
 
 Small things matter in this parser, and each one below was a real defect before it was a rule:
 
@@ -480,7 +627,7 @@ Small things matter in this parser, and each one below was a real defect before 
 
 ### 7.2 The checks
 
-52 checks in the engine, in 14 families, plus eight more on the Firebox itself:
+52 checks in the engine, in 14 families, plus ten more on the Firebox itself:
 
 | Family | Checks | What it asks |
 |---|---:|---|
@@ -498,7 +645,7 @@ Small things matter in this parser, and each one below was a real defect before 
 | Threats | 2 | Command-and-control beaconing and lateral movement, from the logs |
 | Precedence | 2 | Rules that never fire because an earlier rule matches first |
 | NAT | 2 | Static NAT that translates into a dangerous internal service, including a forward from one port to another |
-| The Firebox's own settings | 6 | What the security services do once they are on: a threat level allowed through, a fast-scan mode |
+| The Firebox's own settings | 8 | What the security services do once they are on (a threat level allowed through, a fast-scan mode); logs kept only on the box; logins never locked out; Tor exit nodes not blocked; a directory's certificate not validated; RADIUS without the Message-Authenticator attribute; syslog sent across the internet unencrypted |
 | Certificates | 1 | The Firebox's own certificates judged at the date the configuration was saved |
 | Reach | 1 | What an inbound allow for service "Any" actually reaches |
 
@@ -506,6 +653,17 @@ The last line has a story. The dangerous-ports check reads a policy's named port
 later widened to service "Any" therefore dropped out of it, on 20 of the 53 exports then in hand: the widest rules
 were the ones the check could not see. The answer key found the gap, and a check now says for each such policy, by
 name, where it lets the internet in. That is what an answer key is for.
+
+The two newest checks were each read first on the vendor's own pages: a RADIUS server checked without the
+Message-Authenticator attribute, which WatchGuard rates High against the Blast-RADIUS attack, and syslog sent across the
+internet without encryption.
+
+**Measured against the engine it replaced.** Read check by check on 17 November, on the newest export of each of the 37
+devices: the previous engine's 1,525 results were 1,124 faults, 270 passes and 131 informational notes. v9 raises every
+one of the 1,124 faults with the same check, the same severity and the same words, and none that only the old engine
+raised; one more comes from an old check, and 76 from checks only v9 has. The audit then joins 49 of them into another
+finding where one change closes them (one published rule is one finding, however many hosts it reaches), lists the 131
+notes in the engineer's copy and names the 270 passes under what is right.
 
 ### 7.3 Posture a reader can explain
 
@@ -574,6 +732,18 @@ measurement: treating two policies that differ only in service as a consolidatio
 a fifth of some rule bases, and not one was a finding. On this platform a policy is one policy type, so that is simply
 how a rule base is written.
 
+**Zones are read as the networks they hold.** A WatchGuard rule names a zone, "Any-Trusted" or "Any-Optional", where
+another vendor's would name an address. Read as a name, a narrow rule beneath a broader one on the trusted network was
+invisible to the analysis. A zone is now the networks the export says it holds: its enabled interfaces' networks, the
+static routes through a gateway on them, the SSL VPN and Mobile VPN pools, each branch tunnel's remote networks and the
+routes over its virtual interfaces. Containment is read in one direction only (a /24 takes a host inside it, never the
+reverse), so the analysis can under-report and never invent.
+
+**Which rule really answers.** For every service a policy names, the analysis states the first enabled policy that
+takes it, by the addresses each side resolves to, numbered as Policy Manager numbers it: 899 rows across the 37
+devices. Where the policy that names a service never runs because an earlier, broader one takes its traffic, the row
+names the earlier policy and the one it takes the service from; on 4 devices, 6 rows do.
+
 ### 7.6 Tunnels, certificates and firmware
 
 Each tunnel's cryptography is graded from the weakest Phase 1 transform and Phase 2 proposal a peer may negotiate. The
@@ -581,6 +751,11 @@ Firebox's own certificates are judged at the date the configuration was saved, s
 is what breaks the management page and the SSL VPN portal for users. Firmware is compared against the newest build on
 its own release line and against a bundled snapshot of vulnerabilities known to be exploited, and the finding says how
 old that snapshot is.
+
+The tunnel tables and the VPN finding share one grading. Measured on the 165 IKE policies across the 37 devices, an
+earlier table graded by rules of its own and showed a worst cell different from the finding's grade on 25 tunnels. Each
+proposal is now coloured part by part by the finding's own grading, against both standards the finding cites; the worst
+cell is the finding's grade on all 165, and a test holds the two together over every mix of proposals, 2,880 of them.
 
 ### 7.7 From a finding to a change made by hand
 
@@ -603,6 +778,25 @@ servers behind them. A server's page shows what the internet reaches on it. The 
 the firewall's routes onto the servers' network. And a check on the server side reads the same exposure rows, so a
 server with Remote Desktop published to any address is a finding on the server, on the firewall, and on the path
 between them, counted once.
+
+### 7.9 A firewall's page carries everything its audit does
+
+A firewall's page is a working dashboard, not a summary of the audit. Until v9.0.2 it listed six findings a chapter, and
+measured across the 37 firewalls, 350 of 1,155 findings were only in the printed audit. Each chapter now lists all of
+its findings, each opening in place to its evidence, its steps, its proof and its way back.
+
+- **Every count opens its list.** Each of the 24 figures on a firewall's opening (findings, posture, ways in, rules,
+  tunnels, services, licences) opens the named rows behind it in place, with a way to the chapter that holds them.
+- **What was missing is carried.** The services and aliases an engineer made that nothing uses; the Firebox's user
+  groups, with the users authorised one by one for rules listed apart from them; the networks behind each dynamic NAT
+  rule; the proxy actions' inspection, policy by policy.
+- **Secrets are stated, never shown.** A password, a pass phrase, a pre-shared key or a shared secret is said as set
+  or not set.
+- **Ask about anything.** Each policy, finding and section carries an Ask that opens the console on that firewall with
+  the item already named, the question left to the engineer.
+
+The page and both copies of the audit read one set of sections from the audit's model, so a figure cannot appear on
+one and not the other.
 
 ---
 
@@ -1043,6 +1237,25 @@ A read asks two kinds of question, and the product treats them differently:
 
 Nothing an engineer has said is ever asked again.
 
+#### Weighing causes in code
+
+Inside a Job's diagnosis, what the evidence says about each cause is a number, kept and updated by code. A belief is a
+probability over a family's causes and one more, "other", for a cause the tree does not hold. Each observation says one
+cause's condition was seen or not, with the proof that saw it, and Bayes' rule takes it in for every cause at once: the
+cause it speaks to shows the condition with that proof's sensitivity, and every other cause shows it only as often as
+the condition turns up where it is not the cause. A model's reading enters as soft evidence at its calibrated
+probability, never as a verdict. Each proof's sensitivity and each condition's prevalence is a stated assumption until
+the learning loop measures it.
+
+The next check is chosen by expected information per unit of cost: the bits it should take off the belief's entropy,
+averaged over every outcome it could have, divided by what running it costs (already in the capture, an agent's run, a
+paste, or a question only the engineer can answer). A belief is settled when one cause alone holds 1 − α of it. Even
+then, a root-cause gate in code must see a real proof before the cause is confirmed: a native tool's own answer, a
+correlation over a window, a control that differs only in the suspect, or a before and after watched for the fault's
+natural period. Otherwise the cause stays probable, and says so. Two or more hosts showing a symptom in the same second
+test what they share first, with each host's own restart window left out. Across nine diagnoses kept on one record,
+this weighed 45 candidate causes and confirmed two; six diagnoses settled and three were held for the engineer.
+
 ### 9.9 The fix list, and a small model made honest
 
 **Work units that hold still.** Asked to group findings into work, a frontier model gives a slightly different
@@ -1159,8 +1372,21 @@ first. A steer typed while a check is out reaches the next look. Web search is o
 engineer turns it on for that one, and then it is its own call that sees only the question's words with every client,
 machine and domain name replaced by a stand-in: no capture, no history, so no query can carry a name.
 
+#### The Job's documents, held to its facts
+
 A Job's time entry, the client email and a remediation report are written from the Job's own record of facts, in the
-office's own shapes, and nothing is sent from the application.
+office's own shapes, and nothing is sent from the application. Since v9.0.2 each is held to those facts the way the
+audits' words are (section 9.14). Every number, in figures or in words, every address and every quoted name must be in
+the Job's facts. Every machine the record knows by a name with a digit or a hyphen (191 of the 206 in the estate it was
+built against; a plain word could be a word) must be one this Job names. Nothing may name this application, a model or
+an AI. A document that fails is asked for once more, with what was wrong. One that still fails is kept, with a note
+above it naming what the record does not hold, so the engineer sees it before copying it.
+
+A Job's report no longer writes its own list of findings: its printed page carries the record's own issues and where
+each stands. What waits on the client is scoped to the Job's own servers: its own approvals, and the client's questions
+traced through typed links to the server whose read raised them. Measured over the real model's kept documents before
+it shipped, the check flagged two true statements, and both were put right at their source; what it still flags is
+true: an estimate nothing in the record holds, and a count of open issues one short of the record's.
 
 ### 9.13 Checks the model writes
 
@@ -1488,6 +1714,7 @@ and did not, and how each number is counted.
 every way in; attack paths; who may reach whom; remote access and identity; the rule base; inspection and services;
 the Firebox itself; what the traffic shows; compliance; and a roadmap. Its centerpiece is the pathways: every route
 from the internet to the host that answers, and the two-step paths from an exposed host to what it can reach next.
+Its scope chapter says what it read of the export in front of it.
 
 Three rules keep them honest:
 
@@ -1566,7 +1793,8 @@ of it. The log, the screen trail and the model calls carry the same action ID, s
 | Nineteen pages at phone, tablet, laptop and desktop widths | No sideways scroll |
 | First run from an empty folder | Answers two seconds after start; a first site audit open seven actions later |
 
-These were measured on v9.0.0's release candidate. v9.0.1 changed four code paths, each walked in its own build.
+These were measured on v9.0.0's release candidate. v9.0.1 changed four code paths, and v9.0.2 the page stamp, the Job
+documents and the firewall's page, each walked in its own build.
 
 ---
 
@@ -1574,13 +1802,19 @@ These were measured on v9.0.0's release candidate. v9.0.1 changed four code path
 
 ### 14.1 Five kinds of evidence
 
-| Evidence | What it is | At v9.0.1 |
+| Evidence | What it is | At v9.0.2 |
 |---|---|---|
-| **The suite** | Tests by behavior, run in batches | 6,096 passed, 39 skipped, 0 failed, in 671 files |
+| **The suite** | Tests by behavior, run in batches | 6,145 passed, 39 skipped, 0 failed, in 670 files |
 | **Standing harnesses** | Scripts that prove specific past defects stay closed and that rendered output matches its evidence | 17 of 17 |
 | **The release gate** | Five sub-gates that must all pass before a release may be cut | 5 of 5 |
 | **Rendered invariants** | Properties of the built product's actual output | 16 of 16 |
-| **The walk** | The built program, from an empty folder, with real mouse input, pictured and read | Done at v9.0.0; v9.0.1's fixes walked in its own build |
+| **The walk** | The built program, from an empty folder, with real mouse input, pictured and read | Every release, from an empty folder; v9.0.2's with no restart anywhere |
+
+**Why fewer tests than v8.** The v8 line carried 13,669 tests at v8.3.2, its last release. v9 carries 6,145
+because it is a different build: one schema, eleven layers with imports one way, and one reader per source, so each
+test exercises a real path through more of the system. Tests that only read source text were retired by the ratchet in
+section 14.2. The proof that the rebuild lost nothing is the 140-ability ledger, not the test count: every v8 capability
+has a named home in v9, and a test fails if that home disappears.
 
 The harnesses exist because a green test suite has, in this project's own history, coexisted with wrong output. A
 test asserts what its author thought to assert. A harness opens the rendered artifact and compares it with the
@@ -1591,7 +1825,7 @@ evidence. Both run; neither is trusted alone; and a person still looks at the sc
 Tests count things that should never grow: imports that go up the layers, database connections opened outside the
 store, model calls outside the one client, threads outside the scheduler, scripts inside Python strings, files past
 their ceiling, tests that read source text instead of exercising behavior. A count may fall. It may never rise. When
-one falls, its baseline is lowered in the same commit. This is how a 138,000-line code base written quickly stays one
+one falls, its baseline is lowered in the same commit. This is how a 139,000-line code base written quickly stays one
 that can be changed.
 
 A separate ledger lists 140 abilities, every capability of the previous major version and every layer of the harness
@@ -1648,6 +1882,25 @@ was wrong, the product was right, and saying so is part of the job.
 The lesson is the one this whole document argues: tests, harnesses and a stand-in are necessary and not sufficient.
 The defects lived in a path that only a real model, a real hold and a real agent exercise together.
 
+### 14.6 v9.0.2: the firewall completed, and three more defects closed
+
+v9.0.2 was released on 20 November. It carries the firewall pillar completed (sections 7.1, 7.2, 7.5, 7.6 and 7.9) and
+three defects found while filming v9.0.1 and checking the Job's documents, each fixed with a test that fails on v9.0.1:
+
+| Defect | Cause | Fix |
+|---|---|---|
+| Pages stayed stale until a restart. After a second audit of a firewall, the Audits list and What changed kept the first; after a newer export, a site audit still named a route the export had removed | A page is rebuilt when a stamp of the record moves. The stamp's count of kept audits was formatted from a database row object, which string formatting does not unpack; the error was caught, and the count read as empty on every page's connection. On a plain connection it worked, which is why no test caught it. And a newer export is written over its firewall's row, so the stamp's count of exports never moved either | The row is read as a tuple, and the stamp counts the firewall models kept, since each export keeps a new one at no cost. Tested under both kinds of connection, and with an export written in place |
+| A Job's email and report were printed as the model wrote them | Only the time entry was checked, and only for a stated time | Every document held to the Job's facts, asked again once, and kept with a note where it still fails (section 9.12) |
+| One Job's report carried the whole client's waiting items | The report read every gate of the client | Its own approvals and the questions a read of its own servers raised; a client's report of its run of Jobs keeps every one |
+
+The suite (6,145 passed), the harnesses and the gate ran on the release tree. The program was built from a clean
+export and walked from empty folders with no restart anywhere: a firewall's second export and second audit, then the
+Audits list and What changed right at once; a roster, a capture of 189 servers, a firewall linked to its client and a
+site audit, then that firewall's newer export written over its row, and a second site audit that no longer named the
+removed route; a Job's three documents on a copy of a real record, against the stand-in. That walk found one fault the
+tests had not: a writer that wrote its own findings part anyway still had it printed. The report's page now never
+prints one, and the fix went into the release commit.
+
 ---
 
 ## 15. How it was built
@@ -1690,6 +1943,10 @@ code, and a person has to stay in control of everything that touches production.
 
 Stated here so nobody meets it as a surprise.
 
+- **Not yet proved on a live client server.** Every fix in this document ran on the invented estate, through its
+  simulated agents, or on a real machine I control, through a real agent. No fix has yet been carried end to end, from
+  a whole read through the gate to its proof, on a client's production server. That is the next thing I will prove, on
+  a low-stakes server with the client's consent.
 - **Agents over the internet.** They are built for it and proved on a local network with real and simulated agents.
   They are not yet proved from outside an office's network.
 - **The standing watch on its own timer with real spend.** It has run on its own timer against the stand-in, and for
@@ -1701,12 +1958,6 @@ Stated here so nobody meets it as a surprise.
 - **Not in this version:** certificate renewal and re-keying from inside the product; single sign-on with multi-factor
   authentication; the firewall vendor's cloud API (its reader is built and has never run against a live account);
   a code-signed agent; VMware hosts.
-- **Found while filming v9.0.1, fixed in v9.0.2:** after a new firewall export, a running program kept part of its
-  earlier picture until it was restarted. The What changed page kept showing its earlier state, and a site audit made
-  right after the export still named a route the export had removed (posture 31 where it should have been 56). Each
-  was right at once after a restart: the program's caches did not see the new export. The caches are rebuilt when a
-  stamp of the record moves, and that stamp missed two things: a newly kept audit, and a new export written over an
-  older one. v9.0.2 (20 November 2026) makes it see both, each with a test, and its build was walked with no restart.
 - **Firewall fixes are by hand, by design.** The product writes the steps and proves the result from the next export.
   It does not edit a firewall.
 
@@ -1719,7 +1970,7 @@ Stated here so nobody meets it as a surprise.
 | **Data engineering** | Four source readers that emit one model. A text parser for 47 sections with a fingerprint that forces a re-parse when it changes. A typed record contract with completeness rules. Identity resolution by evidence with measured refusals. One strict schema with numbered forward-only steps. Findings with identity and history, where gone is never fixed. An append-only work log. Host-by-host short writes under concurrency. Reference data with provenance and a shelf life. |
 | **Data analysis** | A measured funnel: which fields move by themselves, fitted from pairs of captures, not listed by hand. Forms counted across a fleet. Isotonic recalibration and exact binomial bounds for a small model's confidence. Precision, coverage and cost as three numbers with error bounds. Answer keys written first, scoring written before each run, and refuted ideas kept with their numbers. |
 | **Forward deployed engineering** | A frontier model placed in a production loop with a harness around it: one client, priced calls, ceilings, a ledger, refusal handling, a scheduler with lanes, prose filed into typed items, quotes pinned to evidence, scripts proved read-only, a gate that is code. Built by sitting with the work as it is actually done, and inverted when a measurement said the first design was wrong. |
-| **Network engineering** | A full firewall model from a configuration export. Exposure computed as a path from the internet through NAT and policy to a listening process, in six states. Zones judged from interfaces, never from names. Rule-base anomaly analysis on resolved address space. VPN cryptography graded. An agent protocol with a private certificate authority, mutual TLS 1.3, fingerprint pinning and outbound-only connections. |
+| **Network engineering** | A full firewall model from a configuration export. Exposure computed as a path from the internet through NAT and policy to a listening process, in six states. Zones judged from interfaces, never from names. Rule-base anomaly analysis on resolved address space, with zones read as the networks they hold, and a first-match simulator. Every element path that carries a value in 54 exports accounted for by a trace of the code. VPN cryptography graded. An agent protocol with a private certificate authority, mutual TLS 1.3, fingerprint pinning and outbound-only connections. |
 | **Systems administration** | 117 server checks drawn from real diagnostic work across Active Directory, DNS, DHCP, Hyper-V, file services, patching, hardening and backup. A 4,165-line PowerShell collector. An agent that runs as SYSTEM, reads through the Windows API and starts no process. An install script with a dry run, a locked-down data folder, a boot task and scoped firewall rules. Nightly verified backups, a support bundle, and soak, load and kill tests. |
 
 ---
@@ -1743,10 +1994,13 @@ Stated here so nobody meets it as a surprise.
    one of those two rules.
 8. **Prove a fix from outside the fix.** A script that checks its own work proves that the script ran. The proof is a
    later measurement, by a different path, against servers nobody touched.
-9. **Run the real thing, for real, before anyone else does.** Four defects survived 6,092 tests and were found in two
-   evenings of using the product the way it is meant to be used.
+9. **Run the real thing, for real, before anyone else does.** Four defects survived the 6,092 tests of v9.0.0 and were found
+   in two evenings of using the product the way it is meant to be used.
 10. **Make structure a ratchet.** Rules that live in a document decay. Rules that live in a test that may only count
     down do not.
+11. **Measure coverage; never assume it.** "The export is read in full" was a belief until a tool traced the program's
+    own code over every element path of 54 exports and found 341 of 1,923 read. The next day every one was accounted
+    for, and the figure is now a ledger that tests read, not a sentence anyone has to remember.
 
 ---
 
@@ -1756,6 +2010,8 @@ Stated here so nobody meets it as a surprise.
 |---|---|
 | **Capture** | The text output of the PowerShell collector for one server: 47 sections |
 | **Export** | A firewall's configuration saved as XML |
+| **Coverage ledger** | Every element path the firewall exports carry, each marked read, secret or out of scope with its reason, from a trace of the program's own code |
+| **Belief** | A probability over a family's causes and "other", updated by Bayes' rule in code as each observation arrives |
 | **Record** | The product's database: everything brought in and everything decided, with history |
 | **Check** | A deterministic rule with one contract and four possible outcomes |
 | **Finding** | Something wrong, named, with its evidence and an identity that survives between captures |

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NinjaToolKit v9: a case study by Ryan Haig</title>
-<meta name="description" content="A technical case study of NinjaToolKit v9.0.1: an AI harness that reads a whole server, holds every claim to the evidence in code, and brings each fix to an engineer's gate.">
+<meta name="description" content="A technical case study of NinjaToolKit v9.0.2: an AI harness that reads a whole server, holds every claim to the evidence in code, and brings each fix to an engineer's gate.">
 <link rel="stylesheet" href="assets/base.css">
 <style>
   .top { position: fixed; inset: 0 0 auto 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: 22px 40px; }
@@ -62,10 +62,10 @@
 <section class="hero">
   <canvas id="loom" aria-hidden="true"></canvas>
   <div class="say">
-    <div class="label">Case study, NinjaToolKit v9.0.1, November 2026</div>
+    <div class="label">Case study, NinjaToolKit v9.0.2, November 2026</div>
     <h1><span>A model reads the whole server.</span><span>Code holds it to the evidence.</span><span>An engineer decides every change.</span></h1>
     <p class="lede"><b>NinjaToolKit</b> is an audit and remediation platform for managed Windows Server estates and WatchGuard firewalls. I designed it, built it and released it: one self-contained program for a whole engineering team, its own agents on the servers, and a harness that takes one server from a first read to a fix that proves itself.</p>
-    <p class="proof">At the release: <span class="mono">138,202</span> lines of Python in eleven layers, <span class="mono">6,096</span> tests passing, <span class="mono">80,161</span> requests through a soak of two hours forty with no error, and <span class="mono">318 of 318</span> audit fields kept by code's own check of what the model wrote.</p>
+    <p class="proof">At the release: <span class="mono">139,481</span> lines of Python in eleven layers, <span class="mono">179</span> deterministic checks, <span class="mono">6,145</span> tests passing, <span class="mono">80,161</span> requests through a soak of two hours forty with no error, <span class="mono">318 of 318</span> audit fields kept by code's own check of what the model wrote, and every one of <span class="mono">1,923</span> value-carrying paths in 54 firewall exports accounted for.</p>
     <div class="acts">
       <a class="pri" href="film/index.html">Watch the film<i>twelve acts</i></a>
       <a class="label lnk" href="case-study/index.html">Read the case study</a>
