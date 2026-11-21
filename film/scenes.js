@@ -157,7 +157,7 @@ function ticker(g, t, from, x, y, o) {
 var M = (function () {
   var R1 = 340, R2 = 572, R3 = 804, XL = 104, XR = 1810;
   var st = [
-    {x: 230, y: R1, n: 'Evidence in', fig: '31 servers, 7 firewalls', sub: 'A text capture, firewall exports, and 22 agents reporting live', who: 'dot', col: C.snap},
+    {x: 230, y: R1, n: 'Evidence in', fig: 'Demo: 31 servers, 7 firewalls', sub: 'Kept small to follow; built on a real 189 servers and 54 exports', who: 'dot', col: C.snap},
     {x: 650, y: R1, n: 'Taken apart', fig: '47 sections a server', sub: 'Every field kept, to the page and the audit', who: 'square', col: C.code},
     {x: 1070, y: R1, n: 'Code judges first', fig: '179 checks', sub: '117 for servers, 52 in the firewall engine, 10 on a Firebox. Free.', who: 'square', col: C.code},
     {x: 1490, y: R1, n: 'The whole read', fig: '59,404 characters', sub: 'One server’s entire output to Opus in one call. Nothing narrows it.', who: 'ring', col: C.opus},

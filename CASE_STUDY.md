@@ -11,7 +11,10 @@ released it.
 describes its architecture, its method and its measured behavior without reproducing source, and it contains no client
 names, machine names, addresses or client data. Every worked example and every screen in the film runs on an estate that
 does not exist: five invented clients, 31 invented servers and seven invented firewalls, generated for this purpose and
-checked by script against the real estate's names so that nothing invented collides with anything real.
+checked by script against the real estate's names so that nothing invented collides with anything real. It is kept
+small on purpose, so every step can be followed. Those sizes are the demonstration's, not the product's: it was built
+against, and measured on, a real estate of 189 servers captured in one 34 MB file and 54 exports of 37 firewalls; a drop
+takes files of up to 200 MB each, as many as there are; and it was load-tested with fifty agents and fifty engineers at once.
 
 **How to read the figures.** Every figure is **measured**: the output of a command or a run, taken at the v9.0.2 tag
 unless the sentence says otherwise. Where a figure comes from the estate the product was built against, it is a count
@@ -109,7 +112,7 @@ an ability on the product's own ledger (section 14.2).
 | Capability | What it does | Section |
 |---|---|---|
 | The device roster | Read first: every device, its client, its site, its type. A capture saves nothing until a roster places it | 5.1 |
-| The collector capture | A 4,165-line PowerShell collector, 47 sections a server. A fleet's paste is split by machine, each section parsed into typed fields, the raw text kept beside the parse, and a parse made by older code parsed again on first use | 5.2 |
+| The collector capture | A 4,165-line PowerShell collector, 47 sections a server. A fleet's paste is split by machine, each section parsed into typed fields, the raw text kept beside the parse, and a parse made by older code parsed again on first use. A drop takes files of up to 200 MB, as many as there are; a real 189-server capture is one 34 MB file | 5.2 |
 | Typed records | One JSON record a line under a fixed envelope with sequence numbers. A run is whole only with a begin, a matching end and no gap; a bridge writes it back in the text collector's layout | 5.2 |
 | Firewall exports | WatchGuard configuration XML read by two independent readers into one firewall model, held in agreement over every export by a standing test | 7.1 |
 | Agent batches | Typed readings checked line by line against a shared record contract; a replay changes nothing | 8.1 |
@@ -1488,7 +1491,8 @@ A run with no question it could change the answer to is not a run worth paying f
 
 ## 10. One loop, end to end: a worked run
 
-Everything in this section happened, on the released program, on the invented estate, and every figure is read from
+Everything in this section happened, on the released program, on the invented estate (small on purpose, so each step can
+be followed), and every figure is read from
 that run's own record. Two records are used, and each step says which:
 
 - **The clean run**, on the v9.0.1 build, over a fresh data folder.
