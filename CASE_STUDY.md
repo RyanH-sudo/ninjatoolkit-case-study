@@ -1701,11 +1701,12 @@ Stated here so nobody meets it as a surprise.
 - **Not in this version:** certificate renewal and re-keying from inside the product; single sign-on with multi-factor
   authentication; the firewall vendor's cloud API (its reader is built and has never run against a live account);
   a code-signed agent; VMware hosts.
-- **Found while filming v9.0.1, not yet fixed:** after a new firewall export, a running program kept part of its
+- **Found while filming v9.0.1, fixed in v9.0.2:** after a new firewall export, a running program kept part of its
   earlier picture until it was restarted. The What changed page kept showing its earlier state, and a site audit made
   right after the export still named a route the export had removed (posture 31 where it should have been 56). Each
-  was right at once after a restart: the program's caches did not see the new export. Both are logged for the next
-  release.
+  was right at once after a restart: the program's caches did not see the new export. The caches are rebuilt when a
+  stamp of the record moves, and that stamp missed two things: a newly kept audit, and a new export written over an
+  older one. v9.0.2 (20 November 2026) makes it see both, each with a test, and its build was walked with no restart.
 - **Firewall fixes are by hand, by design.** The product writes the steps and proves the result from the next export.
   It does not edit a firewall.
 

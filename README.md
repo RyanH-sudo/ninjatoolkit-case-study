@@ -83,7 +83,7 @@ it, 32,284 lines of JavaScript and a 4,165-line PowerShell collector. [4.1](http
 - The evening v9.0.0 shipped it was run end to end with the real model on the invented estate. That run, and filming
   it, found **four defects 6,092 passing tests had not**. Each was fixed with a test that fails on v9.0.0; v9.0.1
   shipped the next morning. [14](https://ryanh-sudo.github.io/ninjatoolkit-case-study/case-study/#14-how-it-was-proved)
-- What is built and not yet proved in production is listed in [section 16](https://ryanh-sudo.github.io/ninjatoolkit-case-study/case-study/#16-what-is-not-proved-yet), including a defect found while filming.
+- What is built and not yet proved in production is listed in [section 16](https://ryanh-sudo.github.io/ninjatoolkit-case-study/case-study/#16-what-is-not-proved-yet), including a defect found while filming and fixed in v9.0.2.
 
 ## What is here
 

@@ -2193,11 +2193,12 @@ code, and a person has to stay in control of everything that touches production.
 <li><strong>Not in this version:</strong> certificate renewal and re-keying from inside the product; single sign-on with multi-factor
   authentication; the firewall vendor's cloud API (its reader is built and has never run against a live account);
   a code-signed agent; VMware hosts.</li>
-<li><strong>Found while filming v9.0.1, not yet fixed:</strong> after a new firewall export, a running program kept part of its
+<li><strong>Found while filming v9.0.1, fixed in v9.0.2:</strong> after a new firewall export, a running program kept part of its
   earlier picture until it was restarted. The What changed page kept showing its earlier state, and a site audit made
   right after the export still named a route the export had removed (posture 31 where it should have been 56). Each
-  was right at once after a restart: the program's caches did not see the new export. Both are logged for the next
-  release.</li>
+  was right at once after a restart: the program's caches did not see the new export. The caches are rebuilt when a
+  stamp of the record moves, and that stamp missed two things: a newly kept audit, and a new export written over an
+  older one. v9.0.2 (20 November 2026) makes it see both, each with a test, and its build was walked with no restart.</li>
 <li><strong>Firewall fixes are by hand, by design.</strong> The product writes the steps and proves the result from the next export.
   It does not edit a firewall.</li>
 </ul>
