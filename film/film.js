@@ -25,119 +25,120 @@ function drawn(name, scene, act, say) { var f = window.FilmScenes[scene]; return
 var S = [
   {name: 'Opening', dur: 9500, kind: 'card', credit: true,
    draw: card({e: 'NinjaToolKit v9', h: BY[0] + '.', hAt: 500, p: BY[1], pAt: 2300,
-               f: 'An AI harness for managed Windows Server estates and WatchGuard firewalls. The companies, servers and firewalls in this film are invented; every screen is the real released program, filmed on v9.0.1.', fAt: 4300})},
-  act('Act I', 'The whole machine.', 'One loop and every part of it moving, each with what it measured on the run filmed here.'),
+               f: 'An AI harness for managed Windows Server estates and WatchGuard firewalls, from ingestion to the deliverable. The companies, servers and firewalls are invented; every screen is the real released program.', fAt: 4300})},
+  act('Act I', 'The whole machine.', 'Script and telemetry in, one record, 179 deterministic checks, a frontier model reading every server whole, code holding every word to the evidence, and an engineer at every gate.'),
   drawn('The whole machine', 'machine', 'Act I', []),
 
-  act('Act II', 'An estate lands.', 'An empty install. Five invented clients, thirty-one servers, seven firewalls, and twenty-two agents speaking the real protocol.'),
-  clip('A new install is empty', 'a-ingest', 0, 36, 'Act II', 'rec', [
-    [.5, 9.5, 'A new install is empty.', 'It seeds nothing. Every screen reads only what is brought in.'],
-    [10, 21, 'The office is named; the engineer names themselves.', 'Everything they do from here carries that name.'],
-    [21.5, 35.5, 'The roster first, then one capture of thirty-one servers.', 'Each server lands under its client and its 47 sections are parsed as it arrives. The worst is put first.']]),
-  clip('Seven firewalls', 'a-exports', 0, 25, 'Act II', 'rec', [
-    [.5, 12, 'Seven firewall exports in one drop.', 'Each is read into one model of its Firebox and judged as it lands.'],
-    [12.5, 24.5, 'Firewalls, the most exposed first.', 'A posture is the worst of its areas, so it always says why.']]),
-  clip('Agents join', 'a-agents', 0, 46, 'Act II', 'rec', [
-    [.5, 15, 'Agents join, through the real protocol.', 'Each makes its own key, spends a single-use code once, and is given a certificate by the office’s own authority.'],
-    [15.5, 30, 'Twenty-two of them, at three clients.', 'Each calls out over TLS 1.3 and holds the line open. Nothing listens at a client.'],
+  act('Act II', 'Ingestion, by script.', 'An empty install. A roster, then one capture of thirty-one servers: 47 sections each, parsed into typed fields and filed under its client as it lands.'),
+  clip('The roster, then the capture', 'i-intake', 0, 27, 'Act II', 'rec', [
+    [.5, 7, 'Drop it anywhere. It files itself.', 'The roster goes first: five invented clients, every device placed under its client and site.'],
+    [7.5, 17, 'One capture, thirty-one servers.', 'Split by machine, cut into 47 sections, each section parsed by its own reader. Each server lands in its own short write, so nobody waits behind the drop.'],
+    [17.5, 26.5, 'Thirty-one filed cleanly under their clients.', 'Who is who is decided from evidence, rung by rung. An address never places anything.']]),
+  clip('The estate fills in', 'i-estate', 0, 35, 'Act II', 'rec', [
+    [.5, 6.5, 'Every client, every server, as it is right now.', 'Each server is a column on the wheel; rings run from noticed on the rim to proved at the centre.'],
+    [7, 17, 'Clients, worst first.', 'Critical and high findings counted per client the moment the capture lands.'],
+    [17.5, 34.5, 'Topology: where the outside reaches in.', 'Every firewall that publishes inward, every route it publishes, and what it lands on.']]),
+
+  act('Act III', 'Ingestion, firewalls.', 'Seven WatchGuard exports in one drop. Each read by two independent readers into one firewall model and judged by 62 checks as it lands.'),
+  clip('Seven exports, taken apart', 'i-intake', 39, 34, 'Act III', 'rec', [
+    [.5, 20, 'Seven exports, audited as they land.', 'Findings counted, elements new to the program named, each waiting for an engineer to say whose it is.'],
+    [20.5, 27.5, 'The newest export, taken apart.', 'The XML as it came, by device, by part, into objects: every policy, alias, service and tunnel the export holds.'],
+    [28, 33.5, 'Every element accounted for.', 'Across the 54 real exports it was built against, 1,923 value-carrying paths: 1,531 read and stated, 23 secrets never shown, 369 out of scope with a reason each.']]),
+  clip('A firewall, opened', 'i-firewall', 0, 12, 'Act III', 'rec', [
+    [.5, 11.5, 'One Firebox: posture, ways in, rules, tunnels.', 'Every count on the opening opens the named rows behind it. Every policy carries Policy Manager’s own number.']]),
+  drawn('Exposure is a path', 'ways', 'Act III', []),
+  clip('Linked by an engineer', 'a-link', 9, 24, 'Act III', 'rec', [
+    [.5, 11, 'Linked to its client by an engineer.', 'Its routes now join that client’s servers, joined within the client only.'],
+    [11.5, 23.5, 'Port 443 lands on the ERP web server; port 33890 on Remote Desktop.', 'The exposure is the translation, not the port number on the policy.']]),
+
+  act('Act IV', 'Ingestion, by telemetry.', 'Twenty-two invented servers speaking the real agent’s protocol: mutual TLS 1.3, a private certificate authority, outbound only.'),
+  clip('Agents join', 'a-agents', 0, 46, 'Act IV', 'rec', [
+    [.5, 15, 'Each agent makes its own key.', 'It checks the listener’s pinned fingerprint, spends a single-use code once, and is signed by the office’s own authority.'],
+    [15.5, 30, 'Health every 5 minutes, each event log every 10, the network hourly, the inventory daily.', 'Read through the Windows API. No child process, no event text, nothing listening at a client.'],
     [30.5, 45.5, 'The estate fills in as they report.', 'Light runs from each server to whoever decided its reading.']]),
-  drawn('The standing watch', 'funnel', 'Act II', []),
-  clip('Jobs nobody opened', 'a-jobs', 0, 30, 'Act II', 'rec', [
-    [.5, 11, 'Today: nothing needs the engineer yet.', 'Below it, the last hour of every client’s readings, already running through code.'],
-    [11.5, 29.5, 'Work: eight Jobs nobody pressed for.', 'Rules in code opened them from the agents’ first readings: two clocks seven minutes ahead, a file server at 2.9% free with its shadow copies failing, servers waiting eight days for a reboot.']]),
-  clip('The estate, live', 'g-wheel', 0, 20, 'Act II', 'rec', [
-    [.5, 19.5, 'The estate, live.', 'Every reading travels from its server to whoever decided it. The agents’ count climbs as readings land; thirteen questions wait on the engineer.']]),
-
-  act('Act III', 'What code knows, before any model.', '177 deterministic checks on every server and firewall, free, as each capture lands.'),
-  clip('A client, as a dashboard', 'g-client', 0, 32, 'Act III', 'rec', [
-    [.5, 10.5, 'A client opens as a dashboard.', 'Live or snapshot is one switch: each server’s last report, processor, memory and the least room on its disks.'],
-    [11, 20, 'Above it, the newest run, told from its record.', 'A read the AI provider refused when the account reached its limit. The program said so in plain words and spent nothing.'],
-    [20.5, 31.5, 'What leans on what.', 'The servers side by side, and the read’s sixteen findings stacked on BR-DC01, root at the bottom.']]),
-  clip('A server, every field', 'g-server', 0, 34, 'Act III', 'rec', [
-    [.5, 11, 'One server. Every fact says its source and its age.', 'From the capture, or live from its agent.'],
-    [11.5, 33.5, 'What is wrong, by area, then every view.', 'Network, posture, identity, security, infrastructure, software, data and keys, and every field the collector captured.']]),
-
-  act('Act IV', 'The firewall pillar.', 'Every way in, traced from the internet through NAT and policy to the process that answers.'),
-  drawn('Exposure is a path', 'ways', 'Act IV', []),
-  clip('Linked by an engineer', 'a-link', 0, 33, 'Act IV', 'rec', [
-    [.5, 9, 'A firewall belongs to a client only when an engineer says so.', 'Never by a guess from its file name.'],
-    [9.5, 20, 'Linked. Its routes now join that client’s servers.', 'An address on another client’s network is never this firewall’s path.'],
-    [20.5, 32.5, 'Four ways in, every one open to any address.', 'Port 443 lands on HQ-APP01. Port 33890 lands on Remote Desktop on HQ-RDS01.']]),
-  clip('A firewall Job', 'f3-job', 0, 28, 'Act IV', 'rec', [
-    [.5, 12, 'A firewall Job: one issue per change.', 'From the clean run. Code settles 22 of its 44 questions at once; the other 22 wait for their proof.'],
-    [12.5, 27.5, 'Its fixes are made by hand.', 'In Policy Manager or the Web UI, never pushed. The next export is the proof.']]),
-  clip('The fix, proved by the next export', 'a-fix', 0, 30, 'Act IV', 'rec', [
-    [.5, 11, 'The fix, made by hand, and the new export brought in.', 'The vendor’s Remote Desktop rule and its NAT are gone; remote access moves behind the SSL VPN.'],
-    [11.5, 29.5, 'Read again from the export itself.', 'Three ways in now. Between the two exports: 4 opened, 5 went, 17 held, and each that went waits for a verdict on its cause.']]),
-  clip('Every way in, drawn', 'g-firewall', 0, 26, 'Act IV', 'rec', [
-    [.5, 25.5, 'Every way in, drawn.', 'The routes that remain, each from the internet to what it reaches, each burning where nothing gates it.']]),
-
-  act('Act V', 'The read, whole.', 'A frontier model reads one server’s entire output in one call. Nothing acts on its words until code has checked them.'),
-  drawn('One server, read whole', 'read', 'Act V', []),
-  clip('Read this server whole', 'f5-read-press', 0, 48, 'Act V', 'real', [
-    [.5, 12.5, 'BR-DC01, a branch domain controller.', 'Its clock is seven minutes off the app’s, and Kerberos is failing around it.'],
-    [13, 26.5, 'What the checks found, by area.', 'Seven findings from code. They are context for the read, never a filter in front of it.'],
-    [27, 47.5, 'Read this server whole.', 'Its raw output in one call, with what the office knows. The real model, recorded as it worked.']]),
-  clip('Filed, and where each item went', 'f5-read-words', 26, 33, 'Act V', 'real', [
-    [.5, 9, 'Filed into typed items.', 'Its findings, and its eighteen read-only checks, each waiting for a press.'],
-    [9.5, 22, 'And what only people can answer.', 'Fifteen questions for the office: who owns an account, which DHCP scope hands out DNS.'],
-    [22.5, 32.5, 'Where each item went.', '60 names proposed by GLiNER, 91 of 91 quotes found in the capture, 18 of 18 checks proved to only read.']]),
-
-  act('Act VI', 'Held to the evidence.', 'Quotes found in the capture, checks proved to only read, and a gate that code decides.'),
-  drawn('Held to the evidence', 'proof', 'Act VI', []),
-  clip('Held for a press', 'f5-held-press', 0, 28, 'Act VI', 'real', [
-    [.5, 12.5, 'The second opinion held the script for one press.', 'Any doubt asks the engineer. The gate is code, never a question put to a model.'],
-    [13, 27.5, 'Run it. The script goes to BR-DC01’s own agent.', 'This press was a defect in v9.0.0, found by this run and fixed in v9.0.1.']]),
-
-  act('Act VII', 'The engine.', 'Every question climbs, cheapest first: code, the reader of names, the decision model, a check on the server, Opus, the engineer.'),
-  drawn('Cheapest first', 'engine', 'Act VII', []),
-  clip('The engine, live', 'g-engine', 0, 21, 'Act VII', 'rec', [
-    [.5, 20.5, 'The engine page, live.', 'This hour the watch is reading the fleet: code settles what it can, thirteen questions wait on the engineer, and nothing has needed Opus.']]),
-  clip('Placement, replayed', 'g-place', 0, 27, 'Act VII', 'replay', [
-    [.5, 26.5, 'Each finding placed into one fix.', 'Above the decision model’s fitted line it is placed; below it, Opus decides. On this run, 42 by the decision model and 6 by Opus.']]),
-
-  act('Act VIII', 'The second look, and a fix through the gate.', 'From the rehearsal the same evening, where the checks came back in time.'),
-  clip('The second look', 'f6-second-look', 0, 33, 'Act VIII', 'real', [
-    [.5, 14.5, 'The second look, once the checks came back.', 'The same conversation picked up with what each check printed. $1.83.'],
-    [15, 32.5, '“The PDC has no time reference (settled).”', 'The cause moved up the chain: the branch was not the problem; the domain’s own time source was.']]),
-  clip('The second look, replayed', 'g-second', 0, 31, 'Act VIII', 'replay', [
-    [.5, 11, 'The same run, told again from its record.', 'One question, settled by Opus.'],
-    [11.5, 30.5, 'Where each finding came from.', 'The server’s output read line by line, each finding drawn from the lines it rests on.']]),
-  drawn('A fix, written whole', 'fixgate', 'Act VIII', []),
-  clip('At the gate', 'g-gate', 0, 26, 'Act VIII', 'rec', [
-    [.5, 25.5, 'One fix at the gate.', 'Its test, its change, its proof and its way back, then its record: proposed, approved, sent to the agent, applied.']]),
-  clip('The Job, as a rope', 'g-job', 0, 26, 'Act VIII', 'replay', [
-    [.5, 25.5, 'The Job, as a rope.', 'Evidence taken apart into lines, read by code, GLiNER and the decision model, and braided into one rope per issue.']]),
-
-  act('Act IX', 'Agents and the watch, live.', 'Twenty-two invented servers speaking the real agent’s protocol, reporting while this was filmed.'),
-  drawn('The line', 'agentline', 'Act IX', []),
-  clip('Five servers go quiet', 'a-silent', 0, 29, 'Act IX', 'rec', [
-    [.5, 12, 'Five servers go quiet.', 'Halden Wray’s agents stopped reporting. After fifteen minutes the watch opened one Job for all five, not five Jobs.'],
+  drawn('The standing watch', 'funnel', 'Act IV', []),
+  clip('Jobs nobody opened', 'a-jobs', 11, 19, 'Act IV', 'rec', [
+    [.5, 18.5, 'Eight Jobs, opened by the watch on its own.', 'Two clocks seven minutes ahead, a file server at 2.9% free with its shadow copies failing, servers waiting eight days for a reboot.']]),
+  clip('Five servers go quiet', 'a-silent', 0, 29, 'Act IV', 'rec', [
+    [.5, 12, 'Five servers go quiet together.', 'The watch opens one Job for all five: servers silent in the same minute are one problem.'],
     [12.5, 28.5, 'Its issue, and the way forward.', 'Found, checked, a fix written, approved, proved: each step waits where it should.']]),
 
-  act('Act X', 'Both audits.', 'Client deliverables, rendered from the same record the pages show.'),
-  drawn('Code checks every word', 'audits', 'Act X', []),
-  clip('A site audit, made', 'a-site', 0, 25, 'Act X', 'rec', [
-    [.5, 24.5, 'A site audit, made.', 'With the AI off it writes itself in code’s own words. With it on, the model writes and code checks every name and number.']]),
-  clip('An audit put together', 'a-auditspage', 0, 15, 'Act X', 'rec', [
-    [.5, 14.5, 'An audit put together from the record, chapter by chapter.', 'Above it, the audit’s run told again: each chapter tried by code first.']]),
-  clip('The Comprehensive Site Audit', 'a-siteaudit', 0, 28, 'Act X', 'rec', [
-    [.5, 27.5, 'The Comprehensive Site Audit.', 'Posture 56 of 100, set by Network. Every server once, every finding in full, each naming its servers.']]),
-  clip('A firewall audit, at work', 'a-fwrun', 0, 24, 'Act X', 'rec', [
-    [.5, 23.5, 'A firewall audit, at work.', 'Above the page, its run as it happens: each chapter tried by code, then by Opus; with the AI off, code’s words stand.']]),
-  clip('The Comprehensive Firewall Audit', 'a-fwaudit', 0, 32, 'Act X', 'rec', [
-    [.5, 31.5, 'The Comprehensive Firewall Audit.', 'Thirteen chapters, the network drawn from the export, a client’s copy, an engineer’s copy and a Brief.']]),
+  act('Act V', 'The record, as dashboards.', 'One SQLite schema, 101 tables, one writer. Every screen is pushed over one socket the moment a write lands.'),
+  clip('Today', 'r-today', 0, 17, 'Act V', 'replay', [
+    [.5, 6.5, 'Today: what needs the engineer, in working order.', 'Above every page, the newest run told from its record: each layer, what it settled, what it cost.'],
+    [7, 16.5, 'A check waiting for one press, and the questions only people can answer.', 'The check was written by the model and proved read-only by PowerShell’s own parser; each question is asked once and its answer kept as a fact.']]),
+  clip('A client', 'r-client', 0, 23, 'Act V', 'replay', [
+    [.5, 10, 'The Reactor, replayed.', 'Every question a run set out to settle falls inward to the cheapest layer that could settle it: code, GLiNER, the decision model, a check, Opus, the engineer.'],
+    [10.5, 22.5, 'A client’s dashboard: ten servers, live from their agents.', 'Then what the reads found on each server, and where each finding stands: settled, likely, or waiting on a named check.']]),
+  clip('A server, every field', 'r-server', 36, 17, 'Act V', 'replay', [
+    [.5, 6, 'What is wrong, by area, with its evidence.', 'Identity, network, operating system: each finding named, scored and placed.'],
+    [6.5, 11.5, 'Microsoft on its events.', '166 of Microsoft’s articles on documented causes, joined to the events this server counted.'],
+    [12, 16.5, 'Every field the collector captured.', '478 of them for this server. Absence is said, never drawn as a zero.']]),
 
-  act('Act XI', 'Talking to the work, and running it.', 'A fact the record holds is answered from the record. Office decides who does what, and what may run alone.'),
-  clip('The console', 'g-console', 0, 30, 'Act XI', 'rec', [
+  act('Act VI', 'Diagnostics.', 'A frontier model reads one server’s entire output in one call. Nothing acts on its words until code has checked them.'),
+  drawn('One server, read whole', 'read', 'Act VI', []),
+  clip('Read this server whole', 'f5-read-press', 27, 21, 'Act VI', 'real', [
+    [.5, 20.5, 'Read this server whole.', 'Its raw output in one call, with what the office knows and what the checks raise beside it. The real model, recorded as it worked.']]),
+  clip('The whole read, drawn', 'r-server', 0, 36, 'Act VI', 'replay', [
+    [.5, 12, 'One server, read whole.', '37,601 characters of BR-DC01’s output read and 10,644 written, its findings numbered from the root.'],
+    [12.5, 24, 'Every finding stands on the lines it quotes.', 'Each quote is found in the capture four ways, strictest first, and the number of records it fits is kept.'],
+    [24.5, 35.5, 'What it found, most important first.', 'The root, then what follows from it, then what only a person can answer, then what is fine.']]),
+  clip('Filed, and where each item went', 'f5-read-words', 26, 33, 'Act VI', 'real', [
+    [.5, 9, 'Filed into typed items.', 'Findings, eighteen read-only checks, questions for the office: prose turned into records code can verify.'],
+    [9.5, 22, 'GLiNER proposes, Opus confirms.', 'Sixty names proposed by the local model; each confirmation becomes a label that fits next week’s line.'],
+    [22.5, 32.5, 'Proved before it touches a server.', '91 of 91 quotes found in the capture, 18 of 18 checks proved to only read.']]),
+  drawn('Held to the evidence', 'proof', 'Act VI', []),
+  clip('The engine', 'r-engine', 0, 34, 'Act VI', 'replay', [
+    [.5, 14, 'Every layer at work.', 'Seventeen questions entered. Of those settled, code took half for nothing and Opus half for $1.77; twelve wait on the engineer.'],
+    [14.5, 33.5, 'Follow one finding.', 'One finding told layer by layer in its own words, from the line it came from to the gate.']]),
+  clip('The second look', 'f6-second-look', 0, 33, 'Act VI', 'real', [
+    [.5, 14.5, 'The second look, once the checks came back.', 'The same conversation picked up with what each check printed. $1.83.'],
+    [15, 32.5, '“The PDC has no time reference (settled).”', 'The cause moved up the chain: from a branch server seven minutes off to the whole domain’s unanchored time.']]),
+  clip('The Job, as a rope', 'r-job', 0, 31, 'Act VI', 'replay', [
+    [.5, 15, 'How this Job was worked out.', 'Evidence taken apart into lines by source, read by code, GLiNER and the decision model, braided into one rope per issue.'],
+    [15.5, 30.5, 'Each pass of the loop pulls it tighter.', 'Ruled-out causes peel away; a cause is confirmed only on a real proof, weighed by Bayes’ rule in code.']]),
+
+  act('Act VII', 'Remediation.', 'Every finding placed into one fix. Fixes in the order an engineer works them. Each written whole, gated, run, and proved from outside the change.'),
+  clip('Placed, and put in order', 'r-fixes', 0, 27, 'Act VII', 'replay', [
+    [.5, 13, 'Each finding placed into one fix.', 'The decision model places it above its fitted line, recalibrated by isotonic regression and bounded by Clopper-Pearson; below the line, Opus decides.'],
+    [13.5, 26.5, 'The line of work.', 'The root before its symptoms; time, then DNS, then Kerberos, then logons; the first server a canary.']]),
+  drawn('A fix, written whole', 'fixgate', 'Act VII', []),
+  clip('At the gate', 'r-gate', 0, 21.5, 'Act VII', 'replay', [
+    [.5, 5, 'One fix at the gate, in four parts.', 'A test that is true while the problem exists, the change with its guards, the proof, and the way back.'],
+    [5.5, 15, 'The change refuses to guess.', 'If the setting comes from Group Policy or DHCP it stops and says where the real fix belongs; it saves the exact state for its way back.'],
+    [15.5, 21, 'Approved by a named engineer, then applied.', 'Sent to BR-FS01’s agent with its digest and run only if the digest is the script’s own; proved later against servers nobody touched.']]),
+  clip('The firewall fix, proved by the next export', 'a-fix', 0, 30, 'Act VII', 'rec', [
+    [.5, 11, 'Firewall fixes are made by hand.', 'In Policy Manager or the Web UI, never pushed. Remote Desktop moves behind the SSL VPN.'],
+    [11.5, 29.5, 'The next export is the proof.', 'Read again from the export itself: three ways in where there were four.']]),
+  clip('The same Firebox, after the fix', 'r-fwafter', 0, 25, 'Act VII', 'replay', [
+    [.5, 6, 'The same Firebox, read from its new export.', 'Three ways in where there were four.'],
+    [6.5, 11, 'Every way in, drawn again.', 'Each path from the internet to what it reaches, with its gate.'],
+    [11.5, 24.5, 'What changed since the last export.', '4 opened, 5 went, 17 held: each that went waits for a verdict on its cause, and is never called fixed without a recorded change.']]),
+
+  act('Act VIII', 'The audits.', 'Two client deliverables from the same record the screens show. The model writes the words; code checks every name and number.'),
+  drawn('Code checks every word', 'audits', 'Act VIII', []),
+  clip('An audit put together, then opened', 'r-audits', 0, 38, 'Act VIII', 'replay', [
+    [.5, 14, 'An audit assembled from the record.', 'Servers captured, sections read, findings held, poured into its chapters as facts.'],
+    [14.5, 27, 'The Comprehensive Site Audit.', 'Its cover: posture 56 of 100, set by Network. Every action numbered, with its chapter, its severity and its first step; the findings at a glance.'],
+    [27.5, 37.5, 'Every server, and its load.', 'The servers audited, then each server’s processor, memory, disk and uptime drawn from the capture’s own rows.']]),
+  clip('The Comprehensive Firewall Audit', 'r-fwaudit', 4, 44, 'Act VIII', 'replay', [
+    [.5, 12, 'The Comprehensive Firewall Audit.', 'Its cover: posture 41 of 100, set by Operations. Then the executive summary, the dominant risk and the immediate actions.'],
+    [12.5, 16.5, 'What is right, and what changed since the last audit.', 'Four new findings, five gone, seventeen still standing; then the scope and the method.'],
+    [17, 27, 'Every way in, and who may reach it.', 'Each rule the internet can use, what stands in its way, and the host it lands on.'],
+    [27.5, 33, 'Attack paths, step by step.', 'Each chain a sequence of rules in the export, ending on the change that breaks it.'],
+    [33.5, 38, 'Tunnels graded part by part.', 'Every IKE policy and its proposals, against the standards the finding cites.'],
+    [38.5, 43.5, 'Every finding, whole.', 'Its NIST control and ATT&CK technique, the evidence from the export, and the fix by hand, step by step.']]),
+
+  act('Act IX', 'Talking to the work, and running it.', 'A fact the record holds is answered from the record. Office decides who does what, and what may run alone.'),
+  clip('The console', 'g-console', 0, 30, 'Act IX', 'rec', [
     [.5, 29.5, 'The console on BR-DC01.', 'When did it last boot, which certificates have expired: answered from its capture, dated, without a model.']]),
-  clip('Office', 'g-office', 0, 40, 'Act XI', 'rec', [
-    [.5, 15, 'Office: the seats.', 'Everything the program reaches out to, and whether each is set up.'],
-    [15.5, 26, 'The decision model’s lines, drawn.', 'Each typed question with its calibrated line.'],
-    [26.5, 39.5, 'People, agents, keys, the record of every act, and the backups.', 'A checked copy every night, and a second folder on another disk or another machine.']]),
+  clip('Office', 'r-office', 0, 10, 'Act IX', 'rec', [
+    [.5, 9.5, 'Office: everything the program speaks to.', 'The model provider, the decision model, GLiNER, the agents, the firewall vendor’s cloud, sign-in: each with what it may do alone.']]),
 
-  act('Act XII', 'How it was proved.', 'And what the release found by being run for real.'),
-  drawn('Measured, never recalled', 'proved', 'Act XII', []),
+  act('Act X', 'The machinery, and the proof.', 'Cheapest first, held to the evidence, and measured, never recalled.'),
+  drawn('Cheapest first', 'engine', 'Act X', []),
+  drawn('The line', 'agentline', 'Act X', []),
+  drawn('Measured, never recalled', 'proved', 'Act X', []),
   {name: 'End', dur: 9000, kind: 'card', credit: true,
    draw: card({e: 'NinjaToolKit v9', h: BY[0] + '.', hAt: 380, p: BY[1], pAt: 1800,
                f: 'Invented data throughout. The program is private company software; this film shows its behaviour, not its source. The full technical case study is beside this film.', fAt: 3600})}

@@ -159,7 +159,7 @@ var M = (function () {
   var st = [
     {x: 230, y: R1, n: 'Evidence in', fig: '31 servers, 7 firewalls', sub: 'A text capture, firewall exports, and 22 agents reporting live', who: 'dot', col: C.snap},
     {x: 650, y: R1, n: 'Taken apart', fig: '47 sections a server', sub: 'Every field kept, to the page and the audit', who: 'square', col: C.code},
-    {x: 1070, y: R1, n: 'Code judges first', fig: '177 checks', sub: '117 for servers, 52 in the firewall engine, 8 on a Firebox. Free.', who: 'square', col: C.code},
+    {x: 1070, y: R1, n: 'Code judges first', fig: '179 checks', sub: '117 for servers, 52 in the firewall engine, 10 on a Firebox. Free.', who: 'square', col: C.code},
     {x: 1490, y: R1, n: 'The whole read', fig: '59,404 characters', sub: 'One server’s entire output to Opus in one call. Nothing narrows it.', who: 'ring', col: C.opus},
     {x: 1490, y: R2, n: 'Filed', fig: '16 findings, 18 checks', sub: '15 questions and 60 names. GLiNER proposes the names, on this machine.', who: 'bead', col: C.gl},
     {x: 1070, y: R2, n: 'Held to the evidence', fig: 'Every quote found', sub: 'Matched four ways in the capture. Every check parsed by PowerShell’s own parser.', who: 'square', col: C.code},
@@ -648,8 +648,8 @@ function proved(g, t) {
     text(g, f[0], x, y, {s: 50, mono: true, c: C.ink, a: k}); text(g, f[1], x, y + 34, {s: 16, c: C.ink3, a: k}); });
   var kd = k01(t, 12500, 900);
   if (kd > 0) { hair(g, 960, 760, 1830, 760, C.gate, kd, 2);
-    text(g, 'And then the release found its own defects', 960, 800, {s: 24, c: C.ink, a: kd});
-    para(g, typed('The evening v9.0.0 shipped, it was run for real on this estate. That run, and filming it, found four defects that 6,092 passing tests had not. Each was fixed with a test that fails on v9.0.0, and v9.0.1 shipped the next morning. Filming v9.0.1 found one more; v9.0.2 fixed it the day after, with the firewall pillar completed.', t, 13300, 10), 960, 840, 870, {s: 18, c: C.ink2, lh: 26}); }
+    text(g, 'Three releases in three days', 960, 800, {s: 24, c: C.ink, a: kd});
+    para(g, typed('v9.0.0, v9.0.1 and v9.0.2, 18 to 20 November. Each built from a clean export of its release commit and walked from an empty folder in the built program, its suite, 17 harnesses and five-part gate green. v9.0.2 completed the firewall pillar: every one of 1,923 value-carrying export paths accounted for.', t, 13300, 10), 960, 840, 870, {s: 18, c: C.ink2, lh: 26}); }
   text(g, '6,546 commits since March 2026; 111 numbered design decisions', LX, 1000, {s: 16, c: C.ink3, a: k01(t, 3500, 800)});
 }
 proved.dur = 30000;

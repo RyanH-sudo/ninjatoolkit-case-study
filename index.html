@@ -67,7 +67,7 @@
     <p class="lede"><b>NinjaToolKit</b> is an audit and remediation platform for managed Windows Server estates and WatchGuard firewalls. I designed it, built it and released it: one self-contained program for a whole engineering team, its own agents on the servers, and a harness that takes one server from a first read to a fix that proves itself.</p>
     <p class="proof">At the release: <span class="mono">139,481</span> lines of Python in eleven layers, <span class="mono">179</span> deterministic checks, <span class="mono">6,145</span> tests passing, <span class="mono">80,161</span> requests through a soak of two hours forty with no error, <span class="mono">318 of 318</span> audit fields kept by code's own check of what the model wrote, and every one of <span class="mono">1,923</span> value-carrying paths in 54 firewall exports accounted for.</p>
     <div class="acts">
-      <a class="pri" href="film/index.html">Watch the film<i>twelve acts</i></a>
+      <a class="pri" href="film/index.html">Watch the film<i>ten acts</i></a>
       <a class="label lnk" href="case-study/index.html">Read the case study</a>
     </div>
     <div class="by"><b>Ryan Haig</b><span class="label">Forward Deployed Engineer</span></div>
@@ -78,11 +78,11 @@
 <section class="film">
   <div class="label">The film</div>
   <h2>The machinery drawn, and the release itself working an estate that does not exist.</h2>
-  <p>Twelve acts, about twenty-two minutes. Ten drawn scenes show how the harness works inside, every figure in them measured. Between them the real v9.0.1 program works five invented clients, thirty-one servers and seven firewalls, recorded as it happened or replayed from its own record. Every word the model says is what it wrote, and every dollar it spent is in its ledger.</p>
+  <p>Ten acts, about twenty minutes, in the order of the work: ingestion by script, by firewall export and by telemetry; the record as dashboards; diagnostics; remediation; the audits sliding out and read through; the console and Office. The real v9.0.2 program works five invented clients, thirty-one servers and seven firewalls, with the drawn instruments moving on its own recorded events, and the real model's reads, filing and second look replayed from their own record. Ten drawn scenes explain the machinery, every figure in them measured. Every word the model says is what it wrote, and every dollar it spent is in its ledger.</p>
   <a class="reel" href="film/index.html" aria-label="Play the film">
-    <video id="reel" muted playsinline loop preload="metadata" src="film/clips/g-wheel.mp4#t=2"></video>
+    <video id="reel" muted playsinline loop preload="metadata" src="film/clips/i-intake.mp4#t=57"></video>
     <span class="go">Play the film</span>
-    <span class="note label">Every client, every server, as it is right now</span>
+    <span class="note label">A firewall export, taken apart as it lands</span>
   </a>
 </section>
 </main>
@@ -102,8 +102,8 @@
   document.addEventListener('visibilitychange', function () { if (document.hidden) loom.stop(); else if (!still) loom.start(); });
   /* the teaser: the wheel alive, a few seconds on a loop */
   var v = document.getElementById('reel');
-  if (!still) { v.addEventListener('loadedmetadata', function () { v.currentTime = 13; v.play().catch(function () {}); });
-    v.addEventListener('timeupdate', function () { if (v.currentTime > 27.5) v.currentTime = 13; }); }
+  if (!still) { v.addEventListener('loadedmetadata', function () { v.currentTime = 57; v.play().catch(function () {}); });
+    v.addEventListener('timeupdate', function () { if (v.currentTime > 72.5) v.currentTime = 57; }); }
 })();
 </script>
 </body>

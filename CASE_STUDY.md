@@ -17,9 +17,10 @@ checked by script against the real estate's names so that nothing invented colli
 unless the sentence says otherwise. Where a figure comes from the estate the product was built against, it is a count
 only. Where something is built and not yet proved in production, section 16 says so.
 
-**The film.** The companion film draws the harness at work in ten scenes, each figure measured, and shows the released
-v9.0.1 program working the invented estate, recorded as it happened or replayed from its own record:
-[watch it online](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/).
+**The film.** The companion film follows the work from ingestion to the deliverable, in ten acts: the released v9.0.2
+program on the invented estate, its drawn instruments moving on its own recorded events, both audits opened and read
+through, the real model's reads, filing and second look replayed from their own record, and ten drawn scenes of the
+machinery, every figure measured: [watch it online](https://ryanh-sudo.github.io/ninjatoolkit-case-study/film/).
 
 ---
 
