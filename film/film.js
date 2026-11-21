@@ -24,8 +24,8 @@ function drawn(name, scene, act, say) { var f = window.FilmScenes[scene]; return
 /* ── the scenes, in order ─────────────────────────────────────────────────────────────────────────────────────── */
 var S = [
   {name: 'Opening', dur: 9500, kind: 'card', credit: true,
-   draw: card({e: 'NinjaToolKit v9.0.1', h: BY[0] + '.', hAt: 500, p: BY[1], pAt: 2300,
-               f: 'An AI harness for managed Windows Server estates and WatchGuard firewalls. The companies, servers and firewalls in this film are invented; every screen is the real released program.', fAt: 4300})},
+   draw: card({e: 'NinjaToolKit v9', h: BY[0] + '.', hAt: 500, p: BY[1], pAt: 2300,
+               f: 'An AI harness for managed Windows Server estates and WatchGuard firewalls. The companies, servers and firewalls in this film are invented; every screen is the real released program, filmed on v9.0.1.', fAt: 4300})},
   act('Act I', 'The whole machine.', 'One loop and every part of it moving, each with what it measured on the run filmed here.'),
   drawn('The whole machine', 'machine', 'Act I', []),
 
@@ -139,7 +139,7 @@ var S = [
   act('Act XII', 'How it was proved.', 'And what the release found by being run for real.'),
   drawn('Measured, never recalled', 'proved', 'Act XII', []),
   {name: 'End', dur: 9000, kind: 'card', credit: true,
-   draw: card({e: 'NinjaToolKit v9.0.1', h: BY[0] + '.', hAt: 380, p: BY[1], pAt: 1800,
+   draw: card({e: 'NinjaToolKit v9', h: BY[0] + '.', hAt: 380, p: BY[1], pAt: 1800,
                f: 'Invented data throughout. The program is private company software; this film shows its behaviour, not its source. The full technical case study is beside this film.', fAt: 3600})}
 ];
 

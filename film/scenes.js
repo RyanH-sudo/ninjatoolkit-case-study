@@ -632,25 +632,25 @@ function audits(g, t) {
 audits.dur = 28000;
 
 /* ── XII. How it was proved ───────────────────────────────────────────────────────────────────────────────────── */
-var LAYERS = [['web', 35785], ['judge', 29692], ['ingest', 17354], ['ai', 14604], ['store', 11392], ['operate', 11085], ['audits', 7113], ['remediate', 4182], ['domain', 2555], ['agent', 2440], ['core', 1968]];
+var LAYERS = [['web', 35989], ['judge', 29911], ['ingest', 17653], ['ai', 14669], ['store', 11422], ['operate', 11085], ['audits', 7472], ['remediate', 4182], ['domain', 2658], ['agent', 2440], ['core', 1968]];
 function proved(g, t) {
   ground(g, t);
   heading(g, t, 'How it was proved', 'Measured, never recalled.');
   var a0 = k01(t, 900, 700), LX = 96, LY = 330;
-  text(g, '138,202 lines of Python in eleven layers, imports one way', LX, LY - 22, {s: 14, w: 500, tr: 2.6, up: true, c: C.ink3, a: a0});
-  LAYERS.forEach(function (l, i) { var k = ease(k01(t, 1500 + i * 220, 900)), y = LY + 14 + i * 40, w = l[1] / 35785 * 560;
+  text(g, 'v9.0.2: 139,481 lines of Python in eleven layers, imports one way', LX, LY - 22, {s: 14, w: 500, tr: 2.6, up: true, c: C.ink3, a: a0});
+  LAYERS.forEach(function (l, i) { var k = ease(k01(t, 1500 + i * 220, 900)), y = LY + 14 + i * 40, w = l[1] / 35989 * 560;
     text(g, l[0], LX, y + 12, {s: 16, mono: true, c: C.ink2, a: k});
     g.fillStyle = rgba('#3987e5', 0.85); g.fillRect(LX + 120, y, w * k, 14);
     text(g, l[1].toLocaleString('en-US'), LX + 130 + w * k, y + 12, {s: 14, mono: true, c: C.ink3, a: k}); });
-  var F = [['6,096', 'tests passing, in 671 files'], ['17', 'standing verification harnesses'], ['5 of 5', 'release gates'],
+  var F = [['6,145', 'tests passing, in 670 files'], ['17', 'standing verification harnesses'], ['5 of 5', 'release gates'],
            ['80,161', 'requests in a 2 h 40 min soak, no error'], ['50', 'agents for an hour, no batch lost'], ['2 of 2', 'kills mid-write, recovered']];
   F.forEach(function (f, i) { var k = k01(t, 4500 + i * 900, 600), x = 960 + (i % 2) * 450, y = 360 + Math.floor(i / 2) * 120;
     text(g, f[0], x, y, {s: 50, mono: true, c: C.ink, a: k}); text(g, f[1], x, y + 34, {s: 16, c: C.ink3, a: k}); });
   var kd = k01(t, 12500, 900);
   if (kd > 0) { hair(g, 960, 760, 1830, 760, C.gate, kd, 2);
     text(g, 'And then the release found its own defects', 960, 800, {s: 24, c: C.ink, a: kd});
-    para(g, typed('The evening v9.0.0 shipped, it was run for real on this estate. That run, and filming it, found four defects that 6,092 passing tests had not. Each was fixed with a test that fails on v9.0.0, and v9.0.1 shipped the next morning.', t, 13300, 10), 960, 840, 870, {s: 18, c: C.ink2, lh: 26}); }
-  text(g, '6,526 commits since March 2026; 111 numbered design decisions', LX, 1000, {s: 16, c: C.ink3, a: k01(t, 3500, 800)});
+    para(g, typed('The evening v9.0.0 shipped, it was run for real on this estate. That run, and filming it, found four defects that 6,092 passing tests had not. Each was fixed with a test that fails on v9.0.0, and v9.0.1 shipped the next morning. Filming v9.0.1 found one more; v9.0.2 fixed it the day after, with the firewall pillar completed.', t, 13300, 10), 960, 840, 870, {s: 18, c: C.ink2, lh: 26}); }
+  text(g, '6,546 commits since March 2026; 111 numbered design decisions', LX, 1000, {s: 16, c: C.ink3, a: k01(t, 3500, 800)});
 }
 proved.dur = 30000;
 
