@@ -4,7 +4,7 @@
 
 A technical case study of NinjaToolKit v9.0.2, released 20 November 2026.
 
-**Author:** Ryan Haig, Forward Deployed Engineer and AI Automation Engineer. I designed the platform, built it and
+**Author:** Ryan Haig, Forward Deployed Engineer. I designed the platform, built it and
 released it.
 
 **What this document is.** NinjaToolKit is private company software, so its source is not public. This case study
@@ -105,7 +105,8 @@ three days: every defect my own runs of the shipped build turned up was fixed wi
 ### 1.1 The capability map
 
 Everything the release does, area by area, with the section that explains it. Every row is a check in the catalogue or
-an ability on the product's own ledger (section 14.2).
+an ability on the product's own ledger (section 14.2). Two rows are built and tested and not yet in use; each says
+so, and section 16 lists everything else that is not yet proved.
 
 **Intake and the record**
 
@@ -169,13 +170,13 @@ an ability on the product's own ledger (section 14.2).
 | Checks out and back | PowerShell's own parser proves each script read-only; one script a server; a gate hook in the path; through the agent, or as one card to copy and paste | 9.7 |
 | The second look | The same conversation picked up with everything that came back; a question answered once and kept as a fact | 9.8 |
 | Causes weighed in code | Bayes' rule over each family's causes and "other"; the next check chosen by expected information per unit of cost; a root-cause gate that demands a real proof | 9.8 |
-| The fix catalogue | Each client's fixes written once and every finding placed in one; the decision model placing at a recalibrated, error-bounded line, with probes, a shadow week and a pinned version | 9.9 |
+| The fix catalogue | Each client's fixes written once and every finding placed in one; the decision model placing at a recalibrated, error-bounded line, with a shadow week and a pinned version (its consistency probes are built and not yet switched on) | 9.9 |
 | The line of work | The root before its symptoms; time, then DNS, then Kerberos, then logons; the first server a canary | 9.9 |
 | A fix, written whole | Pre-check, change, proof and way back; "no change worth making" is a legal answer; two-person approval; waves | 9.10 |
 | The reader of names | Code reads every exact shape; GLiNER, running locally, proposes the rest for Opus to confirm | 9.11 |
 | Talking to the work | A console routed by code: facts from the record, concepts by the cheaper model, everything else an Opus turn on the Job; every quote checked; web search off unless asked for, and name-mapped | 9.12 |
 | Documents held to their facts | A Job's time entry, client email and remediation report, every number, address, quote and machine checked against the Job's own record | 9.12 |
-| Checks the model writes | A finding turned into an interpreted rule that must fire on its own server and waits for an engineer | 9.13 |
+| Checks the model writes | A finding turned into an interpreted rule that must fire on its own server and waits for an engineer (built and tested; not yet used on the real record) | 9.13 |
 | The audits' words | The model writes prose over code's facts; every number, address and name is checked; a field that fails twice is replaced by a deterministic sentence | 9.14 |
 | Learning from the work | Labels from what the work leaves behind; weekly refits in code; alarms; accuracy as precision, coverage and cost | 9.15 |
 | Privacy | A name map with a leak check before any other hosted model, no person named, credentials scrubbed, the local model kept local | 9.16 |
@@ -552,7 +553,8 @@ Three of those families are worth a second look because of where they came from.
 checks and the proven misses are not textbook rules. They are signatures taken from real diagnostic work, generalized
 to the deciding test, the value that marks the fault and what fixes it. Each carries the signature it came from. When
 the model finds something no check raises, the product can turn that finding into a new check, confirmed by an
-engineer before it joins the floor (section 9.13). The catalogue grows from the work.
+engineer before it joins the floor (section 9.13). That path is built and tested; no check has joined the catalogue
+through it yet.
 
 ### 6.3 Instrument honesty
 
@@ -1286,7 +1288,8 @@ used raw:
    gets a smaller limit than a note.
 3. **Consistency probes.** A choice asked again with its options reversed, a yes asked as its negation, a question
    asked again in other words, all in the same request. When a probe disagrees, the answer climbs whatever its
-   confidence.
+   confidence. The probes are built and tested. No production request asks them yet: switching them on waits on a
+   measurement of what they catch against what they cost.
 4. **A shadow week.** A new threshold decides nothing for its first seven days. Every answer in that week is recorded
    beside what actually happened.
 5. **A pinned version.** Thresholds are fitted to one model version. A request names that version exactly, and an
@@ -1402,6 +1405,8 @@ still silent is dropped with the reason and never asked again. A rule that fires
 with every server it fires on listed, before it joins the floor. Absence is not a value: only "exists" may speak of a
 field that is not there.
 
+This is built and tested on invented records. On the real record no rule has been written this way yet.
+
 ### 9.14 The audits' words
 
 The site audit and the firewall audit are written by the model and are still safe to hand a client, because of one
@@ -1497,7 +1502,7 @@ that run's own record. Two records are used, and each step says which:
 
 - **The clean run**, on the v9.0.1 build, over a fresh data folder.
 - **The rehearsal**, earlier the same evening on v9.0.0, over the same estate. Its later steps (the second look and a
-  fix through the gate) are shown from it because the clean run stopped at an honest boundary, described at step 6.
+  fix through the gate) are shown from it because the clean run stops at step 6, for the reason given there.
 
 ### Step 1. An estate lands (clean run)
 
@@ -1547,16 +1552,11 @@ The engineer presses "Run it". The script is handed to BR-DC01's own agent in th
 
 On v9.0.0 that press failed. It was defect one of v9.0.1.
 
-### Step 6. An honest boundary (clean run)
+### Step 6. Where the clean run stops
 
-At this point I paused the work for an hour, and stopped the simulated fleet with it. When the fleet came back, the
-server's answer arrived after its check had expired: a check not back within fifteen minutes expires, and the listener
-refused the late answer, exactly as it should.
-
-The engineer's next move would be to read the server whole again. That press was refused too, by the model provider:
-the account's usage limit had been reached. The program said so in plain words and spent nothing.
-
-Both refusals are the product doing its job. They are also why the next two steps come from the rehearsal.
+The clean run stops here. Its check came back after it had expired (a check not back within fifteen minutes expires)
+and the listener refused the late answer, as it should. The next two steps are shown from the rehearsal run of the
+same loop.
 
 ### Step 7. The second look (rehearsal)
 
@@ -1958,6 +1958,8 @@ Stated here so nobody meets it as a surprise.
   real when pressed. It spends nothing until an office sets a background budget.
 - **A client's first view** measures 142 to 203 ms at the 95th percentile against a 100 ms budget that was set before
   that page became a dashboard. The budget or the page will move; it is an open decision.
+- **Built, not yet in use.** Two abilities are complete and tested and have never run on the real record: the
+  decision model's consistency probes (section 9.9) and checks the model writes (section 9.13).
 - **Partial abilities.** Of the 140 abilities on the ledger, 81 are recorded as running and 45 as partial, most of
   those waiting on a real export, a credential or a first real use.
 - **Not in this version:** certificate renewal and re-keying from inside the product; single sign-on with multi-factor
